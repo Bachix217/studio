@@ -33,7 +33,7 @@ interface VehicleSearchFormProps {
 const defaultFilters: Filters = {
   make: undefined,
   model: undefined,
-  priceRange: [0, 200000],
+  priceRange: [0, 500000],
   mileageRange: [0, 300000],
   yearRange: [1990, new Date().getFullYear()],
   fuelType: undefined,
@@ -84,10 +84,8 @@ export default function VehicleSearchForm({
   };
   
   useEffect(() => {
-     const subscription = watch((value, { name, type }) => {
-       if (type === 'change') {
-         onFilterChange(value as Filters);
-       }
+     const subscription = watch((value) => {
+       onFilterChange(value as Filters);
     });
     return () => subscription.unsubscribe();
   }, [watch, onFilterChange]);
@@ -247,7 +245,7 @@ export default function VehicleSearchForm({
                       render={({ field }) => (
                         <Slider
                           min={0}
-                          max={200000}
+                          max={500000}
                           step={1000}
                           value={field.value}
                           onValueChange={field.onChange}
