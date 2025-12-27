@@ -1,0 +1,14 @@
+export type Vehicle = {
+  id: string;
+  make: string;
+  model: string;
+  year: number;
+  price: number;
+  mileage: number;
+  fuelType: 'Essence' | 'Diesel' | 'Hybride' | 'Électrique';
+  gearbox: 'Manuelle' | 'Automatique';
+  canton: string;
+  description: string;
+  features: string[];
+  images: string[];
+};

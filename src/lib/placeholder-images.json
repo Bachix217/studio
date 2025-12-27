@@ -1,3 +1,154 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "car1-1",
+      "description": "Volkswagen Golf 8 exterior front",
+      "imageUrl": "https://images.unsplash.com/photo-1603615000279-f700d0d11824?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx2b2xrc3dhZ2VuJTIwZ29sZnxlbnwwfHx8fDE3NjY4MzU5OTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "volkswagen golf"
+    },
+    {
+      "id": "car1-2",
+      "description": "Volkswagen Golf 8 interior",
+      "imageUrl": "https://images.unsplash.com/photo-1471174617910-3e9c04f58ff5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Y2FyJTIwaW50ZXJpb3J8ZW58MHx8fHwxNzY2Nzg5MjY4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "car interior"
+    },
+    {
+      "id": "car1-3",
+      "description": "Volkswagen Golf 8 exterior back",
+      "imageUrl": "https://images.unsplash.com/photo-1603615000279-f700d0d11824?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx2b2xrc3dhZ2VuJTIwZ29sZnxlbnwwfHx8fDE3NjY4MzU5OTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "volkswagen golf"
+    },
+    {
+      "id": "car2-1",
+      "description": "Audi Q5 exterior front",
+      "imageUrl": "https://images.unsplash.com/photo-1710011116424-c969cf19a0ee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YXVkaSUyMHE1fGVufDB8fHx8MTc2NjgxNDY5OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "audi q5"
+    },
+    {
+      "id": "car2-2",
+      "description": "Audi Q5 in mountains",
+      "imageUrl": "https://images.unsplash.com/photo-1658731041626-66334aad30be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzdXYlMjBtb3VudGFpbnN8ZW58MHx8fHwxNzY2ODM1OTkyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "suv mountains"
+    },
+    {
+      "id": "car3-1",
+      "description": "BMW 3 series front",
+      "imageUrl": "https://images.unsplash.com/photo-1657769207339-562f3d9207a8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxibXclMjAzLXNlcmllc3xlbnwwfHx8fDE3NjY4MTQ2OTh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "bmw 3-series"
+    },
+    {
+      "id": "car3-2",
+      "description": "BMW 3 series interior dashboard",
+      "imageUrl": "https://images.unsplash.com/photo-1611760357505-922600d8ffa6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXIlMjBkYXNoYm9hcmR8ZW58MHx8fHwxNzY2ODA0NDIxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "car dashboard"
+    },
+    {
+      "id": "car3-3",
+      "description": "BMW 3 series rear view",
+      "imageUrl": "https://images.unsplash.com/photo-1734299388217-2ebc605ef43f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxibXclMjBzZWRhbnxlbnwwfHx8fDE3NjY4MzU5OTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "bmw sedan"
+    },
+    {
+      "id": "car3-4",
+      "description": "BMW 3 series wheel detail",
+      "imageUrl": "https://images.unsplash.com/photo-1688885387704-67df0a0c4be7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YWxsb3klMjB3aGVlbHxlbnwwfHx8fDE3NjY4MzU5OTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "alloy wheel"
+    },
+    {
+      "id": "car4-1",
+      "description": "Tesla Model 3 front",
+      "imageUrl": "https://images.unsplash.com/photo-1610356992334-183d6b7b2acb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8dGVzbGElMjBtb2RlbC0zfGVufDB8fHx8MTc2NjgzNTk5Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "tesla model-3"
+    },
+    {
+      "id": "car4-2",
+      "description": "Tesla Model 3 interior screen",
+      "imageUrl": "https://images.unsplash.com/photo-1553260168-69b041873e65?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx0ZXNsYSUyMGludGVyaW9yfGVufDB8fHx8MTc2NjgzNTk5Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "tesla interior"
+    },
+    {
+      "id": "car5-1",
+      "description": "Peugeot 208 front",
+      "imageUrl": "https://images.unsplash.com/photo-1581607767815-4d7df22e3e28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwZXVnZW90JTIwMjA4fGVufDB8fHx8MTc2NjgxMzk3MHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "peugeot 208"
+    },
+    {
+      "id": "car6-1",
+      "description": "Mercedes A-Class front",
+      "imageUrl": "https://images.unsplash.com/photo-1593081727404-575eeb723999?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtZXJjZWRlcyUyMGEtY2xhc3N8ZW58MHx8fHwxNzY2ODE0Njk5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mercedes a-class"
+    },
+    {
+      "id": "car6-2",
+      "description": "Mercedes A-Class AMG interior",
+      "imageUrl": "https://images.unsplash.com/photo-1562438668-bcf0ca6578f0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxsdXh1cnklMjBpbnRlcmlvcnxlbnwwfHx8fDE3NjY3NjYzMzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "luxury interior"
+    },
+    {
+      "id": "car6-3",
+      "description": "Mercedes A-Class rear",
+      "imageUrl": "https://images.unsplash.com/photo-1712814335851-9edf0a02bf6c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxtZXJjZWRlcyUyMGhhdGNoYmFja3xlbnwwfHx8fDE3NjY4MzU5OTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mercedes hatchback"
+    },
+    {
+      "id": "car7-1",
+      "description": "Fiat 500 front",
+      "imageUrl": "https://images.unsplash.com/photo-1573401491021-c5f127195de0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmaWF0JTIwNTAwfGVufDB8fHx8MTc2NjgzNTk5Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fiat 500"
+    },
+    {
+      "id": "car7-2",
+      "description": "Fiat 500 interior",
+      "imageUrl": "https://images.unsplash.com/photo-1551522435-a13afa10f103?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxmaWF0JTIwaW50ZXJpb3J8ZW58MHx8fHwxNzY2ODM1OTkyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fiat interior"
+    },
+    {
+      "id": "car8-1",
+      "description": "Porsche 911 front",
+      "imageUrl": "https://images.unsplash.com/photo-1598814165187-ed79437d7490?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxwb3JzY2hlJTIwOTExfGVufDB8fHx8MTc2NjgzNTk5Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "porsche 911"
+    },
+    {
+      "id": "car8-2",
+      "description": "Porsche 911 rear quarter",
+      "imageUrl": "https://images.unsplash.com/photo-1628519592419-bf288f08cef5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzcG9ydHMlMjBjYXJ8ZW58MHx8fHwxNzY2ODA3MzYxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sports car"
+    },
+    {
+      "id": "car8-3",
+      "description": "Porsche 911 interior cockpit",
+      "imageUrl": "https://images.unsplash.com/photo-1566215963619-ba25312fc9ff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzcG9ydHNjYXIlMjBpbnRlcmlvcnxlbnwwfHx8fDE3NjY4MzU5OTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sportscar interior"
+    },
+    {
+      "id": "car9-1",
+      "description": "Renault Zoe front",
+      "imageUrl": "https://images.unsplash.com/photo-1656724996989-f2396fe87c17?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxyZW5hdWx0JTIwem9lfGVufDB8fHx8MTc2NjgzNTk5Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "renault zoe"
+    },
+    {
+      "id": "car9-2",
+      "description": "Renault Zoe charging",
+      "imageUrl": "https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxldiUyMGNoYXJnaW5nfGVufDB8fHx8MTc2NjgyNjA3NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "ev charging"
+    },
+    {
+      "id": "car10-1",
+      "description": "Skoda Octavia estate front",
+      "imageUrl": "https://images.unsplash.com/photo-1629280432491-ee82fe3c23fc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxza29kYSUyMG9jdGF2aWF8ZW58MHx8fHwxNzY2ODM1OTkyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "skoda octavia"
+    },
+    {
+      "id": "car10-2",
+      "description": "Skoda Octavia estate trunk open",
+      "imageUrl": "https://images.unsplash.com/photo-1681263989935-f7ddc8088f09?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjYXIlMjB0cnVua3xlbnwwfHx8fDE3NjY3ODkyNjh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "car trunk"
+    },
+    {
+      "id": "car10-3",
+      "description": "Skoda Octavia virtual cockpit",
+      "imageUrl": "https://images.unsplash.com/photo-1662242742653-13f0f76de431?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxkaWdpdGFsJTIwY29ja3BpdHxlbnwwfHx8fDE3NjY4MzU5OTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "digital cockpit"
+    }
+  ]
 }
