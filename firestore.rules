@@ -15,6 +15,14 @@ service cloud.firestore {
       // Modification/Suppression : Seul celui qui a créé l'annonce (le propriétaire) peut la changer
       allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
+    
+    // Règles pour les annonces archivées
+    match /deleted-vehicles/{vehicleId} {
+        // Seul le propriétaire peut archiver son annonce
+        allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+        // Personne ne peut lire, modifier ou supprimer les archives (sauf via la console Firebase)
+        allow read, update, delete: if false;
+    }
 
     // Profils utilisateurs
     match /users/{userId} {
