@@ -24,7 +24,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { CANTONS, FUEL_TYPES, GEARBOX_TYPES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, X as XIcon, Image as ImageIcon } from 'lucide-react';
+import { UploadCloud } from 'lucide-react';
 import { useFirebase } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
@@ -37,6 +37,8 @@ import Image from 'next/image';
 const MAX_IMAGES = 5;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
+const imageSchema = z.custom<File>(file => file instanceof File, "Veuillez téléverser un fichier valide.");
+
 const formSchema = z.object({
   make: z.string().min(2, "La marque est requise."),
   model: z.string().min(1, "Le modèle est requis."),
@@ -48,9 +50,10 @@ const formSchema = z.object({
   canton: z.string().min(2, "Le canton est requis."),
   description: z.string().min(20, "Veuillez fournir une description plus détaillée."),
   features: z.string().optional(),
-  images: z.custom<FileList>().refine(files => files && files.length > 0, 'Au moins une image est requise.')
-    .refine(files => files.length <= MAX_IMAGES, `Vous ne pouvez téléverser que ${MAX_IMAGES} images maximum.`)
-    .refine(files => Array.from(files).every(file => file.size <= MAX_FILE_SIZE), `Chaque image doit peser moins de 5 Mo.`),
+  images: z.array(imageSchema)
+    .min(1, 'Au moins une image est requise.')
+    .max(MAX_IMAGES, `Vous ne pouvez téléverser que ${MAX_IMAGES} images maximum.`)
+    .refine(files => files.every(file => file.size <= MAX_FILE_SIZE), `Chaque image doit peser moins de 5 Mo.`),
 });
 
 export default function SellForm() {
@@ -74,15 +77,17 @@ export default function SellForm() {
       mileage: undefined,
       description: '',
       features: '',
+      images: [],
     },
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
+      const fileArray = Array.from(files);
+      const newPreviews = fileArray.map(file => URL.createObjectURL(file));
       setImagePreviews(newPreviews);
-      form.setValue('images', files);
+      form.setValue('images', fileArray);
     }
   };
 
@@ -101,7 +106,7 @@ export default function SellForm() {
 
     try {
       const imageUrls: string[] = [];
-      const imageFiles = Array.from(values.images);
+      const imageFiles = values.images;
 
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
@@ -129,14 +134,19 @@ export default function SellForm() {
       }
       
       const docRef = await addDoc(collection(firestore, 'vehicles'), {
-        ...values,
+        make: values.make,
+        model: values.model,
+        year: Number(values.year),
+        price: Number(values.price),
+        mileage: Number(values.mileage),
+        fuelType: values.fuelType,
+        gearbox: values.gearbox,
+        canton: values.canton,
+        description: values.description,
         features: values.features ? values.features.split(',').map(f => f.trim()) : [],
         images: imageUrls,
         userId: user.uid,
         createdAt: serverTimestamp(),
-        price: Number(values.price),
-        mileage: Number(values.mileage),
-        year: Number(values.year),
       });
       
       toast({
@@ -313,7 +323,7 @@ export default function SellForm() {
             <FormField
               control={form.control}
               name="images"
-              render={() => (
+              render={({ field }) => (
                 <FormItem>
                   <FormLabel>Photos ({imagePreviews.length}/{MAX_IMAGES})</FormLabel>
                    <FormControl>
@@ -368,5 +378,3 @@ export default function SellForm() {
     </Card>
   );
 }
-
-    
