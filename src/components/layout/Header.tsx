@@ -124,7 +124,6 @@ export default function Header() {
                 <SheetContent side="right">
                   <div className="flex flex-col space-y-4 pt-10">
                     {user ? <AuthLinks /> : <GuestLinks />}
-                    {user ? null : <GuestLinks />}
                   </div>
                 </SheetContent>
               </Sheet>
