@@ -4,26 +4,34 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import type { Vehicle } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
-import { Calendar, Cog, Fuel, Gauge, MapPin } from 'lucide-react';
+import { Calendar, Cog, Fuel, Gauge, MapPin, ImageIcon } from 'lucide-react';
 
 interface VehicleCardProps {
   vehicle: Vehicle;
 }
 
 export default function VehicleCard({ vehicle }: VehicleCardProps) {
+  const imageUrl = vehicle.images && vehicle.images.length > 0 ? vehicle.images[0] : null;
+
   return (
     <Link href={`/vehicles/${vehicle.id}`} className="group block">
       <Card className="h-full flex flex-col overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
         <CardHeader className="p-0 relative">
-          <div className="aspect-[4/3] relative w-full overflow-hidden">
-            <Image
-              src={vehicle.images[0]}
-              alt={`${vehicle.make} ${vehicle.model}`}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              data-ai-hint="car exterior"
-            />
+          <div className="aspect-[4/3] relative w-full overflow-hidden bg-muted">
+            {imageUrl ? (
+              <Image
+                src={imageUrl}
+                alt={`${vehicle.make} ${vehicle.model}`}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                data-ai-hint="car exterior"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <ImageIcon className="w-16 h-16 text-muted-foreground" />
+              </div>
+            )}
           </div>
           <Badge className="absolute top-3 right-3" variant="secondary">{vehicle.canton}</Badge>
         </CardHeader>
