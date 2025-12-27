@@ -6,7 +6,7 @@ import Footer from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
-import { Calendar, Cog, Fuel, Gauge, Mail, MessageCircle, CheckCircle, User, Globe, Building, MapPin } from 'lucide-react';
+import { Calendar, Cog, Fuel, Gauge, Mail, MessageCircle, CheckCircle, User, Globe, Building, MapPin, Phone } from 'lucide-react';
 import ImageGallery from '@/components/vehicles/ImageGallery';
 import { useEffect, useState } from 'react';
 import { useFirebase } from '@/firebase';
@@ -125,7 +125,7 @@ export default function VehiclePage() {
                       <CardTitle className="text-lg">Informations du vendeur</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {seller.userType === 'professionnel' && seller.companyName ? (
+                      {seller.userType === 'professionnel' ? (
                         <>
                            <div className="flex items-start gap-3">
                             <Building className="text-muted-foreground mt-1" size={18} />
@@ -158,11 +158,19 @@ export default function VehiclePage() {
                      
                       <div className="flex flex-col sm:flex-row gap-3 pt-2">
                        {seller.sharePhoneNumber && seller.phone && (
-                        <Button asChild className="w-full" size="lg">
-                          <a href={`https://wa.me/${seller.phone.replace(/\s/g, '')}`} target="_blank" rel="noopener noreferrer">
-                            <MessageCircle className="mr-2" /> WhatsApp
-                          </a>
-                        </Button>
+                        seller.userType === 'professionnel' ? (
+                          <Button asChild className="w-full" size="lg">
+                            <a href={`tel:${seller.phone}`}>
+                              <Phone className="mr-2" /> Appeler
+                            </a>
+                          </Button>
+                        ) : (
+                          <Button asChild className="w-full" size="lg">
+                            <a href={`https://wa.me/${seller.phone.replace(/\s/g, '')}`} target="_blank" rel="noopener noreferrer">
+                              <MessageCircle className="mr-2" /> WhatsApp
+                            </a>
+                          </Button>
+                        )
                       )}
                       <Button asChild className="w-full" variant="outline" size="lg" disabled={!seller.email}>
                          <a href={`mailto:${seller.email}`}>

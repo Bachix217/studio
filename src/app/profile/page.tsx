@@ -123,7 +123,6 @@ export default function ProfilePage() {
 
     const profileDocRef = doc(firestore, 'users', user.uid);
     try {
-      // Ensure email is not overwritten if it exists
       const updateData: Partial<UserProfile> = {
         ...values,
         uid: user.uid,
@@ -133,8 +132,6 @@ export default function ProfilePage() {
         updateData.companyName = '';
         updateData.address = '';
         updateData.website = '';
-        updateData.phone = '';
-        updateData.sharePhoneNumber = false;
       }
 
       await setDoc(profileDocRef, updateData, { merge: true });
@@ -263,6 +260,46 @@ export default function ProfilePage() {
                       </FormItem>
                     )}
                   />
+                  {userType === 'particulier' && (
+                    <>
+                    <Separator />
+                     <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Téléphone de contact (pour WhatsApp)</FormLabel>
+                            <FormControl>
+                              <Input type="tel" placeholder="+41 79 123 45 67" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField
+                        control={form.control}
+                        name="sharePhoneNumber"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">
+                                Partager mon numéro
+                              </FormLabel>
+                              <FormDescription>
+                                Autoriser les acheteurs à vous contacter via WhatsApp.
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
                 </CardContent>
               </Card>
 
@@ -318,9 +355,9 @@ export default function ProfilePage() {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Téléphone de contact (pour WhatsApp)</FormLabel>
+                            <FormLabel>Téléphone de contact</FormLabel>
                             <FormControl>
-                              <Input type="tel" placeholder="+41 79 123 45 67" {...field} value={field.value ?? ''} />
+                              <Input type="tel" placeholder="+41 22 123 45 67" {...field} value={field.value ?? ''} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -333,10 +370,10 @@ export default function ProfilePage() {
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                             <div className="space-y-0.5">
                               <FormLabel className="text-base">
-                                Partager mon numéro de téléphone
+                                Partager le numéro de téléphone
                               </FormLabel>
                               <FormDescription>
-                                Autoriser les acheteurs à vous contacter via WhatsApp sur vos annonces.
+                                Autoriser les acheteurs à vous appeler via vos annonces.
                               </FormDescription>
                             </div>
                             <FormControl>
