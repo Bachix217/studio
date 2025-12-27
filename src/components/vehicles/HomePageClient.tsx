@@ -19,21 +19,24 @@ export type Filters = {
   canton: string | undefined;
 };
 
+const initialFilters: Filters = {
+  make: undefined,
+  model: undefined,
+  priceRange: [0, 200000],
+  mileageRange: [0, 300000],
+  yearRange: [1990, new Date().getFullYear()],
+  fuelType: undefined,
+  gearbox: undefined,
+  canton: undefined,
+};
+
+
 export default function HomePageClient() {
   const { firestore } = useFirebase();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [filters, setFilters] = useState<Filters>({
-    make: undefined,
-    model: undefined,
-    priceRange: [0, 200000],
-    mileageRange: [0, 300000],
-    yearRange: [1990, new Date().getFullYear()],
-    fuelType: undefined,
-    gearbox: undefined,
-    canton: undefined,
-  });
+  const [filters, setFilters] = useState<Filters>(initialFilters);
 
   useEffect(() => {
     if (!firestore) return;
@@ -58,14 +61,20 @@ export default function HomePageClient() {
   const filteredVehicles = useMemo(() => {
     return vehicles.filter(v => {
       if (!v) return false;
-      if (filters.make && v.make !== filters.make) return false;
-      if (filters.make && filters.model && v.model !== filters.model) return false;
+      const makeFilter = filters.make || '';
+      const modelFilter = filters.model || '';
+      const fuelTypeFilter = filters.fuelType || '';
+      const gearboxFilter = filters.gearbox || '';
+      const cantonFilter = filters.canton || '';
+
+      if (makeFilter && v.make !== makeFilter) return false;
+      if (makeFilter && modelFilter && v.model !== modelFilter) return false;
       if (filters.priceRange && (v.price < filters.priceRange[0] || v.price > filters.priceRange[1])) return false;
       if (filters.mileageRange && (v.mileage < filters.mileageRange[0] || v.mileage > filters.mileageRange[1])) return false;
       if (filters.yearRange && (v.year < filters.yearRange[0] || v.year > filters.yearRange[1])) return false;
-      if (filters.fuelType && v.fuelType !== filters.fuelType) return false;
-      if (filters.gearbox && v.gearbox !== filters.gearbox) return false;
-      if (filters.canton && v.canton !== filters.canton) return false;
+      if (fuelTypeFilter && v.fuelType !== fuelTypeFilter) return false;
+      if (gearboxFilter && v.gearbox !== gearboxFilter) return false;
+      if (cantonFilter && v.canton !== cantonFilter) return false;
       return true;
     });
   }, [filters, vehicles]);

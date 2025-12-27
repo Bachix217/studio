@@ -73,7 +73,9 @@ export default function VehicleSearchForm({
 
 
   useEffect(() => {
-    setValue('model', undefined);
+    if (selectedMake) {
+      setValue('model', undefined);
+    }
   }, [selectedMake, setValue]);
 
   const handleReset = () => {
@@ -82,8 +84,10 @@ export default function VehicleSearchForm({
   };
   
   useEffect(() => {
-     const subscription = watch((value, { name }) => {
-       onFilterChange(value as Filters);
+     const subscription = watch((value, { name, type }) => {
+       if (type === 'change') {
+         onFilterChange(value as Filters);
+       }
     });
     return () => subscription.unsubscribe();
   }, [watch, onFilterChange]);
@@ -108,13 +112,17 @@ export default function VehicleSearchForm({
                   control={control}
                   render={({ field }) => (
                     <Select
-                      onValueChange={field.onChange}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        setValue('model', undefined); 
+                      }}
                       value={field.value || ''}
                     >
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Toutes les marques" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="">Toutes les marques</SelectItem>
                         {makes.map(make => (
                           <SelectItem key={make} value={make}>
                             {make}
@@ -143,6 +151,7 @@ export default function VehicleSearchForm({
                         <SelectValue placeholder="Tous les modèles" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="">Tous les modèles</SelectItem>
                         {models.map(model => (
                           <SelectItem key={model} value={model}>
                             {model}
@@ -168,6 +177,7 @@ export default function VehicleSearchForm({
                         <SelectValue placeholder="Tous types" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="">Tous types</SelectItem>
                         {FUEL_TYPES.map(type => (
                           <SelectItem key={type} value={type}>
                             {type}
@@ -195,6 +205,7 @@ export default function VehicleSearchForm({
                         <SelectValue placeholder="Toute la Suisse" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="">Toute la Suisse</SelectItem>
                         {CANTONS.map(canton => (
                           <SelectItem key={canton.value} value={canton.value}>
                             {canton.label}
@@ -307,6 +318,7 @@ export default function VehicleSearchForm({
                             <SelectValue placeholder="Toutes" />
                           </SelectTrigger>
                           <SelectContent>
+                             <SelectItem value="">Toutes</SelectItem>
                             {GEARBOX_TYPES.map(type => (
                               <SelectItem key={type} value={type}>
                                 {type}
