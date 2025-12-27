@@ -59,7 +59,7 @@ export default function HomePageClient() {
     return vehicles.filter(v => {
       if (!v) return false;
       if (filters.make && v.make !== filters.make) return false;
-      if (filters.model && v.model !== filters.model) return false;
+      if (filters.make && filters.model && v.model !== filters.model) return false;
       if (filters.priceRange && (v.price < filters.priceRange[0] || v.price > filters.priceRange[1])) return false;
       if (filters.mileageRange && (v.mileage < filters.mileageRange[0] || v.mileage > filters.mileageRange[1])) return false;
       if (filters.yearRange && (v.year < filters.yearRange[0] || v.year > filters.yearRange[1])) return false;
