@@ -34,6 +34,7 @@ export default function Header() {
   const handleLogout = async () => {
     setIsMenuOpen(false);
     await signOut(auth);
+    router.push('/');
   };
   
   const navigateTo = (path: string) => {
@@ -77,22 +78,14 @@ export default function Header() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-
-  const AuthLinks = () => (
-    <>
-       <Button variant="ghost" asChild>
-        <Link href="/sell" className="font-semibold" onClick={() => setIsMenuOpen(false)}>Vendre ma voiture</Link>
-      </Button>
-    </>
-  );
   
-  const GuestLinks = ({ isMobile = false }) => (
+  const GuestLinks = () => (
     <>
-      <Button variant={isMobile ? "outline" : "ghost"} className={isMobile ? "w-full" : ""} asChild>
-        <Link href="/login" onClick={() => setIsMenuOpen(false)}>Connexion</Link>
+      <Button variant="ghost" asChild>
+        <Link href="/login">Connexion</Link>
       </Button>
-      <Button asChild className={isMobile ? "w-full" : ""}>
-        <Link href="/signup" onClick={() => setIsMenuOpen(false)}>Inscription</Link>
+      <Button asChild>
+        <Link href="/signup">Inscription</Link>
       </Button>
     </>
   );
@@ -142,7 +135,12 @@ export default function Header() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-4">
-                  <GuestLinks isMobile={true} />
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/login" onClick={() => setIsMenuOpen(false)}>Connexion</Link>
+                  </Button>
+                  <Button asChild className="w-full">
+                    <Link href="/signup" onClick={() => setIsMenuOpen(false)}>Inscription</Link>
+                  </Button>
                 </div>
               )}
           </div>
@@ -154,26 +152,29 @@ export default function Header() {
     <header className="bg-card border-b shadow-sm sticky top-0 z-40">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex-shrink-0">
+          
+          <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-primary">
               <Car size={28} />
               <span>Tacoto.ch</span>
             </Link>
+             {user && (
+              <nav className="hidden md:flex items-center">
+                 <Button variant="ghost" asChild>
+                  <Link href="/sell" className="font-semibold">Vendre ma voiture</Link>
+                </Button>
+              </nav>
+            )}
           </div>
           
-          <nav className="hidden md:flex items-center space-x-4">
-            {user ? <AuthLinks /> : null}
-          </nav>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center space-x-2">
-              {user ? <UserMenuDesktop /> : <GuestLinks />}
-            </div>
-
-            <div className="md:hidden">
-              <MobileSheetMenu />
-            </div>
+          <div className="hidden md:flex items-center gap-4">
+            {user ? <UserMenuDesktop /> : <GuestLinks />}
           </div>
+
+          <div className="md:hidden">
+            <MobileSheetMenu />
+          </div>
+
         </div>
       </div>
     </header>
