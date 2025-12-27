@@ -89,10 +89,10 @@ export default function VehicleSearchForm({ filters, onFilterChange }: VehicleSe
             name="make"
             control={control}
             render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={(value) => field.onChange(value === 'all' ? '' : value)} value={field.value || 'all'}>
                 <SelectTrigger><SelectValue placeholder="Toutes les marques" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes les marques</SelectItem>
+                  <SelectItem value="all">Toutes les marques</SelectItem>
                   {makes.map(make => <SelectItem key={make} value={make}>{make}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -105,10 +105,10 @@ export default function VehicleSearchForm({ filters, onFilterChange }: VehicleSe
             name="model"
             control={control}
             render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value} disabled={!selectedMake || models.length === 0}>
+              <Select onValueChange={(value) => field.onChange(value === 'all' ? '' : value)} value={field.value || 'all'} disabled={!selectedMake || models.length === 0}>
                 <SelectTrigger><SelectValue placeholder="Tous les modèles" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tous les modèles</SelectItem>
+                  <SelectItem value="all">Tous les modèles</SelectItem>
                   {models.map(model => <SelectItem key={model} value={model}>{model}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -185,10 +185,10 @@ export default function VehicleSearchForm({ filters, onFilterChange }: VehicleSe
             name="fuelType"
             control={control}
             render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={(value) => field.onChange(value === 'all' ? '' : value)} value={field.value || 'all'}>
                 <SelectTrigger><SelectValue placeholder="Tous types" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Tous types</SelectItem>
+                  <SelectItem value="all">Tous types</SelectItem>
                   {FUEL_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -202,10 +202,10 @@ export default function VehicleSearchForm({ filters, onFilterChange }: VehicleSe
             name="gearbox"
             control={control}
             render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={(value) => field.onChange(value === 'all' ? '' : value)} value={field.value || 'all'}>
                 <SelectTrigger><SelectValue placeholder="Toutes" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toutes</SelectItem>
+                  <SelectItem value="all">Toutes</SelectItem>
                   {GEARBOX_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -219,10 +219,10 @@ export default function VehicleSearchForm({ filters, onFilterChange }: VehicleSe
             name="canton"
             control={control}
             render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={(value) => field.onChange(value === 'all' ? '' : value)} value={field.value || 'all'}>
                 <SelectTrigger><SelectValue placeholder="Toute la Suisse" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Toute la Suisse</SelectItem>
+                  <SelectItem value="all">Toute la Suisse</SelectItem>
                   {CANTONS.map(canton => <SelectItem key={canton.value} value={canton.value}>{canton.label}</SelectItem>)}
                 </SelectContent>
               </Select>
