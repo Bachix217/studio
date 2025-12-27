@@ -56,8 +56,8 @@ export default function SellForm() {
       make: '',
       model: '',
       year: new Date().getFullYear(),
-      price: undefined,
-      mileage: undefined,
+      price: '' as any,
+      mileage: '' as any,
       description: '',
     },
   });
