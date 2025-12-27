@@ -9,12 +9,18 @@ export default function Footer() {
             <p className="text-center md:text-left text-sm text-muted-foreground">
               &copy; {currentYear} Tacoto.ch. Tous droits réservés.
             </p>
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-4 text-sm flex-wrap justify-center">
                 <Link href="/legal/mentions-legales" className="text-muted-foreground hover:text-foreground transition-colors">
                     Mentions légales
                 </Link>
-                <Link href="/legal/politique-de-confidentialite" className="text-muted-foreground hover:text-foreground transition-colors">
-                    Politique de confidentialité
+                 <Link href="/legal/politique-de-confidentialite" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Confidentialité
+                </Link>
+                <Link href="/legal/cgu" className="text-muted-foreground hover:text-foreground transition-colors">
+                    CGU
+                </Link>
+                <Link href="/legal/faq" className="text-muted-foreground hover:text-foreground transition-colors">
+                    FAQ
                 </Link>
             </div>
         </div>
