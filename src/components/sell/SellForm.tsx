@@ -30,7 +30,7 @@ import { useUser } from '@/firebase/auth/use-user';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 
@@ -58,6 +58,7 @@ export default function SellForm() {
   const { firestore, storage } = useFirebase();
   const { user } = useUser();
   const router = useRouter();
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -133,6 +134,9 @@ export default function SellForm() {
         images: imageUrls,
         userId: user.uid,
         createdAt: serverTimestamp(),
+        price: Number(values.price),
+        mileage: Number(values.mileage),
+        year: Number(values.year),
       });
       
       toast({
@@ -141,6 +145,10 @@ export default function SellForm() {
       });
       
       form.reset();
+      setImagePreviews([]);
+      if (imageInputRef.current) {
+        imageInputRef.current.value = '';
+      }
       router.push(`/vehicles/${docRef.id}`);
 
     } catch (error: any) {
@@ -305,7 +313,7 @@ export default function SellForm() {
             <FormField
               control={form.control}
               name="images"
-              render={({ field: { onChange, ...fieldProps } }) => (
+              render={() => (
                 <FormItem>
                   <FormLabel>Photos ({imagePreviews.length}/{MAX_IMAGES})</FormLabel>
                    <FormControl>
@@ -322,9 +330,9 @@ export default function SellForm() {
                           className="hidden" 
                           multiple 
                           accept="image/png, image/jpeg, image/gif"
-                          {...fieldProps}
                           onChange={handleImageChange}
                           disabled={isSubmitting}
+                          ref={imageInputRef}
                         />
                       </label>
                     </div> 
@@ -360,3 +368,5 @@ export default function SellForm() {
     </Card>
   );
 }
+
+    
