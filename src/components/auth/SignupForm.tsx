@@ -17,6 +17,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase/provider';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -31,7 +32,7 @@ const formSchema = z.object({
 
 export default function SignupForm() {
   const { toast } = useToast();
-  const { auth } = useFirebase();
+  const { auth, firestore } = useFirebase();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -45,7 +46,18 @@ export default function SignupForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      // Create a user profile document in Firestore
+      await setDoc(doc(firestore, "users", user.uid), {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.email?.split('@')[0] || 'Utilisateur',
+        phone: '',
+        createdAt: new Date(),
+      });
+      
       toast({
         title: 'Inscription réussie !',
         description: 'Votre compte a été créé. Vous êtes maintenant connecté.',

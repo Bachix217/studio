@@ -1,31 +1,39 @@
 'use client';
-import { getVehicleById, getVehicles } from '@/lib/data';
+import { getVehicleById } from '@/lib/data';
 import { notFound, useParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
-import { Calendar, Cog, Fuel, Gauge, Mail, MessageCircle, CheckCircle } from 'lucide-react';
+import { Calendar, Cog, Fuel, Gauge, Mail, MessageCircle, CheckCircle, User } from 'lucide-react';
 import ImageGallery from '@/components/vehicles/ImageGallery';
 import { useEffect, useState } from 'react';
 import { useFirebase } from '@/firebase';
-import type { Vehicle } from '@/lib/types';
+import type { Vehicle, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function VehiclePage() {
   const { firestore } = useFirebase();
   const params = useParams();
   const id = params.id as string;
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [seller, setSeller] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (id && firestore) {
-      getVehicleById(firestore, id).then(vehicleData => {
+      getVehicleById(firestore, id).then(async vehicleData => {
         if (vehicleData) {
           setVehicle(vehicleData);
+          if (vehicleData.userId) {
+            const sellerDocRef = doc(firestore, 'users', vehicleData.userId);
+            const sellerDocSnap = await getDoc(sellerDocRef);
+            if (sellerDocSnap.exists()) {
+              setSeller(sellerDocSnap.data() as UserProfile);
+            }
+          }
         } else {
           notFound();
         }
@@ -110,15 +118,33 @@ export default function VehiclePage() {
               </div>
               
               <div className="mt-auto pt-8">
-                <p className="font-semibold mb-2">Contacter le vendeur :</p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button className="w-full" size="lg">
-                    <MessageCircle className="mr-2" /> WhatsApp
-                  </Button>
-                  <Button className="w-full" variant="outline" size="lg">
-                    <Mail className="mr-2" /> E-mail
-                  </Button>
-                </div>
+                {seller ? (
+                  <>
+                    <div className="flex items-center gap-3 mb-4">
+                      <User className="text-muted-foreground" />
+                      <div>
+                        <p className="font-semibold">Vendu par :</p>
+                        <p className="text-lg text-foreground">{seller.displayName}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Button asChild className="w-full" size="lg" disabled={!seller.phone}>
+                        <a href={`https://wa.me/${seller.phone?.replace(/\s/g, '')}`} target="_blank" rel="noopener noreferrer">
+                          <MessageCircle className="mr-2" /> WhatsApp
+                        </a>
+                      </Button>
+                      <Button asChild className="w-full" variant="outline" size="lg" disabled={!seller.email}>
+                         <a href={`mailto:${seller.email}`}>
+                          <Mail className="mr-2" /> E-mail
+                        </a>
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center text-muted-foreground">
+                    <p>Informations du vendeur non disponibles.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

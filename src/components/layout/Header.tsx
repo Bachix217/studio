@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Car, Menu, List, User as UserIcon, LogOut } from 'lucide-react';
+import { Car, Menu, List, User as UserIcon, LogOut, UserCircle } from 'lucide-react';
 import { useState } from 'react';
 import {
   Sheet,
@@ -21,15 +21,21 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { signOut } from 'firebase/auth';
 import { useFirebase } from '@/firebase/provider';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user } = useUser();
   const { auth } = useFirebase();
+  const router = useRouter();
 
   const handleLogout = async () => {
     await signOut(auth);
   };
+  
+  const navigateTo = (path: string) => {
+    router.push(path);
+  }
 
   const UserMenu = () => (
     <DropdownMenu>
@@ -51,6 +57,15 @@ export default function Header() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => navigateTo('/profile')}>
+          <UserCircle className="mr-2 h-4 w-4" />
+          <span>Profil</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigateTo('/my-listings')}>
+          <List className="mr-2 h-4 w-4" />
+          <span>Mes annonces</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Déconnexion</span>
@@ -63,12 +78,6 @@ export default function Header() {
     <>
        <Button variant="ghost" asChild>
         <Link href="/sell" className="font-semibold" onClick={() => setIsMenuOpen(false)}>Vendre ma voiture</Link>
-      </Button>
-      <Button variant="ghost" asChild>
-        <Link href="/my-listings" className="flex items-center gap-2 font-semibold" onClick={() => setIsMenuOpen(false)}>
-          <List size={18} />
-          Mes annonces
-        </Link>
       </Button>
     </>
   );

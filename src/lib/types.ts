@@ -16,3 +16,11 @@ export type Vehicle = {
   userId: string;
   createdAt: Timestamp;
 };
+
+export type UserProfile = {
+  uid: string;
+  email: string;
+  displayName: string;
+  phone?: string;
+  createdAt: Timestamp | Date;
+};
