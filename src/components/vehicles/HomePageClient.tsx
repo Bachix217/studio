@@ -11,7 +11,7 @@ import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 export type Filters = {
   make: string | undefined;
   model: string | undefined;
-  priceRange?: number[];
+  priceRange?: (number | undefined)[];
   mileageRange?: number[];
   yearRange?: number[];
   fuelType: string | undefined;
@@ -67,9 +67,12 @@ export default function HomePageClient() {
       const gearboxFilter = filters.gearbox || '';
       const cantonFilter = filters.canton || '';
 
+      const minPrice = filters.priceRange?.[0] ?? 0;
+      const maxPrice = filters.priceRange?.[1] ?? 100000000;
+
       if (makeFilter && v.make !== makeFilter) return false;
       if (makeFilter && modelFilter && v.model !== modelFilter) return false;
-      if (filters.priceRange && (v.price < filters.priceRange[0] || v.price > filters.priceRange[1])) return false;
+      if (v.price < minPrice || v.price > maxPrice) return false;
       if (filters.mileageRange && (v.mileage < filters.mileageRange[0] || v.mileage > filters.mileageRange[1])) return false;
       if (filters.yearRange && (v.year < filters.yearRange[0] || v.year > filters.yearRange[1])) return false;
       if (fuelTypeFilter && v.fuelType !== fuelTypeFilter) return false;

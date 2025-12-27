@@ -23,6 +23,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '../ui/input';
 
 interface VehicleSearchFormProps {
   filters: Filters;
@@ -46,7 +47,7 @@ export default function VehicleSearchForm({
   onFilterChange,
   allVehicles,
 }: VehicleSearchFormProps) {
-  const { control, watch, reset, setValue, handleSubmit } = useForm<Filters>({
+  const { control, watch, reset, setValue, handleSubmit, register } = useForm<Filters>({
     defaultValues: filters,
   });
 
@@ -84,14 +85,20 @@ export default function VehicleSearchForm({
   };
   
   useEffect(() => {
-     const subscription = watch((value) => {
-       onFilterChange(value as Filters);
+     const subscription = watch((value, { name }) => {
+        const newValues = {
+            ...value,
+            priceRange: [
+                Number(value.priceRange?.[0] || 0),
+                Number(value.priceRange?.[1] || 100000000)
+            ]
+        };
+       onFilterChange(newValues as Filters);
     });
     return () => subscription.unsubscribe();
   }, [watch, onFilterChange]);
 
 
-  const currentPriceRange = watch('priceRange') || defaultFilters.priceRange;
   const currentMileageRange =
     watch('mileageRange') || defaultFilters.mileageRange;
   const currentYearRange = watch('yearRange') || defaultFilters.yearRange;
@@ -239,23 +246,23 @@ export default function VehicleSearchForm({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
                   <div className="space-y-3">
                     <label className="text-sm font-medium">Prix</label>
-                    <Controller
-                      name="priceRange"
-                      control={control}
-                      render={({ field }) => (
-                        <Slider
-                          min={0}
-                          max={100000000}
-                          step={1000}
-                          value={field.value}
-                          onValueChange={field.onChange}
+                     <div className="flex items-center gap-2">
+                        <Controller
+                            name="priceRange.0"
+                            control={control}
+                            render={({ field }) => (
+                                <Input type="number" placeholder="Prix min." {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
+                            )}
                         />
-                      )}
-                    />
-                    <div className="text-sm text-muted-foreground flex justify-between">
-                      <span>{formatCurrency(currentPriceRange![0])}</span>
-                      <span>{formatCurrency(currentPriceRange![1])}</span>
-                    </div>
+                         <span>-</span>
+                        <Controller
+                            name="priceRange.1"
+                            control={control}
+                            render={({ field }) => (
+                                <Input type="number" placeholder="Prix max." {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
+                            )}
+                        />
+                     </div>
                   </div>
 
                   <div className="space-y-3">
