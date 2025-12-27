@@ -133,6 +133,8 @@ export default function ProfilePage() {
         updateData.companyName = '';
         updateData.address = '';
         updateData.website = '';
+        updateData.phone = '';
+        updateData.sharePhoneNumber = false;
       }
 
       await setDoc(profileDocRef, updateData, { merge: true });
@@ -241,7 +243,7 @@ export default function ProfilePage() {
 
               <Card>
                  <CardHeader>
-                  <CardTitle>Informations de Contact</CardTitle>
+                  <CardTitle>Informations Publiques</CardTitle>
                   <CardDescription>Ces informations seront affichées sur vos annonces.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6 pt-6">
@@ -261,41 +263,6 @@ export default function ProfilePage() {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Téléphone (pour WhatsApp)</FormLabel>
-                        <FormControl>
-                          <Input type="tel" placeholder="+41 79 123 45 67" {...field} value={field.value ?? ''} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   <FormField
-                    control={form.control}
-                    name="sharePhoneNumber"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel className="text-base">
-                            Partager mon numéro de téléphone
-                          </FormLabel>
-                          <FormDescription>
-                            Autoriser les acheteurs à vous contacter via WhatsApp sur vos annonces.
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
                 </CardContent>
               </Card>
 
@@ -303,7 +270,7 @@ export default function ProfilePage() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Informations Professionnelles</CardTitle>
-                    <CardDescription>Renseignez les détails de votre entreprise.</CardDescription>
+                    <CardDescription>Renseignez les détails de votre entreprise pour inspirer confiance aux acheteurs.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6 pt-6">
                      <FormField
@@ -342,6 +309,42 @@ export default function ProfilePage() {
                               <Input type="url" placeholder="https://www.votregarage.ch" {...field} value={field.value ?? ''}/>
                             </FormControl>
                             <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Separator />
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Téléphone de contact (pour WhatsApp)</FormLabel>
+                            <FormControl>
+                              <Input type="tel" placeholder="+41 79 123 45 67" {...field} value={field.value ?? ''} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField
+                        control={form.control}
+                        name="sharePhoneNumber"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                              <FormLabel className="text-base">
+                                Partager mon numéro de téléphone
+                              </FormLabel>
+                              <FormDescription>
+                                Autoriser les acheteurs à vous contacter via WhatsApp sur vos annonces.
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
                           </FormItem>
                         )}
                       />
