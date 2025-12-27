@@ -57,7 +57,7 @@ export default function HomePageClient() {
 
   const filteredVehicles = useMemo(() => {
     return vehicles.filter(v => {
-      if (!v) return false; // Add a guard clause to prevent error on undefined vehicle
+      if (!v) return false;
       if (filters.make && v.make !== filters.make) return false;
       if (filters.model && v.model !== filters.model) return false;
       if (filters.priceRange && (v.price < filters.priceRange[0] || v.price > filters.priceRange[1])) return false;
@@ -73,7 +73,7 @@ export default function HomePageClient() {
   if (loading) {
     return (
       <div className="space-y-8">
-        <VehicleSearchForm filters={filters} onFilterChange={setFilters} />
+        <VehicleSearchForm filters={filters} onFilterChange={setFilters} allVehicles={vehicles} />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-96 w-full" />
@@ -85,7 +85,7 @@ export default function HomePageClient() {
 
   return (
     <div className="space-y-8">
-      <VehicleSearchForm filters={filters} onFilterChange={setFilters} />
+      <VehicleSearchForm filters={filters} onFilterChange={setFilters} allVehicles={vehicles} />
       <VehicleList vehicles={filteredVehicles} />
     </div>
   );

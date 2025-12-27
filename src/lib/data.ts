@@ -139,8 +139,7 @@ export const getVehicleById = async (firestore: any, id: string): Promise<Vehicl
 
 export const getMakes = async (firestore: any): Promise<string[]> => {
   const vehicles = await getVehicles(firestore);
-   // Also include makes from initial vehicles to populate the filter
-  const allMakes = [...vehicles.map(v => v.make), ...initialVehicles.map(v => v.make)];
+  const allMakes = vehicles.map(v => v.make);
   return [...new Set(allMakes)].sort();
 }
 
@@ -150,9 +149,7 @@ export const getModelsByMake = async (firestore: any, make: string): Promise<str
   const q = query(vehiclesCollection, where('make', '==', make));
   const snapshot = await getDocs(q);
    if (snapshot.empty) {
-      // If no vehicles in DB for that make, check initialVehicles
-      const initialModels = initialVehicles.filter(v => v.make === make).map(v => v.model);
-      return [...new Set(initialModels)].sort();
+      return [];
     }
   const vehicles: Vehicle[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle));
   return [...new Set(vehicles.map(v => v.model))].sort();

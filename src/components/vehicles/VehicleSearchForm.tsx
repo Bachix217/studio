@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -13,8 +13,8 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { CANTONS, FUEL_TYPES, GEARBOX_TYPES } from '@/lib/constants';
-import { getMakes, getModelsByMake } from '@/lib/data';
 import { Filters } from './HomePageClient';
+import type { Vehicle } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { RotateCcw, SlidersHorizontal } from 'lucide-react';
 import {
@@ -23,11 +23,11 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
-import { useFirebase } from '@/firebase';
 
 interface VehicleSearchFormProps {
   filters: Filters;
   onFilterChange: (filters: Filters) => void;
+  allVehicles: Vehicle[];
 }
 
 const defaultFilters: Filters = {
@@ -44,14 +44,12 @@ const defaultFilters: Filters = {
 export default function VehicleSearchForm({
   filters,
   onFilterChange,
+  allVehicles,
 }: VehicleSearchFormProps) {
-  const { firestore } = useFirebase();
   const { control, watch, reset, setValue, handleSubmit } = useForm<Filters>({
     defaultValues: filters,
   });
 
-  const [makes, setMakes] = useState<string[]>([]);
-  const [models, setModels] = useState<string[]>([]);
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
 
   const selectedMake = watch('make');
@@ -59,29 +57,24 @@ export default function VehicleSearchForm({
   const onSubmit = (data: Filters) => {
     onFilterChange(data);
   };
+  
+  const makes = useMemo(() => {
+    const vehicleMakes = allVehicles.map(v => v.make);
+    return [...new Set(vehicleMakes)].sort();
+  }, [allVehicles]);
+
+  const models = useMemo(() => {
+    if (!selectedMake) return [];
+    const vehicleModels = allVehicles
+      .filter(v => v.make === selectedMake)
+      .map(v => v.model);
+    return [...new Set(vehicleModels)].sort();
+  }, [allVehicles, selectedMake]);
+
 
   useEffect(() => {
-    if (!firestore) return;
-    const fetchMakes = async () => {
-      const makesData = await getMakes(firestore);
-      setMakes(makesData);
-    };
-    fetchMakes();
-  }, [firestore]);
-
-  useEffect(() => {
-    if (!firestore) return;
-    const fetchModels = async () => {
-      if (selectedMake) {
-        setValue('model', undefined);
-        const modelsData = await getModelsByMake(firestore, selectedMake);
-        setModels(modelsData);
-      } else {
-        setModels([]);
-      }
-    };
-    fetchModels();
-  }, [selectedMake, setValue, firestore]);
+    setValue('model', undefined);
+  }, [selectedMake, setValue]);
 
   const handleReset = () => {
     reset(defaultFilters);
