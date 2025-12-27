@@ -83,7 +83,7 @@ export default function MyListingsPage() {
           </Button>
         </div>
         {vehicles.length > 0 ? (
-          <VehicleList vehicles={vehicles} />
+          <VehicleList vehicles={vehicles} showControls={true} />
         ) : (
           <div className="text-center py-16 bg-card rounded-lg shadow-sm">
             <h2 className="text-xl font-semibold">Vous n'avez aucune annonce active.</h2>

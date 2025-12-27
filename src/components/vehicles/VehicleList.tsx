@@ -3,9 +3,10 @@ import VehicleCard from './VehicleCard';
 
 interface VehicleListProps {
   vehicles: Vehicle[];
+  showControls?: boolean;
 }
 
-export default function VehicleList({ vehicles }: VehicleListProps) {
+export default function VehicleList({ vehicles, showControls = false }: VehicleListProps) {
   if (vehicles.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-card rounded-lg p-8 text-center shadow-sm">
@@ -18,7 +19,7 @@ export default function VehicleList({ vehicles }: VehicleListProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
       {vehicles.map((vehicle) => (
-        <VehicleCard key={vehicle.id} vehicle={vehicle} />
+        <VehicleCard key={vehicle.id} vehicle={vehicle} showControls={showControls} />
       ))}
     </div>
   );
