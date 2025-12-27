@@ -26,11 +26,25 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Separator } from '@/components/ui/separator';
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères.'),
   phone: z.string().optional(),
   sharePhoneNumber: z.boolean().optional(),
+  userType: z.enum(['particulier', 'professionnel']).default('particulier'),
+  companyName: z.string().optional(),
+  address: z.string().optional(),
+  website: z.string().optional(),
+}).refine(data => {
+    if (data.userType === 'professionnel') {
+        return !!data.companyName && data.companyName.length > 2;
+    }
+    return true;
+}, {
+    message: "Le nom de l'entreprise est requis pour les professionnels.",
+    path: ['companyName'],
 });
 
 export default function ProfilePage() {
@@ -47,8 +61,14 @@ export default function ProfilePage() {
       displayName: '',
       phone: '',
       sharePhoneNumber: false,
+      userType: 'particulier',
+      companyName: '',
+      address: '',
+      website: '',
     },
   });
+  
+  const userType = form.watch('userType');
 
   useEffect(() => {
     if (userLoading) return;
@@ -75,6 +95,7 @@ export default function ProfilePage() {
           phone: '',
           sharePhoneNumber: false,
           createdAt: serverTimestamp(),
+          userType: 'particulier',
         };
         await setDoc(profileDocRef, newProfile);
         userProfile = { ...newProfile, createdAt: new Date() }; // Approximate createdAt for client side
@@ -85,6 +106,10 @@ export default function ProfilePage() {
         displayName: userProfile.displayName,
         phone: userProfile.phone || '',
         sharePhoneNumber: userProfile.sharePhoneNumber || false,
+        userType: userProfile.userType || 'particulier',
+        companyName: userProfile.companyName || '',
+        address: userProfile.address || '',
+        website: userProfile.website || '',
       });
       setIsProfileLoading(false);
     };
@@ -99,11 +124,18 @@ export default function ProfilePage() {
     const profileDocRef = doc(firestore, 'users', user.uid);
     try {
       // Ensure email is not overwritten if it exists
-      const updateData = {
-        ...values,
-        email: profile?.email || user.email,
+      const updateData: UserProfile = {
+        ...profile, // Keep existing fields like email and createdAt
         uid: user.uid,
+        ...values,
+      };
+
+      if(values.userType === 'particulier') {
+        updateData.companyName = '';
+        updateData.address = '';
+        updateData.website = '';
       }
+
       await setDoc(profileDocRef, updateData, { merge: true });
       toast({
         title: 'Profil mis à jour',
@@ -157,12 +189,51 @@ export default function ProfilePage() {
             <CardHeader>
               <CardTitle>Mon Profil</CardTitle>
               <CardDescription>
-                Mettez à jour vos informations de contact. Celles-ci seront visibles par les acheteurs potentiels.
+                Mettez à jour vos informations. Celles-ci seront visibles par les acheteurs potentiels.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                  <FormField
+                    control={form.control}
+                    name="userType"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <FormLabel>Type de compte</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex items-center space-x-4"
+                          >
+                            <FormItem className="flex items-center space-x-2 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="particulier" />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                Particulier
+                              </FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-2 space-y-0">
+                              <FormControl>
+                                <RadioGroupItem value="professionnel" />
+                              </FormControl>
+                              <FormLabel className="font-normal">
+                                Professionnel
+                              </FormLabel>
+                            </FormItem>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Separator />
+                  
+                  <h4 className="text-lg font-medium">Informations de contact</h4>
+
                   <FormField
                     control={form.control}
                     name="displayName"
@@ -172,6 +243,9 @@ export default function ProfilePage() {
                         <FormControl>
                           <Input placeholder="Votre nom ou pseudonyme" {...field} />
                         </FormControl>
+                         <FormDescription>
+                          Ce nom sera affiché publiquement sur vos annonces.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -211,6 +285,56 @@ export default function ProfilePage() {
                       </FormItem>
                     )}
                   />
+
+                  {userType === 'professionnel' && (
+                    <>
+                      <Separator />
+                      <h4 className="text-lg font-medium">Informations professionnelles</h4>
+                      <div className="space-y-8">
+                         <FormField
+                            control={form.control}
+                            name="companyName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nom de l'entreprise</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Garage du Lac SA" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                           <FormField
+                            control={form.control}
+                            name="address"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Adresse</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Route de Lausanne 1, 1202 Genève" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                           <FormField
+                            control={form.control}
+                            name="website"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Site web</FormLabel>
+                                <FormControl>
+                                  <Input type="url" placeholder="https://www.votregarage.ch" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                      </div>
+                    </>
+                  )}
+
+
                   <Button type="submit" disabled={form.formState.isSubmitting}>
                     {form.formState.isSubmitting ? "Enregistrement..." : "Enregistrer les modifications"}
                   </Button>

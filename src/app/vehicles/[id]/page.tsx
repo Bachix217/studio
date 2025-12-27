@@ -6,13 +6,14 @@ import Footer from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
-import { Calendar, Cog, Fuel, Gauge, Mail, MessageCircle, CheckCircle, User } from 'lucide-react';
+import { Calendar, Cog, Fuel, Gauge, Mail, MessageCircle, CheckCircle, User, Globe, Building, MapPin } from 'lucide-react';
 import ImageGallery from '@/components/vehicles/ImageGallery';
 import { useEffect, useState } from 'react';
 import { useFirebase } from '@/firebase';
 import type { Vehicle, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { doc, getDoc } from 'firebase/firestore';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function VehiclePage() {
   const { firestore } = useFirebase();
@@ -119,15 +120,43 @@ export default function VehiclePage() {
               
               <div className="mt-auto pt-8">
                 {seller ? (
-                  <>
-                    <div className="flex items-center gap-3 mb-4">
-                      <User className="text-muted-foreground" />
-                      <div>
-                        <p className="font-semibold">Vendu par :</p>
-                        <p className="text-lg text-foreground">{seller.displayName}</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-3">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Informations du vendeur</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {seller.userType === 'professionnel' && seller.companyName ? (
+                        <>
+                           <div className="flex items-start gap-3">
+                            <Building className="text-muted-foreground mt-1" size={18} />
+                            <div>
+                              <p className="font-semibold">{seller.companyName}</p>
+                              <p className="text-sm text-muted-foreground">{seller.displayName}</p>
+                            </div>
+                          </div>
+                           {seller.address && (
+                            <div className="flex items-start gap-3">
+                              <MapPin className="text-muted-foreground mt-1" size={18} />
+                              <p className="text-sm">{seller.address}</p>
+                            </div>
+                           )}
+                           {seller.website && (
+                             <div className="flex items-start gap-3">
+                               <Globe className="text-muted-foreground mt-1" size={18} />
+                               <a href={seller.website} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+                                {seller.website}
+                               </a>
+                            </div>
+                           )}
+                        </>
+                      ) : (
+                         <div className="flex items-center gap-3">
+                          <User className="text-muted-foreground" size={18} />
+                          <p className="font-semibold">{seller.displayName}</p>
+                        </div>
+                      )}
+                     
+                      <div className="flex flex-col sm:flex-row gap-3 pt-2">
                        {seller.sharePhoneNumber && seller.phone && (
                         <Button asChild className="w-full" size="lg">
                           <a href={`https://wa.me/${seller.phone.replace(/\s/g, '')}`} target="_blank" rel="noopener noreferrer">
@@ -141,7 +170,8 @@ export default function VehiclePage() {
                         </a>
                       </Button>
                     </div>
-                  </>
+                    </CardContent>
+                  </Card>
                 ) : (
                   <div className="text-center text-muted-foreground">
                     <p>Informations du vendeur non disponibles.</p>

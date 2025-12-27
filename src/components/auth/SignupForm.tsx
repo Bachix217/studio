@@ -20,6 +20,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import type { UserProfile } from '@/lib/types';
 
 const formSchema = z.object({
     email: z.string().email("L'adresse e-mail est invalide."),
@@ -45,17 +46,26 @@ export default function SignupForm() {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!auth || !firestore) return;
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
       // Create a user profile document in Firestore
-      await setDoc(doc(firestore, "users", user.uid), {
+      const newUserProfile: Omit<UserProfile, 'createdAt'> = {
         uid: user.uid,
-        email: user.email,
+        email: user.email || '',
         displayName: user.email?.split('@')[0] || 'Utilisateur',
         phone: '',
         sharePhoneNumber: false,
+        userType: 'particulier',
+        companyName: '',
+        address: '',
+        website: '',
+      }
+
+      await setDoc(doc(firestore, "users", user.uid), {
+        ...newUserProfile,
         createdAt: serverTimestamp(),
       });
       

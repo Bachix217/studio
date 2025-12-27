@@ -24,4 +24,8 @@ export type UserProfile = {
   phone?: string;
   sharePhoneNumber?: boolean;
   createdAt: Timestamp | Date;
+  userType?: 'particulier' | 'professionnel';
+  companyName?: string;
+  address?: string;
+  website?: string;
 };
