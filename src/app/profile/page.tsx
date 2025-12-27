@@ -5,7 +5,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useUser } from '@/firebase/auth/use-user';
 import { useFirebase } from '@/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -36,6 +36,8 @@ export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+
 
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
@@ -54,16 +56,36 @@ export default function ProfilePage() {
     if (!firestore) return;
 
     const profileDocRef = doc(firestore, 'users', user.uid);
-    getDoc(profileDocRef).then(docSnap => {
+    
+    const fetchOrCreateProfile = async () => {
+      const docSnap = await getDoc(profileDocRef);
+      let userProfile: UserProfile;
+
       if (docSnap.exists()) {
-        const data = docSnap.data() as UserProfile;
-        setProfile(data);
-        form.reset({
-          displayName: data.displayName,
-          phone: data.phone || '',
-        });
+        userProfile = docSnap.data() as UserProfile;
+      } else {
+        // Profile doesn't exist, create a new one
+        const newProfile: UserProfile = {
+          uid: user.uid,
+          email: user.email || '',
+          displayName: user.displayName || user.email?.split('@')[0] || 'Utilisateur',
+          phone: '',
+          createdAt: serverTimestamp(),
+        };
+        await setDoc(profileDocRef, newProfile);
+        userProfile = { ...newProfile, createdAt: new Date() }; // Approximate createdAt for client side
       }
-    });
+      
+      setProfile(userProfile);
+      form.reset({
+        displayName: userProfile.displayName,
+        phone: userProfile.phone || '',
+      });
+      setIsProfileLoading(false);
+    };
+
+    fetchOrCreateProfile();
+    
   }, [user, userLoading, firestore, router, form]);
 
   async function onSubmit(values: z.infer<typeof profileFormSchema>) {
@@ -71,7 +93,13 @@ export default function ProfilePage() {
 
     const profileDocRef = doc(firestore, 'users', user.uid);
     try {
-      await setDoc(profileDocRef, values, { merge: true });
+      // Ensure email is not overwritten if it exists
+      const updateData = {
+        ...values,
+        email: profile?.email || user.email,
+        uid: user.uid,
+      }
+      await setDoc(profileDocRef, updateData, { merge: true });
       toast({
         title: 'Profil mis à jour',
         description: 'Vos informations ont été enregistrées avec succès.',
@@ -85,7 +113,7 @@ export default function ProfilePage() {
     }
   }
 
-  if (userLoading || !profile) {
+  if (userLoading || isProfileLoading) {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
@@ -96,9 +124,15 @@ export default function ProfilePage() {
                 <Skeleton className="h-8 w-48" />
                 <Skeleton className="h-4 w-full mt-2" />
               </CardHeader>
-              <CardContent className="space-y-4">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
+              <CardContent className="space-y-4 pt-6">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
                 <Skeleton className="h-10 w-32 mt-4" />
               </CardContent>
             </Card>
@@ -121,7 +155,7 @@ export default function ProfilePage() {
                 Mettez à jour vos informations de contact. Celles-ci seront visibles par les acheteurs potentiels.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <FormField
