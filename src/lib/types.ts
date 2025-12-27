@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export type Vehicle = {
   id: string;
   make: string;
@@ -11,4 +13,6 @@ export type Vehicle = {
   description: string;
   features: string[];
   images: string[];
+  userId: string;
+  createdAt: Timestamp;
 };

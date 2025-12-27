@@ -23,6 +23,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
+import { useFirebase } from '@/firebase';
 
 interface VehicleSearchFormProps {
   filters: Filters;
@@ -44,6 +45,7 @@ export default function VehicleSearchForm({
   filters,
   onFilterChange,
 }: VehicleSearchFormProps) {
+  const { firestore } = useFirebase();
   const { control, watch, reset, setValue } = useForm<Filters>({
     defaultValues: filters,
   });
@@ -55,17 +57,19 @@ export default function VehicleSearchForm({
   const selectedMake = watch('make');
 
   useEffect(() => {
+    if (!firestore) return;
     const fetchMakes = async () => {
-      const makesData = await getMakes();
+      const makesData = await getMakes(firestore);
       setMakes(makesData);
     };
     fetchMakes();
-  }, []);
+  }, [firestore]);
 
   useEffect(() => {
+    if (!firestore) return;
     const fetchModels = async () => {
       if (selectedMake) {
-        const modelsData = await getModelsByMake(selectedMake);
+        const modelsData = await getModelsByMake(firestore, selectedMake);
         setModels(modelsData);
       } else {
         setModels([]);
@@ -73,7 +77,7 @@ export default function VehicleSearchForm({
     };
     fetchModels();
     setValue('model', '');
-  }, [selectedMake, setValue]);
+  }, [selectedMake, setValue, firestore]);
 
   useEffect(() => {
     const subscription = watch(value => {

@@ -5,6 +5,8 @@ import type { Vehicle } from '@/lib/types';
 import VehicleSearchForm from './VehicleSearchForm';
 import VehicleList from './VehicleList';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFirebase } from '@/firebase';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 
 export type Filters = {
   make?: string;
@@ -17,20 +19,38 @@ export type Filters = {
   canton?: string;
 };
 
-export default function HomePageClient({ initialVehicles }: { initialVehicles: Vehicle[] }) {
+export default function HomePageClient() {
+  const { firestore } = useFirebase();
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [filters, setFilters] = useState<Filters>({
     priceRange: [0, 200000],
     mileageRange: [0, 300000],
     yearRange: [1990, new Date().getFullYear()],
   });
 
-  const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    if (!firestore) return;
+    setLoading(true);
+    const vehiclesCollection = collection(firestore, 'vehicles');
+    const q = query(vehiclesCollection, orderBy('createdAt', 'desc'));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const vehiclesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle));
+      setVehicles(vehiclesData);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching vehicles: ", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [firestore]);
+
 
   const filteredVehicles = useMemo(() => {
-    return initialVehicles.filter(v => {
+    return vehicles.filter(v => {
       if (filters.make && v.make !== filters.make) return false;
       if (filters.model && v.model !== filters.model) return false;
       if (filters.priceRange && (v.price < filters.priceRange[0] || v.price > filters.priceRange[1])) return false;
@@ -41,9 +61,9 @@ export default function HomePageClient({ initialVehicles }: { initialVehicles: V
       if (filters.canton && v.canton !== filters.canton) return false;
       return true;
     });
-  }, [filters, initialVehicles]);
+  }, [filters, vehicles]);
 
-  if (!isMounted) {
+  if (loading) {
     return (
       <div className="space-y-8">
         <Skeleton className="h-64 w-full" />

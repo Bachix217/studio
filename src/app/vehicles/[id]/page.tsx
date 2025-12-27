@@ -1,5 +1,6 @@
+'use client';
 import { getVehicleById, getVehicles } from '@/lib/data';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import Image from 'next/image';
@@ -8,31 +9,70 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
 import { Calendar, Cog, Fuel, Gauge, Mail, MessageCircle, CheckCircle } from 'lucide-react';
 import ImageGallery from '@/components/vehicles/ImageGallery';
+import { useEffect, useState } from 'react';
+import { useFirebase } from '@/firebase';
+import type { Vehicle } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export async function generateStaticParams() {
-  const vehicles = await getVehicles();
-  return vehicles.map((vehicle) => ({
-    id: vehicle.id,
-  }));
-}
+export default function VehiclePage() {
+  const { firestore } = useFirebase();
+  const params = useParams();
+  const id = params.id as string;
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const vehicle = await getVehicleById(params.id);
-  if (!vehicle) {
-    return { title: 'Véhicule non trouvé' };
-  }
-  return {
-    title: `${vehicle.make} ${vehicle.model} (${vehicle.year}) - Tacoto.ch`,
-    description: vehicle.description.substring(0, 150),
-  };
-}
+  useEffect(() => {
+    if (id && firestore) {
+      getVehicleById(firestore, id).then(vehicleData => {
+        if (vehicleData) {
+          setVehicle(vehicleData);
+        } else {
+          notFound();
+        }
+        setLoading(false);
+      });
+    }
+  }, [id, firestore]);
 
-
-export default async function VehiclePage({ params }: { params: { id: string } }) {
-  const vehicle = await getVehicleById(params.id);
-
-  if (!vehicle) {
-    notFound();
+  if (loading || !vehicle) {
+     return (
+      <>
+        <Header />
+        <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-card rounded-lg shadow-lg overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
+              <div className="lg:col-span-3">
+                 <Skeleton className="aspect-[4/3] w-full h-full" />
+              </div>
+              <div className="lg:col-span-2 p-6 flex flex-col gap-4">
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-9 w-3/4" />
+                <Skeleton className="h-8 w-1/2" />
+                <div className="grid grid-cols-2 gap-4 mt-6 text-sm">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                       <Skeleton className="h-8 w-8 rounded-full" />
+                       <div className="flex flex-col gap-2">
+                         <Skeleton className="h-5 w-20" />
+                         <Skeleton className="h-4 w-12" />
+                       </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-auto pt-8 flex flex-col sm:flex-row gap-3">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              </div>
+            </div>
+            <div className="p-6 border-t">
+               <Skeleton className="h-96 w-full" />
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
   }
 
   const specs = [

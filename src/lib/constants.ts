@@ -1,3 +1,5 @@
+import type { Vehicle } from './types';
+
 export const CANTONS = [
   { value: 'AG', label: 'Argovie' },
   { value: 'AI', label: 'Appenzell Rhodes-Intérieures' },
@@ -29,5 +31,3 @@ export const CANTONS = [
 
 export const FUEL_TYPES: Vehicle['fuelType'][] = ['Essence', 'Diesel', 'Hybride', 'Électrique'];
 export const GEARBOX_TYPES: Vehicle['gearbox'][] = ['Manuelle', 'Automatique'];
-
-import type { Vehicle } from './types';

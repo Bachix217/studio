@@ -25,6 +25,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { CANTONS, FUEL_TYPES, GEARBOX_TYPES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
 import { UploadCloud } from 'lucide-react';
+import { useFirebase } from '@/firebase';
+import { useUser } from '@/firebase/auth/use-user';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
   make: z.string().min(2, "La marque est requise."),
@@ -37,11 +41,15 @@ const formSchema = z.object({
   canton: z.string().min(2, "Le canton est requis."),
   description: z.string().min(20, "Veuillez fournir une description plus détaillée."),
   features: z.string().optional(),
-  images: z.any().optional(), // In a real app, this would be more robust
+  images: z.any().optional(),
 });
 
 export default function SellForm() {
   const { toast } = useToast();
+  const { firestore } = useFirebase();
+  const { user } = useUser();
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -54,13 +62,47 @@ export default function SellForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    toast({
-      title: "Annonce soumise !",
-      description: "Votre annonce a été envoyée pour vérification. Merci !",
-    });
-    form.reset();
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Vous n'êtes pas connecté",
+        description: "Vous devez être connecté pour vendre un véhicule.",
+      });
+      return;
+    }
+
+    try {
+      // In a real app, you would handle image uploads here and get back URLs.
+      // For now, we'll use placeholder images.
+      const imageUrls = [
+        'https://picsum.photos/seed/newcar/1200/800',
+      ];
+      
+      const docRef = await addDoc(collection(firestore, 'vehicles'), {
+        ...values,
+        features: values.features ? values.features.split(',').map(f => f.trim()) : [],
+        images: imageUrls,
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+      });
+      
+      toast({
+        title: "Annonce publiée !",
+        description: "Votre annonce a été ajoutée avec succès.",
+      });
+      
+      form.reset();
+      router.push(`/vehicles/${docRef.id}`);
+
+    } catch (error: any) {
+      console.error("Error adding document: ", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur lors de la publication",
+        description: "Une erreur est survenue. Veuillez réessayer.",
+      });
+    }
   }
 
   return (
