@@ -48,10 +48,7 @@ const formSchema = z.object({
   canton: z.string().min(2, "Le canton est requis."),
   description: z.string().min(20, "Veuillez fournir une description plus détaillée."),
   features: z.string().optional(),
-  images: z.any()
-    .refine((files) => files?.length > 0, 'Au moins une image est requise.')
-    .refine((files) => files?.length <= MAX_IMAGES, `Vous ne pouvez téléverser que ${MAX_IMAGES} images maximum.`)
-    .refine((files) => Array.from(files).every((file: any) => file.size <= MAX_FILE_SIZE), `Chaque image doit peser moins de 5 Mo.`),
+  // images validation will be handled manually
 });
 
 export default function SellForm() {
@@ -62,7 +59,9 @@ export default function SellForm() {
   
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [imageFiles, setImageFiles] = useState<FileList | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -74,23 +73,52 @@ export default function SellForm() {
       mileage: undefined,
       description: '',
       features: '',
-      images: undefined,
     },
   });
+  
+  const validateImages = (files: FileList | null): boolean => {
+    if (!files || files.length === 0) {
+      setImageError('Au moins une image est requise.');
+      return false;
+    }
+    if (files.length > MAX_IMAGES) {
+      setImageError(`Vous ne pouvez téléverser que ${MAX_IMAGES} images maximum.`);
+      return false;
+    }
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_FILE_SIZE) {
+        setImageError(`Chaque image doit peser moins de 5 Mo.`);
+        return false;
+      }
+    }
+    setImageError(null);
+    return true;
+  };
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-        form.setValue('images', files);
-        const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
-        setImagePreviews(newPreviews);
+    if (files && files.length > 0) {
+        if(validateImages(files)) {
+          setImageFiles(files);
+          const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
+          setImagePreviews(newPreviews);
+        } else {
+          e.target.value = ''; // Clear the input if validation fails
+          setImageFiles(null);
+          setImagePreviews([]);
+        }
     } else {
-        form.setValue('images', null);
+        setImageFiles(null);
         setImagePreviews([]);
+        validateImages(null);
     }
   };
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: Omit<z.infer<typeof formSchema>, 'images'>) {
+    if (!validateImages(imageFiles)) {
+      return;
+    }
+    
     if (!user) {
       toast({
         variant: "destructive",
@@ -105,10 +133,10 @@ export default function SellForm() {
 
     try {
       const imageUrls: string[] = [];
-      const imageFiles = Array.from(values.images);
+      const filesToUpload = Array.from(imageFiles!);
 
-      for (let i = 0; i < imageFiles.length; i++) {
-        const file = imageFiles[i];
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const file = filesToUpload[i];
         const storageRef = ref(storage, `vehicles/${user.uid}/${Date.now()}-${file.name}`);
         const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -116,7 +144,7 @@ export default function SellForm() {
           uploadTask.on('state_changed',
             (snapshot) => {
               const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              const totalProgress = (i / imageFiles.length) * 100 + progress / imageFiles.length;
+              const totalProgress = (i / filesToUpload.length) * 100 + progress / filesToUpload.length;
               setUploadProgress(totalProgress);
             },
             (error) => {
@@ -133,15 +161,10 @@ export default function SellForm() {
       }
       
       const docRef = await addDoc(collection(firestore, 'vehicles'), {
-        make: values.make,
-        model: values.model,
+        ...values,
         year: Number(values.year),
         price: Number(values.price),
         mileage: Number(values.mileage),
-        fuelType: values.fuelType,
-        gearbox: values.gearbox,
-        canton: values.canton,
-        description: values.description,
         features: values.features ? values.features.split(',').map(f => f.trim()) : [],
         images: imageUrls,
         userId: user.uid,
@@ -155,6 +178,7 @@ export default function SellForm() {
       
       form.reset();
       setImagePreviews([]);
+      setImageFiles(null);
       router.push(`/vehicles/${docRef.id}`);
 
     } catch (error: any) {
@@ -316,45 +340,39 @@ export default function SellForm() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="images"
-              render={() => (
-                <FormItem>
-                  <FormLabel>Photos ({imagePreviews.length}/{MAX_IMAGES})</FormLabel>
-                   <FormControl>
-                    <div className="flex items-center justify-center w-full">
-                      <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-background hover:bg-muted transition">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
-                          <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
-                          <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images (max 5Mo chacune)</p>
-                        </div>
-                        <Input 
-                          id="dropzone-file" 
-                          type="file" 
-                          className="hidden" 
-                          multiple 
-                          accept="image/png, image/jpeg, image/gif"
-                          onChange={handleImageChange}
-                          disabled={isSubmitting}
-                        />
-                      </label>
-                    </div> 
-                  </FormControl>
-                  <FormMessage />
-                  {imagePreviews.length > 0 && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-4">
-                      {imagePreviews.map((src, index) => (
-                        <div key={index} className="relative aspect-square w-full rounded-md overflow-hidden">
-                          <Image src={src} alt={`Aperçu ${index}`} fill className="object-cover" />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </FormItem>
-              )}
-            />
+            <FormItem>
+                <FormLabel>Photos ({imagePreviews.length}/{MAX_IMAGES})</FormLabel>
+                <FormControl>
+                  <div className="flex items-center justify-center w-full">
+                    <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-background hover:bg-muted transition">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
+                        <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
+                        <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images (max 5Mo chacune)</p>
+                      </div>
+                      <Input 
+                        id="dropzone-file" 
+                        type="file" 
+                        className="hidden" 
+                        multiple 
+                        accept="image/png, image/jpeg, image/gif"
+                        onChange={handleImageChange}
+                        disabled={isSubmitting}
+                      />
+                    </label>
+                  </div> 
+                </FormControl>
+                {imageError && <p className="text-sm font-medium text-destructive">{imageError}</p>}
+                {imagePreviews.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-4">
+                    {imagePreviews.map((src, index) => (
+                      <div key={index} className="relative aspect-square w-full rounded-md overflow-hidden">
+                        <Image src={src} alt={`Aperçu ${index}`} fill className="object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+            </FormItem>
             
             {uploadProgress !== null && (
               <div className="space-y-2">
