@@ -22,16 +22,12 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
-
-interface VehicleSearchFormProps {
-  filters: Filters;
-  onFilterChange: (filters: Filters) => void;
-  allVehicles: Vehicle[];
-}
+import { Input } from '@/components/ui/input';
 
 const defaultFilters: Filters = {
   make: undefined,
   model: undefined,
+  priceRange: [undefined, undefined],
   mileageRange: [0, 300000],
   yearRange: [1990, new Date().getFullYear()],
   fuelType: undefined,
@@ -44,7 +40,7 @@ export default function VehicleSearchForm({
   onFilterChange,
   allVehicles,
 }: VehicleSearchFormProps) {
-  const { control, watch, reset, setValue, handleSubmit } = useForm<Filters>({
+  const { control, watch, reset, setValue } = useForm<Filters>({
     defaultValues: filters,
   });
 
@@ -65,7 +61,6 @@ export default function VehicleSearchForm({
     return [...new Set(vehicleModels)].sort();
   }, [allVehicles, selectedMake]);
 
-
   useEffect(() => {
     if (selectedMake) {
       const currentModel = watch('model');
@@ -77,11 +72,22 @@ export default function VehicleSearchForm({
 
   const handleReset = () => {
     reset(defaultFilters);
+    onFilterChange(defaultFilters);
   };
   
   useEffect(() => {
-     const subscription = watch((value) => {
-       onFilterChange(value as Filters);
+    const subscription = watch((value) => {
+      const newFilters = { ...value };
+      
+      const minPrice = value.priceRange?.[0] ? parseInt(value.priceRange[0] as any, 10) : undefined;
+      const maxPrice = value.priceRange?.[1] ? parseInt(value.priceRange[1] as any, 10) : undefined;
+
+      newFilters.priceRange = [
+        isNaN(minPrice as number) ? undefined : minPrice,
+        isNaN(maxPrice as number) ? undefined : maxPrice
+      ];
+      
+      onFilterChange(newFilters as Filters);
     });
     return () => subscription.unsubscribe();
   }, [watch, onFilterChange]);
@@ -106,10 +112,10 @@ export default function VehicleSearchForm({
                   render={({ field }) => (
                     <Select
                       onValueChange={(value) => {
-                        field.onChange(value === '' ? undefined : value);
+                        field.onChange(value);
                         setValue('model', undefined); 
                       }}
-                      value={field.value}
+                      value={field.value || ''}
                     >
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Toutes les marques" />
@@ -135,8 +141,8 @@ export default function VehicleSearchForm({
                   control={control}
                   render={({ field }) => (
                     <Select
-                      onValueChange={(value) => field.onChange(value === '' ? undefined : value)}
-                      value={field.value}
+                      onValueChange={(value) => field.onChange(value)}
+                      value={field.value || ''}
                       disabled={!selectedMake || models.length === 0}
                     >
                       <SelectTrigger className="mt-1">
@@ -161,8 +167,8 @@ export default function VehicleSearchForm({
                   control={control}
                   render={({ field }) => (
                     <Select
-                      onValueChange={(value) => field.onChange(value === '' ? undefined : value)}
-                      value={field.value}
+                      onValueChange={(value) => field.onChange(value)}
+                      value={field.value || ''}
                     >
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Tous types" />
@@ -188,8 +194,8 @@ export default function VehicleSearchForm({
                   control={control}
                   render={({ field }) => (
                     <Select
-                      onValueChange={(value) => field.onChange(value === '' ? undefined : value)}
-                      value={field.value}
+                      onValueChange={(value) => field.onChange(value)}
+                      value={field.value || ''}
                     >
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Toute la Suisse" />
@@ -228,6 +234,39 @@ export default function VehicleSearchForm({
               <CollapsibleContent className="mt-6">
                 <Separator className="mb-6" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">Prix (CHF)</label>
+                    <div className="flex items-center gap-2">
+                       <Controller
+                          name="priceRange.0"
+                          control={control}
+                          render={({ field }) => (
+                            <Input
+                              type="number"
+                              placeholder="Min"
+                              {...field}
+                              onChange={e => field.onChange(e.target.value)}
+                              value={field.value || ''}
+                            />
+                          )}
+                        />
+                        <span className="text-muted-foreground">-</span>
+                        <Controller
+                          name="priceRange.1"
+                          control={control}
+                          render={({ field }) => (
+                            <Input
+                              type="number"
+                              placeholder="Max"
+                              {...field}
+                              onChange={e => field.onChange(e.target.value)}
+                              value={field.value || ''}
+                            />
+                          )}
+                        />
+                    </div>
+                  </div>
+
                   <div className="space-y-3">
                     <label className="text-sm font-medium">Kilométrage</label>
                     <Controller
@@ -269,18 +308,16 @@ export default function VehicleSearchForm({
                       <span>{currentYearRange![1]}</span>
                     </div>
                   </div>
-                </div>
 
-                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end mt-4">
-                  <div>
+                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Boîte</label>
                     <Controller
                       name="gearbox"
                       control={control}
                       render={({ field }) => (
                         <Select
-                           onValueChange={(value) => field.onChange(value === '' ? undefined : value)}
-                           value={field.value}
+                           onValueChange={(value) => field.onChange(value)}
+                           value={field.value || ''}
                         >
                           <SelectTrigger className="mt-1">
                             <SelectValue placeholder="Toutes" />

@@ -11,6 +11,7 @@ import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 export type Filters = {
   make?: string;
   model?: string;
+  priceRange?: (number | undefined)[];
   mileageRange?: number[];
   yearRange?: number[];
   fuelType?: string;
@@ -21,6 +22,7 @@ export type Filters = {
 const initialFilters: Filters = {
   make: undefined,
   model: undefined,
+  priceRange: [undefined, undefined],
   mileageRange: [0, 300000],
   yearRange: [1990, new Date().getFullYear()],
   fuelType: undefined,
@@ -65,8 +67,13 @@ export default function HomePageClient() {
       const gearboxFilter = filters.gearbox;
       const cantonFilter = filters.canton;
 
+      const [minPrice, maxPrice] = filters.priceRange || [undefined, undefined];
+
       if (makeFilter && v.make !== makeFilter) return false;
       if (modelFilter && v.model !== modelFilter) return false;
+
+      if (typeof minPrice === 'number' && v.price < minPrice) return false;
+      if (typeof maxPrice === 'number' && v.price > maxPrice) return false;
       
       if (filters.mileageRange && (v.mileage < filters.mileageRange[0] || v.mileage > filters.mileageRange[1])) return false;
       if (filters.yearRange && (v.year < filters.yearRange[0] || v.year > filters.yearRange[1])) return false;
