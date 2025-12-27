@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { FirebaseProvider } from "@/firebase/provider";
+import BottomNavBar from "@/components/layout/BottomNavBar";
 
 export const metadata: Metadata = {
   title: "Tacoto.ch - Achetez et vendez des voitures en Suisse",
@@ -23,7 +24,8 @@ export default function RootLayout({
       </head>
       <body className={cn("font-body antialiased min-h-screen flex flex-col", "bg-background")}>
         <FirebaseProvider>
-          {children}
+          <div className="flex-grow pb-16 md:pb-0">{children}</div>
+          <BottomNavBar />
         </FirebaseProvider>
         <Toaster />
       </body>
