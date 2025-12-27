@@ -71,9 +71,9 @@ export default function SignupForm() {
       
       toast({
         title: 'Inscription réussie !',
-        description: 'Votre compte a été créé. Vous êtes maintenant connecté.',
+        description: 'Veuillez compléter votre profil pour pouvoir vendre des véhicules.',
       });
-      router.push('/');
+      router.push('/profile');
     } catch (error: any) {
       console.error(error);
       toast({
