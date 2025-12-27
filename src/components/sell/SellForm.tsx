@@ -24,11 +24,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { CANTONS, FUEL_TYPES, GEARBOX_TYPES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud } from 'lucide-react';
+import { UploadCloud, X as XIcon, Image as ImageIcon } from 'lucide-react';
 import { useFirebase } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
+import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
+import { useState } from 'react';
+import { Progress } from '@/components/ui/progress';
+import Image from 'next/image';
+
+const MAX_IMAGES = 5;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const formSchema = z.object({
   make: z.string().min(2, "La marque est requise."),
@@ -41,14 +48,20 @@ const formSchema = z.object({
   canton: z.string().min(2, "Le canton est requis."),
   description: z.string().min(20, "Veuillez fournir une description plus détaillée."),
   features: z.string().optional(),
-  images: z.any().optional(),
+  images: z.custom<FileList>().refine(files => files && files.length > 0, 'Au moins une image est requise.')
+    .refine(files => files.length <= MAX_IMAGES, `Vous ne pouvez téléverser que ${MAX_IMAGES} images maximum.`)
+    .refine(files => Array.from(files).every(file => file.size <= MAX_FILE_SIZE), `Chaque image doit peser moins de 5 Mo.`),
 });
 
 export default function SellForm() {
   const { toast } = useToast();
-  const { firestore } = useFirebase();
+  const { firestore, storage } = useFirebase();
   const { user } = useUser();
   const router = useRouter();
+
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,11 +69,21 @@ export default function SellForm() {
       make: '',
       model: '',
       year: new Date().getFullYear(),
-      price: '' as any,
-      mileage: '' as any,
+      price: undefined,
+      mileage: undefined,
       description: '',
+      features: '',
     },
   });
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
+      setImagePreviews(newPreviews);
+      form.setValue('images', files);
+    }
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
@@ -71,13 +94,38 @@ export default function SellForm() {
       });
       return;
     }
+    
+    setIsSubmitting(true);
+    setUploadProgress(0);
 
     try {
-      // In a real app, you would handle image uploads here and get back URLs.
-      // For now, we'll use placeholder images.
-      const imageUrls = [
-        'https://picsum.photos/seed/newcar/1200/800',
-      ];
+      const imageUrls: string[] = [];
+      const imageFiles = Array.from(values.images);
+
+      for (let i = 0; i < imageFiles.length; i++) {
+        const file = imageFiles[i];
+        const storageRef = ref(storage, `vehicles/${user.uid}/${Date.now()}-${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        await new Promise<void>((resolve, reject) => {
+          uploadTask.on('state_changed',
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              const totalProgress = (i / imageFiles.length) * 100 + progress / imageFiles.length;
+              setUploadProgress(totalProgress);
+            },
+            (error) => {
+              console.error("Upload failed", error);
+              reject(error);
+            },
+            async () => {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              imageUrls.push(downloadURL);
+              resolve();
+            }
+          );
+        });
+      }
       
       const docRef = await addDoc(collection(firestore, 'vehicles'), {
         ...values,
@@ -102,6 +150,9 @@ export default function SellForm() {
         title: "Erreur lors de la publication",
         description: "Une erreur est survenue. Veuillez réessayer.",
       });
+    } finally {
+        setIsSubmitting(false);
+        setUploadProgress(null);
     }
   }
 
@@ -153,7 +204,7 @@ export default function SellForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Prix (CHF)</FormLabel>
-                    <FormControl><Input type="number" placeholder="ex: 32000" {...field} /></FormControl>
+                    <FormControl><Input type="number" placeholder="ex: 32000" {...field} value={field.value ?? ''} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -164,7 +215,7 @@ export default function SellForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Kilométrage</FormLabel>
-                    <FormControl><Input type="number" placeholder="ex: 45000" {...field} /></FormControl>
+                    <FormControl><Input type="number" placeholder="ex: 45000" {...field} value={field.value ?? ''} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -251,24 +302,58 @@ export default function SellForm() {
               )}
             />
 
-            <FormItem>
-              <FormLabel>Photos</FormLabel>
-              <FormControl>
-                <div className="flex items-center justify-center w-full">
-                    <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-background hover:bg-muted transition">
+            <FormField
+              control={form.control}
+              name="images"
+              render={({ field: { onChange, ...fieldProps } }) => (
+                <FormItem>
+                  <FormLabel>Photos ({imagePreviews.length}/{MAX_IMAGES})</FormLabel>
+                   <FormControl>
+                    <div className="flex items-center justify-center w-full">
+                      <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-background hover:bg-muted transition">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
-                            <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
-                            <p className="text-xs text-muted-foreground">PNG, JPG, GIF jusqu'à 10MB</p>
+                          <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
+                          <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
+                          <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images (max 5Mo chacune)</p>
                         </div>
-                        <Input id="dropzone-file" type="file" className="hidden" multiple />
-                    </label>
-                </div> 
-              </FormControl>
-              <FormMessage />
-            </FormItem>
+                        <Input 
+                          id="dropzone-file" 
+                          type="file" 
+                          className="hidden" 
+                          multiple 
+                          accept="image/png, image/jpeg, image/gif"
+                          {...fieldProps}
+                          onChange={handleImageChange}
+                          disabled={isSubmitting}
+                        />
+                      </label>
+                    </div> 
+                  </FormControl>
+                  <FormMessage />
+                  {imagePreviews.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-4">
+                      {imagePreviews.map((src, index) => (
+                        <div key={index} className="relative aspect-square w-full rounded-md overflow-hidden">
+                          <Image src={src} alt={`Aperçu ${index}`} fill className="object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </FormItem>
+              )}
+            />
+            
+            {uploadProgress !== null && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Téléversement en cours...</p>
+                <Progress value={uploadProgress} />
+                <p className="text-sm text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
+              </div>
+            )}
 
-            <Button type="submit" size="lg" className="w-full md:w-auto">Soumettre l'annonce</Button>
+            <Button type="submit" size="lg" className="w-full md:w-auto" disabled={isSubmitting}>
+                {isSubmitting ? 'Publication en cours...' : "Soumettre l'annonce"}
+            </Button>
           </form>
         </Form>
       </CardContent>
