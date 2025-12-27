@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Car, Menu, List, User as UserIcon, LogOut, UserCircle, X } from 'lucide-react';
+import { Car, Menu, List, User as UserIcon, LogOut, UserCircle, X, FileText, Shield, HelpCircle, BookUser } from 'lucide-react';
 import { useState } from 'react';
 import {
   Sheet,
@@ -24,6 +24,13 @@ import { signOut } from 'firebase/auth';
 import { useFirebase } from '@/firebase/provider';
 import { useRouter } from 'next/navigation';
 import { Separator } from '../ui/separator';
+
+const legalLinks = [
+    { href: "/legal/mentions-legales", label: "Mentions légales", icon: FileText },
+    { href: "/legal/politique-de-confidentialite", label: "Confidentialité", icon: Shield },
+    { href: "/legal/cgu", label: "CGU", icon: BookUser },
+    { href: "/legal/faq", label: "FAQ", icon: HelpCircle },
+];
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -106,43 +113,60 @@ export default function Header() {
               </Link>
           </SheetHeader>
           <div className="flex flex-col h-full p-4">
-              {user ? (
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center gap-3 mb-4">
-                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={user?.photoURL || ''} alt={user?.displayName || 'Utilisateur'} />
-                      <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || <UserIcon />}</AvatarFallback>
-                    </Avatar>
-                     <div className="flex flex-col space-y-0.5">
-                      <p className="text-base font-medium leading-none">{user?.displayName || 'Mon Compte'}</p>
-                      <p className="text-sm leading-none text-muted-foreground">
-                        {user?.email}
-                      </p>
+              <div className="flex-grow">
+                {user ? (
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={user?.photoURL || ''} alt={user?.displayName || 'Utilisateur'} />
+                        <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || <UserIcon />}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col space-y-0.5">
+                        <p className="text-base font-medium leading-none">{user?.displayName || 'Mon Compte'}</p>
+                        <p className="text-sm leading-none text-muted-foreground">
+                          {user?.email}
+                        </p>
+                      </div>
                     </div>
+                    <Separator />
+                    <nav className="flex flex-col space-y-2 mt-4 text-lg">
+                      <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/sell')}>Vendre ma voiture</Button>
+                      <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/my-listings')}>Mes annonces</Button>
+                      <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/profile')}>Profil</Button>
+                    </nav>
                   </div>
-                  <Separator />
-                  <nav className="flex flex-col space-y-2 mt-4 text-lg">
-                     <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/sell')}>Vendre ma voiture</Button>
-                     <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/my-listings')}>Mes annonces</Button>
-                     <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/profile')}>Profil</Button>
-                  </nav>
-                  <div className="mt-auto">
-                    <Button variant="outline" className="w-full" onClick={handleLogout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Déconnexion
+                ) : (
+                  <div className="flex flex-col gap-4">
+                    <Button variant="outline" className="w-full" asChild>
+                      <Link href="/login" onClick={() => setIsMenuOpen(false)}>Connexion</Link>
+                    </Button>
+                    <Button asChild className="w-full">
+                      <Link href="/signup" onClick={() => setIsMenuOpen(false)}>Inscription</Link>
                     </Button>
                   </div>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-4">
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link href="/login" onClick={() => setIsMenuOpen(false)}>Connexion</Link>
+                )}
+              </div>
+
+              <div className="mt-auto">
+                 <Separator className="my-4" />
+                 <nav className="flex flex-col space-y-2 text-base">
+                    {legalLinks.map(({href, label, icon: Icon}) => (
+                         <Button key={href} variant="ghost" className="justify-start text-muted-foreground" onClick={() => navigateTo(href)}>
+                           <Icon className="mr-2 h-4 w-4" />
+                           {label}
+                         </Button>
+                    ))}
+                 </nav>
+                {user && (
+                  <>
+                  <Separator className="my-4" />
+                  <Button variant="outline" className="w-full" onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Déconnexion
                   </Button>
-                  <Button asChild className="w-full">
-                    <Link href="/signup" onClick={() => setIsMenuOpen(false)}>Inscription</Link>
-                  </Button>
-                </div>
-              )}
+                  </>
+                )}
+              </div>
           </div>
         </SheetContent>
       </Sheet>
