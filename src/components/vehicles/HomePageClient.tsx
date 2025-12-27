@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import type { Vehicle } from '@/lib/types';
 import VehicleSearchForm from './VehicleSearchForm';
 import VehicleList from './VehicleList';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export type Filters = {
   make?: string;
@@ -43,27 +44,22 @@ export default function HomePageClient({ initialVehicles }: { initialVehicles: V
   }, [filters, initialVehicles]);
 
   if (!isMounted) {
-    // Render a skeleton or loading state on the server and initial client render
     return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="md:col-span-1">
-                {/* Skeleton for search form */}
-            </div>
-            <div className="md:col-span-3">
-                {/* Skeleton for vehicle list */}
-            </div>
+      <div className="space-y-8">
+        <Skeleton className="h-64 w-full" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-96 w-full" />
+          ))}
         </div>
+      </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-      <aside className="md:col-span-1">
-        <VehicleSearchForm filters={filters} onFilterChange={setFilters} />
-      </aside>
-      <div className="md:col-span-3">
-        <VehicleList vehicles={filteredVehicles} />
-      </div>
+    <div className="space-y-8">
+      <VehicleSearchForm filters={filters} onFilterChange={setFilters} />
+      <VehicleList vehicles={filteredVehicles} />
     </div>
   );
 }
