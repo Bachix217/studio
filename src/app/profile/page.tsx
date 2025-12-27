@@ -257,7 +257,7 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel>Téléphone (pour WhatsApp)</FormLabel>
                         <FormControl>
-                          <Input type="tel" placeholder="+41 79 123 45 67" {...field} />
+                          <Input type="tel" placeholder="+41" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
