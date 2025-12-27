@@ -33,7 +33,6 @@ interface VehicleSearchFormProps {
 const defaultFilters: Filters = {
   make: undefined,
   model: undefined,
-  priceRange: [undefined, undefined],
   mileageRange: [0, 300000],
   yearRange: [1990, new Date().getFullYear()],
   fuelType: undefined,
@@ -234,28 +233,7 @@ export default function VehicleSearchForm({
 
               <CollapsibleContent className="mt-6">
                 <Separator className="mb-6" />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
-                  <div className="space-y-3">
-                    <label className="text-sm font-medium">Prix</label>
-                     <div className="flex items-center gap-2">
-                        <Controller
-                            name="priceRange.0"
-                            control={control}
-                            render={({ field }) => (
-                                <Input type="number" placeholder="Prix min." {...field} value={field.value ?? ''} />
-                            )}
-                        />
-                         <span>-</span>
-                        <Controller
-                            name="priceRange.1"
-                            control={control}
-                            render={({ field }) => (
-                                <Input type="number" placeholder="Prix max." {...field} value={field.value ?? ''} />
-                            )}
-                        />
-                     </div>
-                  </div>
-
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                   <div className="space-y-3">
                     <label className="text-sm font-medium">Kilométrage</label>
                     <Controller
