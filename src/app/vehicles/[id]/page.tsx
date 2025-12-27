@@ -128,11 +128,13 @@ export default function VehiclePage() {
                       </div>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3">
-                      <Button asChild className="w-full" size="lg" disabled={!seller.phone}>
-                        <a href={`https://wa.me/${seller.phone?.replace(/\s/g, '')}`} target="_blank" rel="noopener noreferrer">
-                          <MessageCircle className="mr-2" /> WhatsApp
-                        </a>
-                      </Button>
+                       {seller.sharePhoneNumber && seller.phone && (
+                        <Button asChild className="w-full" size="lg">
+                          <a href={`https://wa.me/${seller.phone.replace(/\s/g, '')}`} target="_blank" rel="noopener noreferrer">
+                            <MessageCircle className="mr-2" /> WhatsApp
+                          </a>
+                        </Button>
+                      )}
                       <Button asChild className="w-full" variant="outline" size="lg" disabled={!seller.email}>
                          <a href={`mailto:${seller.email}`}>
                           <Mail className="mr-2" /> E-mail

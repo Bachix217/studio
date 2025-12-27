@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,10 +25,12 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères.'),
   phone: z.string().optional(),
+  sharePhoneNumber: z.boolean().optional(),
 });
 
 export default function ProfilePage() {
@@ -38,12 +41,12 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
 
-
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       displayName: '',
       phone: '',
+      sharePhoneNumber: false,
     },
   });
 
@@ -70,6 +73,7 @@ export default function ProfilePage() {
           email: user.email || '',
           displayName: user.displayName || user.email?.split('@')[0] || 'Utilisateur',
           phone: '',
+          sharePhoneNumber: false,
           createdAt: serverTimestamp(),
         };
         await setDoc(profileDocRef, newProfile);
@@ -80,6 +84,7 @@ export default function ProfilePage() {
       form.reset({
         displayName: userProfile.displayName,
         phone: userProfile.phone || '',
+        sharePhoneNumber: userProfile.sharePhoneNumber || false,
       });
       setIsProfileLoading(false);
     };
@@ -157,7 +162,7 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent className="pt-6">
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                   <FormField
                     control={form.control}
                     name="displayName"
@@ -181,6 +186,28 @@ export default function ProfilePage() {
                           <Input type="tel" placeholder="+41 79 123 45 67" {...field} />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="sharePhoneNumber"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">
+                            Partager mon téléphone
+                          </FormLabel>
+                          <FormDescription>
+                            Autoriser les acheteurs à vous contacter via WhatsApp.
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
                       </FormItem>
                     )}
                   />

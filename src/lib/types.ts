@@ -22,5 +22,6 @@ export type UserProfile = {
   email: string;
   displayName: string;
   phone?: string;
+  sharePhoneNumber?: boolean;
   createdAt: Timestamp | Date;
 };

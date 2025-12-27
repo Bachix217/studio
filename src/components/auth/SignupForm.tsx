@@ -17,7 +17,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase/provider';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -55,7 +55,8 @@ export default function SignupForm() {
         email: user.email,
         displayName: user.email?.split('@')[0] || 'Utilisateur',
         phone: '',
-        createdAt: new Date(),
+        sharePhoneNumber: false,
+        createdAt: serverTimestamp(),
       });
       
       toast({
