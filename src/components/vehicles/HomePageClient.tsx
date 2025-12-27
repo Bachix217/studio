@@ -11,7 +11,7 @@ import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 export type Filters = {
   make: string | undefined;
   model: string | undefined;
-  priceRange?: (number | undefined)[];
+  priceRange?: (number | undefined | string)[];
   mileageRange?: number[];
   yearRange?: number[];
   fuelType: string | undefined;
@@ -67,14 +67,14 @@ export default function HomePageClient() {
       const gearboxFilter = filters.gearbox || '';
       const cantonFilter = filters.canton || '';
 
-      const minPrice = filters.priceRange?.[0];
-      const maxPrice = filters.priceRange?.[1];
+      const minPrice = filters.priceRange?.[0] ? parseFloat(String(filters.priceRange[0])) : undefined;
+      const maxPrice = filters.priceRange?.[1] ? parseFloat(String(filters.priceRange[1])) : undefined;
 
       if (makeFilter && v.make !== makeFilter) return false;
       if (makeFilter && modelFilter && v.model !== modelFilter) return false;
       
-      if (minPrice !== undefined && v.price < minPrice) return false;
-      if (maxPrice !== undefined && v.price > maxPrice) return false;
+      if (minPrice !== undefined && !isNaN(minPrice) && v.price < minPrice) return false;
+      if (maxPrice !== undefined && !isNaN(maxPrice) && v.price > maxPrice) return false;
       
       if (filters.mileageRange && (v.mileage < filters.mileageRange[0] || v.mileage > filters.mileageRange[1])) return false;
       if (filters.yearRange && (v.year < filters.yearRange[0] || v.year > filters.yearRange[1])) return false;

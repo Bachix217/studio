@@ -70,9 +70,12 @@ export default function VehicleSearchForm({
 
   useEffect(() => {
     if (selectedMake) {
-      setValue('model', undefined);
+      const currentModel = watch('model');
+      if (currentModel && !models.includes(currentModel)) {
+        setValue('model', undefined);
+      }
     }
-  }, [selectedMake, setValue]);
+  }, [selectedMake, models, setValue, watch]);
 
   const handleReset = () => {
     reset(defaultFilters);
@@ -81,14 +84,7 @@ export default function VehicleSearchForm({
   
   useEffect(() => {
      const subscription = watch((value) => {
-       const newValues = {
-         ...value,
-         priceRange: [
-           value.priceRange?.[0] === '' ? undefined : Number(value.priceRange?.[0]),
-           value.priceRange?.[1] === '' ? undefined : Number(value.priceRange?.[1])
-         ]
-       };
-       onFilterChange(newValues as Filters);
+       onFilterChange(value as Filters);
     });
     return () => subscription.unsubscribe();
   }, [watch, onFilterChange]);
@@ -246,7 +242,7 @@ export default function VehicleSearchForm({
                             name="priceRange.0"
                             control={control}
                             render={({ field }) => (
-                                <Input type="number" placeholder="Prix min." {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                                <Input type="number" placeholder="Prix min." {...field} value={field.value ?? ''} />
                             )}
                         />
                          <span>-</span>
@@ -254,7 +250,7 @@ export default function VehicleSearchForm({
                             name="priceRange.1"
                             control={control}
                             render={({ field }) => (
-                                <Input type="number" placeholder="Prix max." {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                                <Input type="number" placeholder="Prix max." {...field} value={field.value ?? ''} />
                             )}
                         />
                      </div>
