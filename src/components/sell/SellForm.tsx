@@ -98,14 +98,19 @@ export default function SellForm() {
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
-    setImageFiles(files);
     if (files.length > 0) {
-      validateImages(files);
-      const newPreviews = files.map(file => URL.createObjectURL(file));
-      setImagePreviews(newPreviews);
+      if (validateImages(files)) {
+        setImageFiles(files);
+        const newPreviews = files.map(file => URL.createObjectURL(file));
+        setImagePreviews(newPreviews);
+      } else {
+        setImageFiles([]);
+        setImagePreviews([]);
+      }
     } else {
+      setImageFiles([]);
       setImagePreviews([]);
-      validateImages([]);
+      setImageError('Au moins une image est requise.');
     }
   };
   
@@ -207,229 +212,229 @@ export default function SellForm() {
   return (
     <Card>
       <CardContent className="p-6">
-        {step === 1 && (
-          <div className="space-y-8">
-            <div>
-              <h3 className="text-lg font-medium">Étape 1 sur 2 : Photos du véhicule</h3>
-              <p className="text-sm text-muted-foreground">Téléversez jusqu'à {MAX_IMAGES} photos de votre voiture.</p>
-            </div>
-             <FormItem>
-                <FormLabel>Photos ({imagePreviews.length}/{MAX_IMAGES})</FormLabel>
-                <FormControl>
-                  <div className="flex items-center justify-center w-full">
-                    <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-background hover:bg-muted transition">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
-                        <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
-                        <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images (max 5Mo chacune)</p>
-                      </div>
-                      <Input 
-                        id="dropzone-file" 
-                        type="file" 
-                        className="hidden" 
-                        multiple 
-                        accept="image/png, image/jpeg, image/gif, image/webp"
-                        onChange={handleImageChange}
-                        disabled={isUploading}
-                      />
-                    </label>
-                  </div> 
-                </FormControl>
-                {imageError && <p className="text-sm font-medium text-destructive">{imageError}</p>}
-                {imagePreviews.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-4">
-                    {imagePreviews.map((src, index) => (
-                      <div key={index} className="relative aspect-square w-full rounded-md overflow-hidden">
-                        <Image src={src} alt={`Aperçu ${index}`} fill className="object-cover" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-            </FormItem>
-            
-            {uploadProgress !== null && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Téléversement en cours...</p>
-                <Progress value={uploadProgress} />
-                <p className="text-sm text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
-              </div>
-            )}
-
-            <Button onClick={handleImageUpload} disabled={isUploading || imageFiles.length === 0 || !!imageError}>
-              {isUploading ? 'Téléversement...' : 'Continuer'}
-            </Button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <Form {...form}>
+          {step === 1 && (
+            <div className="space-y-8">
               <div>
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="text-lg font-medium">Étape 2 sur 2 : Détails de l'annonce</h3>
-                        <p className="text-sm text-muted-foreground">Renseignez les informations sur votre véhicule.</p>
+                <h3 className="text-lg font-medium">Étape 1 sur 2 : Photos du véhicule</h3>
+                <p className="text-sm text-muted-foreground">Téléversez jusqu'à {MAX_IMAGES} photos de votre voiture.</p>
+              </div>
+              <FormItem>
+                  <FormLabel>Photos ({imagePreviews.length}/{MAX_IMAGES})</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center justify-center w-full">
+                      <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-background hover:bg-muted transition">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
+                          <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
+                          <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images (max 5Mo chacune)</p>
+                        </div>
+                        <Input 
+                          id="dropzone-file" 
+                          type="file" 
+                          className="hidden" 
+                          multiple 
+                          accept="image/png, image/jpeg, image/gif, image/webp"
+                          onChange={handleImageChange}
+                          disabled={isUploading}
+                        />
+                      </label>
+                    </div> 
+                  </FormControl>
+                  {imageError && <p className="text-sm font-medium text-destructive">{imageError}</p>}
+                  {imagePreviews.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-4">
+                      {imagePreviews.map((src, index) => (
+                        <div key={index} className="relative aspect-square w-full rounded-md overflow-hidden">
+                          <Image src={src} alt={`Aperçu ${index}`} fill className="object-cover" />
+                        </div>
+                      ))}
                     </div>
-                     <Button variant="outline" size="sm" onClick={() => setStep(1)}>Modifier les photos</Button>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-4">
-                    {imageUrls.map((src, index) => (
-                      <div key={index} className="relative aspect-square w-full rounded-md overflow-hidden">
-                        <Image src={src} alt={`Véhicule ${index}`} fill className="object-cover" />
-                      </div>
-                    ))}
-                </div>
-              </div>
-
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <FormField
-                  control={form.control}
-                  name="make"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Marque</FormLabel>
-                      <FormControl><Input placeholder="ex: Volkswagen" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
                   )}
-                />
-                <FormField
-                  control={form.control}
-                  name="model"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Modèle</FormLabel>
-                      <FormControl><Input placeholder="ex: Golf" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <FormField
-                  control={form.control}
-                  name="year"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Année</FormLabel>
-                      <FormControl><Input type="number" placeholder="ex: 2021" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Prix (CHF)</FormLabel>
-                      <FormControl><Input type="number" placeholder="ex: 32000" {...field} value={field.value ?? ''} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="mileage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Kilométrage</FormLabel>
-                      <FormControl><Input type="number" placeholder="ex: 45000" {...field} value={field.value ?? ''} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              </FormItem>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <FormField
-                  control={form.control}
-                  name="fuelType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Carburant</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger></FormControl>
-                        <SelectContent>
-                          {FUEL_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="gearbox"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Boîte de vitesses</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger></FormControl>
-                        <SelectContent>
-                          {GEARBOX_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="canton"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Canton</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger></FormControl>
-                        <SelectContent>
-                          {CANTONS.map(canton => <SelectItem key={canton.value} value={canton.value}>{canton.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              {uploadProgress !== null && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Téléversement en cours...</p>
+                  <Progress value={uploadProgress} />
+                  <p className="text-sm text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
+                </div>
+              )}
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Décrivez votre voiture en détail..." rows={5} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="features"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Équipements</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Climatisation, Sièges chauffants, Toit ouvrant..." {...field} />
-                    </FormControl>
-                    <p className="text-sm text-muted-foreground">Séparez les équipements par une virgule.</p>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button type="submit" size="lg" className="w-full md:w-auto" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? 'Publication en cours...' : "Soumettre l'annonce"}
+              <Button onClick={handleImageUpload} disabled={isUploading || imageFiles.length === 0 || !!imageError}>
+                {isUploading ? 'Téléversement...' : 'Continuer'}
               </Button>
-            </form>
-          </Form>
-        )}
+            </div>
+          )}
+
+          {step === 2 && (
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <div>
+                  <div className="flex items-center justify-between">
+                      <div>
+                          <h3 className="text-lg font-medium">Étape 2 sur 2 : Détails de l'annonce</h3>
+                          <p className="text-sm text-muted-foreground">Renseignez les informations sur votre véhicule.</p>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => setStep(1)}>Modifier les photos</Button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-4">
+                      {imageUrls.map((src, index) => (
+                        <div key={index} className="relative aspect-square w-full rounded-md overflow-hidden">
+                          <Image src={src} alt={`Véhicule ${index}`} fill className="object-cover" />
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <FormField
+                    control={form.control}
+                    name="make"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Marque</FormLabel>
+                        <FormControl><Input placeholder="ex: Volkswagen" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="model"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Modèle</FormLabel>
+                        <FormControl><Input placeholder="ex: Golf" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <FormField
+                    control={form.control}
+                    name="year"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Année</FormLabel>
+                        <FormControl><Input type="number" placeholder="ex: 2021" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Prix (CHF)</FormLabel>
+                        <FormControl><Input type="number" placeholder="ex: 32000" {...field} value={field.value ?? ''} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="mileage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Kilométrage</FormLabel>
+                        <FormControl><Input type="number" placeholder="ex: 45000" {...field} value={field.value ?? ''} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <FormField
+                    control={form.control}
+                    name="fuelType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Carburant</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {FUEL_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="gearbox"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Boîte de vitesses</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {GEARBOX_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="canton"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Canton</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {CANTONS.map(canton => <SelectItem key={canton.value} value={canton.value}>{canton.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Décrivez votre voiture en détail..." rows={5} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="features"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Équipements</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Climatisation, Sièges chauffants, Toit ouvrant..." {...field} />
+                      </FormControl>
+                      <p className="text-sm text-muted-foreground">Séparez les équipements par une virgule.</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button type="submit" size="lg" className="w-full md:w-auto" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? 'Publication en cours...' : "Soumettre l'annonce"}
+                </Button>
+              </form>
+          )}
+        </Form>
       </CardContent>
     </Card>
   );
