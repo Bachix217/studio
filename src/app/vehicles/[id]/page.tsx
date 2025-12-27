@@ -111,6 +111,9 @@ export default function VehiclePage() {
     { icon: Fuel, label: 'Carburant', value: vehicle.fuelType },
     { icon: Cog, label: 'Boîte', value: vehicle.gearbox },
   ];
+  
+  const mailSubject = encodeURIComponent(`Intérêt pour votre ${vehicle.make} ${vehicle.model} sur Tacoto.ch`);
+  const mailtoLink = `mailto:${seller?.email}?subject=${mailSubject}`;
 
   return (
     <>
@@ -194,7 +197,7 @@ export default function VehiclePage() {
                         )
                       )}
                       <Button asChild className="w-full" variant="outline" size="lg" disabled={!seller.email}>
-                         <a href={`mailto:${seller.email}`}>
+                         <a href={mailtoLink}>
                           <Mail className="mr-2" /> E-mail
                         </a>
                       </Button>
