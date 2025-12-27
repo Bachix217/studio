@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Car, Heart, Menu, X, User as UserIcon, LogOut } from 'lucide-react';
+import { Car, Menu, List, User as UserIcon, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import {
   Sheet,
@@ -65,9 +65,9 @@ export default function Header() {
         <Link href="/sell" className="font-semibold" onClick={() => setIsMenuOpen(false)}>Vendre ma voiture</Link>
       </Button>
       <Button variant="ghost" asChild>
-        <Link href="#" className="flex items-center gap-2 font-semibold" onClick={() => setIsMenuOpen(false)}>
-          <Heart size={18} />
-          Mes favoris
+        <Link href="/my-listings" className="flex items-center gap-2 font-semibold" onClick={() => setIsMenuOpen(false)}>
+          <List size={18} />
+          Mes annonces
         </Link>
       </Button>
     </>
@@ -115,6 +115,7 @@ export default function Header() {
                 <SheetContent side="right">
                   <div className="flex flex-col space-y-4 pt-10">
                     {user ? <AuthLinks /> : <GuestLinks />}
+                    {user ? null : <GuestLinks />}
                   </div>
                 </SheetContent>
               </Sheet>
