@@ -81,13 +81,13 @@ export default function SellForm() {
     },
   });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, fieldChange: (files: File[]) => void) => {
     const files = e.target.files;
     if (files) {
       const fileArray = Array.from(files);
       const newPreviews = fileArray.map(file => URL.createObjectURL(file));
       setImagePreviews(newPreviews);
-      form.setValue('images', fileArray);
+      fieldChange(fileArray);
     }
   };
 
@@ -323,7 +323,7 @@ export default function SellForm() {
             <FormField
               control={form.control}
               name="images"
-              render={({ field }) => (
+              render={({ field: { onChange, value, ...rest } }) => (
                 <FormItem>
                   <FormLabel>Photos ({imagePreviews.length}/{MAX_IMAGES})</FormLabel>
                    <FormControl>
@@ -340,9 +340,10 @@ export default function SellForm() {
                           className="hidden" 
                           multiple 
                           accept="image/png, image/jpeg, image/gif"
-                          onChange={handleImageChange}
+                          onChange={(e) => handleImageChange(e, onChange)}
                           disabled={isSubmitting}
                           ref={imageInputRef}
+                          {...rest}
                         />
                       </label>
                     </div> 
@@ -378,3 +379,5 @@ export default function SellForm() {
     </Card>
   );
 }
+
+    
