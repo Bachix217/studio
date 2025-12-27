@@ -123,8 +123,8 @@ export default function Header() {
                   <Separator />
                   <nav className="flex flex-col space-y-2 mt-4 text-lg">
                      <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/sell')}>Vendre ma voiture</Button>
-                     <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/profile')}>Profil</Button>
                      <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/my-listings')}>Mes annonces</Button>
+                     <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/profile')}>Profil</Button>
                   </nav>
                   <div className="mt-auto">
                     <Button variant="outline" className="w-full" onClick={handleLogout}>
@@ -159,9 +159,12 @@ export default function Header() {
               <span>Tacoto.ch</span>
             </Link>
              {user && (
-              <nav className="hidden md:flex items-center">
+              <nav className="hidden md:flex items-center gap-2">
                  <Button variant="ghost" asChild>
                   <Link href="/sell" className="font-semibold">Vendre ma voiture</Link>
+                </Button>
+                 <Button variant="ghost" asChild>
+                  <Link href="/my-listings" className="font-semibold">Mes annonces</Link>
                 </Button>
               </nav>
             )}
