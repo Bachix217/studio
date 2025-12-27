@@ -4,15 +4,23 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow public read access to vehicles
+    // Règles pour les véhicules
     match /vehicles/{vehicleId} {
+      // Tout le monde peut voir les annonces
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == request.resource.data.userId;
+
+      // Création : L'utilisateur doit être connecté et son UID doit être dans le champ 'userId' de l'annonce
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+
+      // Modification/Suppression : Seul celui qui a créé l'annonce (le propriétaire) peut la changer
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
     }
 
-    // Allow public read on user profiles, but only owner can write
+    // Profils utilisateurs
     match /users/{userId} {
+      // Tout le monde peut lire les profils
       allow read: if true;
+      // Seul le propriétaire du profil peut le modifier
       allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
