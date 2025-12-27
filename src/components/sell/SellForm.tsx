@@ -33,6 +33,7 @@ import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 import { useState, ChangeEvent } from 'react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
+import { Label } from '@/components/ui/label';
 
 const MAX_IMAGES = 5;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
