@@ -10,14 +10,14 @@ import { collection, onSnapshot, orderBy, query, getDocs, writeBatch, serverTime
 import { initialVehicles } from '@/lib/data';
 
 export type Filters = {
-  make?: string;
-  model?: string;
+  make: string | undefined;
+  model: string | undefined;
   priceRange?: number[];
   mileageRange?: number[];
   yearRange?: number[];
-  fuelType?: string;
-  gearbox?: string;
-  canton?: string;
+  fuelType: string | undefined;
+  gearbox: string | undefined;
+  canton: string | undefined;
 };
 
 export default function HomePageClient() {
@@ -26,9 +26,14 @@ export default function HomePageClient() {
   const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState<Filters>({
+    make: undefined,
+    model: undefined,
     priceRange: [0, 200000],
     mileageRange: [0, 300000],
     yearRange: [1990, new Date().getFullYear()],
+    fuelType: undefined,
+    gearbox: undefined,
+    canton: undefined,
   });
 
   useEffect(() => {

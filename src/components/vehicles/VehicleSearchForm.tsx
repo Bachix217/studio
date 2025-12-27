@@ -16,7 +16,7 @@ import { CANTONS, FUEL_TYPES, GEARBOX_TYPES } from '@/lib/constants';
 import { getMakes, getModelsByMake } from '@/lib/data';
 import { Filters } from './HomePageClient';
 import { formatCurrency } from '@/lib/utils';
-import { RotateCcw, SlidersHorizontal, Search } from 'lucide-react';
+import { RotateCcw, SlidersHorizontal } from 'lucide-react';
 import {
   Collapsible,
   CollapsibleContent,
@@ -31,14 +31,14 @@ interface VehicleSearchFormProps {
 }
 
 const defaultFilters: Filters = {
-  make: '',
-  model: '',
+  make: undefined,
+  model: undefined,
   priceRange: [0, 200000],
   mileageRange: [0, 300000],
   yearRange: [1990, new Date().getFullYear()],
-  fuelType: '',
-  gearbox: '',
-  canton: '',
+  fuelType: undefined,
+  gearbox: undefined,
+  canton: undefined,
 };
 
 export default function VehicleSearchForm({
@@ -73,7 +73,7 @@ export default function VehicleSearchForm({
     if (!firestore) return;
     const fetchModels = async () => {
       if (selectedMake) {
-        setValue('model', '');
+        setValue('model', undefined);
         const modelsData = await getModelsByMake(firestore, selectedMake);
         setModels(modelsData);
       } else {
@@ -90,7 +90,6 @@ export default function VehicleSearchForm({
   
   useEffect(() => {
      const subscription = watch((value, { name }) => {
-      // We trigger search on every change
        onFilterChange(value as Filters);
     });
     return () => subscription.unsubscribe();
@@ -123,7 +122,6 @@ export default function VehicleSearchForm({
                         <SelectValue placeholder="Toutes les marques" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Toutes les marques</SelectItem>
                         {makes.map(make => (
                           <SelectItem key={make} value={make}>
                             {make}
@@ -152,7 +150,6 @@ export default function VehicleSearchForm({
                         <SelectValue placeholder="Tous les modèles" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Tous les modèles</SelectItem>
                         {models.map(model => (
                           <SelectItem key={model} value={model}>
                             {model}
@@ -178,7 +175,6 @@ export default function VehicleSearchForm({
                         <SelectValue placeholder="Tous types" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Tous types</SelectItem>
                         {FUEL_TYPES.map(type => (
                           <SelectItem key={type} value={type}>
                             {type}
@@ -206,7 +202,6 @@ export default function VehicleSearchForm({
                         <SelectValue placeholder="Toute la Suisse" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Toute la Suisse</SelectItem>
                         {CANTONS.map(canton => (
                           <SelectItem key={canton.value} value={canton.value}>
                             {canton.label}
@@ -319,7 +314,6 @@ export default function VehicleSearchForm({
                             <SelectValue placeholder="Toutes" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Toutes</SelectItem>
                             {GEARBOX_TYPES.map(type => (
                               <SelectItem key={type} value={type}>
                                 {type}
