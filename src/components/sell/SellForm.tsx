@@ -100,10 +100,15 @@ export default function SellForm() {
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length > 0) {
+        if (!validateImages(files)) {
+          setImageFiles([]);
+          setImagePreviews([]);
+          return;
+        }
         setImageFiles(files);
         const newPreviews = files.map(file => URL.createObjectURL(file));
         setImagePreviews(newPreviews);
-        validateImages(files);
+        setImageError(null);
     } else {
       setImageFiles([]);
       setImagePreviews([]);
@@ -209,60 +214,60 @@ export default function SellForm() {
   return (
     <Card>
       <CardContent className="p-6">
-        {step === 1 && (
-          <div className="space-y-8">
-            <div>
-              <h3 className="text-lg font-medium">Étape 1 sur 2 : Photos du véhicule</h3>
-              <p className="text-sm text-muted-foreground">Téléversez jusqu'à {MAX_IMAGES} photos de votre voiture.</p>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="dropzone-file">Photos ({imagePreviews.length}/{MAX_IMAGES})</Label>
-                <div className="flex items-center justify-center w-full">
-                  <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-background hover:bg-muted transition">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
-                      <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
-                      <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images (max 5Mo chacune)</p>
-                    </div>
-                    <Input 
-                      id="dropzone-file" 
-                      type="file" 
-                      className="hidden" 
-                      multiple 
-                      accept="image/png, image/jpeg, image/gif, image/webp"
-                      onChange={handleImageChange}
-                      disabled={isUploading}
-                    />
-                  </label>
-                </div> 
-                {imageError && <p className="text-sm font-medium text-destructive">{imageError}</p>}
-                {imagePreviews.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 pt-4">
-                    {imagePreviews.map((src, index) => (
-                      <div key={index} className="relative aspect-square w-full rounded-md overflow-hidden">
-                        <Image src={src} alt={`Aperçu ${index}`} fill className="object-cover" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-            </div>
-            
-            {uploadProgress !== null && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Téléversement en cours...</p>
-                <Progress value={uploadProgress} />
-                <p className="text-sm text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
+        <Form {...form}>
+          {step === 1 && (
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-lg font-medium">Étape 1 sur 2 : Photos du véhicule</h3>
+                <p className="text-sm text-muted-foreground">Téléversez jusqu'à {MAX_IMAGES} photos de votre voiture.</p>
               </div>
-            )}
+              <div className="space-y-2">
+                  <Label htmlFor="dropzone-file">Photos ({imagePreviews.length}/{MAX_IMAGES})</Label>
+                  <div className="flex items-center justify-center w-full">
+                    <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-background hover:bg-muted transition">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
+                        <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
+                        <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images (max 5Mo chacune)</p>
+                      </div>
+                      <Input 
+                        id="dropzone-file" 
+                        type="file" 
+                        className="hidden" 
+                        multiple 
+                        accept="image/png, image/jpeg, image/gif, image/webp"
+                        onChange={handleImageChange}
+                        disabled={isUploading}
+                      />
+                    </label>
+                  </div> 
+                  {imageError && <p className="text-sm font-medium text-destructive">{imageError}</p>}
+                  {imagePreviews.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 pt-4">
+                      {imagePreviews.map((src, index) => (
+                        <div key={index} className="relative aspect-square w-full rounded-md overflow-hidden">
+                          <Image src={src} alt={`Aperçu ${index}`} fill className="object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+              </div>
+              
+              {uploadProgress !== null && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Téléversement en cours...</p>
+                  <Progress value={uploadProgress} />
+                  <p className="text-sm text-muted-foreground text-center">{Math.round(uploadProgress)}%</p>
+                </div>
+              )}
 
-            <Button onClick={handleImageUpload} disabled={isUploading || imageFiles.length === 0 || !!imageError}>
-              {isUploading ? 'Téléversement...' : 'Continuer'}
-            </Button>
-          </div>
-        )}
+              <Button onClick={handleImageUpload} disabled={isUploading || imageFiles.length === 0 || !!imageError}>
+                {isUploading ? 'Téléversement...' : 'Continuer'}
+              </Button>
+            </div>
+          )}
 
-        {step === 2 && (
-            <Form {...form}>
+          {step === 2 && (
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div>
                   <div className="flex items-center justify-between">
@@ -428,8 +433,8 @@ export default function SellForm() {
                     {form.formState.isSubmitting ? 'Publication en cours...' : "Soumettre l'annonce"}
                 </Button>
               </form>
-            </Form>
-        )}
+          )}
+        </Form>
       </CardContent>
     </Card>
   );
