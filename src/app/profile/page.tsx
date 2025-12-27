@@ -36,7 +36,7 @@ const profileFormSchema = z.object({
   userType: z.enum(['particulier', 'professionnel']).default('particulier'),
   companyName: z.string().optional(),
   address: z.string().optional(),
-  website: z.string().optional(),
+  website: z.string().url({ message: "Veuillez entrer une URL valide." }).optional().or(z.literal('')),
 }).refine(data => {
     if (data.userType === 'professionnel') {
         return !!data.companyName && data.companyName.length > 2;
@@ -124,10 +124,9 @@ export default function ProfilePage() {
     const profileDocRef = doc(firestore, 'users', user.uid);
     try {
       // Ensure email is not overwritten if it exists
-      const updateData: UserProfile = {
-        ...profile, // Keep existing fields like email and createdAt
-        uid: user.uid,
+      const updateData: Partial<UserProfile> = {
         ...values,
+        uid: user.uid,
       };
 
       if(values.userType === 'particulier') {
@@ -145,7 +144,7 @@ export default function ProfilePage() {
       toast({
         variant: 'destructive',
         title: 'Erreur',
-        description: 'Impossible de mettre à jour le profil.',
+        description: 'Impossible de mettre à jour le profil. ' + error.message,
       });
     }
   }
@@ -155,13 +154,16 @@ export default function ProfilePage() {
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="max-w-2xl mx-auto">
-            <Card>
+          <div className="max-w-3xl mx-auto">
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+            <Card className="mt-8">
               <CardHeader>
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-4 w-full mt-2" />
+                <Skeleton className="h-6 w-32" />
               </CardHeader>
-              <CardContent className="space-y-4 pt-6">
+              <CardContent className="space-y-6 pt-6">
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="h-10 w-full" />
@@ -184,42 +186,47 @@ export default function ProfilePage() {
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle>Mon Profil</CardTitle>
-              <CardDescription>
-                Mettez à jour vos informations. Celles-ci seront visibles par les acheteurs potentiels.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div className="max-w-3xl mx-auto">
+          <header className="mb-8">
+              <h1 className="text-3xl font-bold tracking-tight">Mon Profil</h1>
+              <p className="text-muted-foreground mt-1">
+                Gérez vos informations publiques et vos paramètres de compte.
+              </p>
+          </header>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>Type de Compte</CardTitle>
+                  <CardDescription>Sélectionnez le type de compte qui vous correspond.</CardDescription>
+                </CardHeader>
+                <CardContent>
                   <FormField
                     control={form.control}
                     name="userType"
                     render={({ field }) => (
-                      <FormItem className="space-y-3">
-                        <FormLabel>Type de compte</FormLabel>
+                      <FormItem className="pt-2">
                         <FormControl>
                           <RadioGroup
                             onValueChange={field.onChange}
                             defaultValue={field.value}
-                            className="flex items-center space-x-4"
+                            className="flex items-center space-x-6"
                           >
-                            <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormItem className="flex items-center space-x-3 space-y-0">
                               <FormControl>
                                 <RadioGroupItem value="particulier" />
                               </FormControl>
-                              <FormLabel className="font-normal">
+                              <FormLabel className="font-normal text-base">
                                 Particulier
                               </FormLabel>
                             </FormItem>
-                            <FormItem className="flex items-center space-x-2 space-y-0">
+                            <FormItem className="flex items-center space-x-3 space-y-0">
                               <FormControl>
                                 <RadioGroupItem value="professionnel" />
                               </FormControl>
-                              <FormLabel className="font-normal">
+                              <FormLabel className="font-normal text-base">
                                 Professionnel
                               </FormLabel>
                             </FormItem>
@@ -229,22 +236,26 @@ export default function ProfilePage() {
                       </FormItem>
                     )}
                   />
+                </CardContent>
+              </Card>
 
-                  <Separator />
-                  
-                  <h4 className="text-lg font-medium">Informations de contact</h4>
-
+              <Card>
+                 <CardHeader>
+                  <CardTitle>Informations de Contact</CardTitle>
+                  <CardDescription>Ces informations seront affichées sur vos annonces.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6 pt-6">
                   <FormField
                     control={form.control}
                     name="displayName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Nom d'affichage</FormLabel>
+                        <FormLabel>Nom d'affichage public</FormLabel>
                         <FormControl>
                           <Input placeholder="Votre nom ou pseudonyme" {...field} />
                         </FormControl>
                          <FormDescription>
-                          Ce nom sera affiché publiquement sur vos annonces.
+                          Ce nom sera visible par les autres utilisateurs.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -257,7 +268,7 @@ export default function ProfilePage() {
                       <FormItem>
                         <FormLabel>Téléphone (pour WhatsApp)</FormLabel>
                         <FormControl>
-                          <Input type="tel" placeholder="+41" {...field} />
+                          <Input type="tel" placeholder="+41 79 123 45 67" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -270,10 +281,10 @@ export default function ProfilePage() {
                       <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
                           <FormLabel className="text-base">
-                            Partager mon téléphone
+                            Partager mon numéro de téléphone
                           </FormLabel>
                           <FormDescription>
-                            Autoriser les acheteurs à vous contacter via WhatsApp.
+                            Autoriser les acheteurs à vous contacter via WhatsApp sur vos annonces.
                           </FormDescription>
                         </div>
                         <FormControl>
@@ -285,63 +296,67 @@ export default function ProfilePage() {
                       </FormItem>
                     )}
                   />
+                </CardContent>
+              </Card>
 
-                  {userType === 'professionnel' && (
-                    <>
-                      <Separator />
-                      <h4 className="text-lg font-medium">Informations professionnelles</h4>
-                      <div className="space-y-8">
-                         <FormField
-                            control={form.control}
-                            name="companyName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Nom de l'entreprise</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Garage du Lac SA" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                           <FormField
-                            control={form.control}
-                            name="address"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Adresse</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Route de Lausanne 1, 1202 Genève" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                           <FormField
-                            control={form.control}
-                            name="website"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Site web</FormLabel>
-                                <FormControl>
-                                  <Input type="url" placeholder="https://www.votregarage.ch" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                      </div>
-                    </>
-                  )}
+              {userType === 'professionnel' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Informations Professionnelles</CardTitle>
+                    <CardDescription>Renseignez les détails de votre entreprise.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6 pt-6">
+                     <FormField
+                        control={form.control}
+                        name="companyName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nom de l'entreprise</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Garage du Lac SA" {...field} value={field.value ?? ''}/>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField
+                        control={form.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Adresse</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Route de Lausanne 1, 1202 Genève" {...field} value={field.value ?? ''}/>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                       <FormField
+                        control={form.control}
+                        name="website"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Site web</FormLabel>
+                            <FormControl>
+                              <Input type="url" placeholder="https://www.votregarage.ch" {...field} value={field.value ?? ''}/>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                  </CardContent>
+                </Card>
+              )}
 
 
-                  <Button type="submit" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? "Enregistrement..." : "Enregistrer les modifications"}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+              <div className="flex justify-end">
+                <Button type="submit" disabled={form.formState.isSubmitting} size="lg">
+                  {form.formState.isSubmitting ? "Enregistrement..." : "Enregistrer les modifications"}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </div>
       </main>
       <Footer />
