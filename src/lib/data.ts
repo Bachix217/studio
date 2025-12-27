@@ -1,15 +1,105 @@
 import type { Vehicle } from './types';
-import { collection, getDocs, doc, getDoc, query, orderBy, where } from 'firebase/firestore';
-import { initializeFirebase } from '@/firebase';
+import { collection, getDocs, doc, getDoc, query, orderBy, where, serverTimestamp } from 'firebase/firestore';
 
-// This file now fetches data from Firestore instead of using mocks.
-
-// We get the firestore instance on the client.
-// const { firestore } = initializeFirebase();
-
-// The mockVehicles array is kept for data structure reference and potential fallback, but is not actively used.
-const mockVehicles: Omit<Vehicle, 'id' | 'userId' | 'createdAt'>[] = [
-  // ... mock data from previous version can be kept here for reference if needed
+export const initialVehicles: Omit<Vehicle, 'id' | 'userId' | 'createdAt'>[] = [
+  {
+    make: 'Volkswagen',
+    model: 'Golf',
+    year: 2021,
+    price: 32000,
+    mileage: 45000,
+    fuelType: 'Essence',
+    gearbox: 'Automatique',
+    canton: 'ZH',
+    description: 'Belle VW Golf 8, bien entretenue. Service suivi. Pneus d\'été et d\'hiver.',
+    features: ['Climatisation automatique', 'Sièges chauffants', 'Apple CarPlay', 'Android Auto', 'Régulateur de vitesse adaptatif'],
+    images: [
+      'https://picsum.photos/seed/golf1/1200/800',
+      'https://picsum.photos/seed/golf2/1200/800',
+      'https://picsum.photos/seed/golf3/1200/800'
+    ]
+  },
+  {
+    make: 'Audi',
+    model: 'Q5',
+    year: 2019,
+    price: 45000,
+    mileage: 60000,
+    fuelType: 'Diesel',
+    gearbox: 'Automatique',
+    canton: 'GE',
+    description: 'Audi Q5 S-Line avec de nombreuses options. Expertise du jour. Non-fumeur.',
+    features: ['Toit panoramique', 'Phares LED Matrix', 'Virtual Cockpit', 'Système audio Bang & Olufsen'],
+    images: [
+      'https://picsum.photos/seed/audi1/1200/800',
+      'https://picsum.photos/seed/audi2/1200/800'
+    ]
+  },
+  {
+    make: 'BMW',
+    model: '330i',
+    year: 2022,
+    price: 55000,
+    mileage: 15000,
+    fuelType: 'Essence',
+    gearbox: 'Automatique',
+    canton: 'VD',
+    description: 'BMW Série 3 comme neuve. Pack M Sport. Garantie constructeur.',
+    features: ['Affichage tête haute', 'Suspension adaptative M', 'Caméra 360°', 'Accès confort'],
+    images: [
+      'https://picsum.photos/seed/bmw1/1200/800',
+      'https://picsum.photos/seed/bmw2/1200/800',
+      'https://picsum.photos/seed/bmw3/1200/800'
+    ]
+  },
+  {
+    make: 'Tesla',
+    model: 'Model 3',
+    year: 2023,
+    price: 48000,
+    mileage: 25000,
+    fuelType: 'Électrique',
+    gearbox: 'Automatique',
+    canton: 'BE',
+    description: 'Tesla Model 3 Long Range. Autopilot amélioré. En parfait état.',
+    features: ['Autopilot', 'Intérieur Premium blanc', 'Jantes Sport 19"', 'Pompe à chaleur'],
+    images: [
+      'https://picsum.photos/seed/tesla1/1200/800',
+      'https://picsum.photos/seed/tesla2/1200/800'
+    ]
+  },
+  {
+    make: 'Mercedes-Benz',
+    model: 'A 250',
+    year: 2020,
+    price: 38500,
+    mileage: 52000,
+    fuelType: 'Essence',
+    gearbox: 'Automatique',
+    canton: 'BS',
+    description: 'Superbe Mercedes Classe A Pack AMG. Éclairage d\'ambiance. MBUX.',
+    features: ['Pack Nuit AMG', 'Sièges sport', 'Toit ouvrant', 'Intégration smartphone'],
+    images: [
+      'https://picsum.photos/seed/merc1/1200/800'
+    ]
+  },
+   {
+    make: 'Porsche',
+    model: '911 Carrera',
+    year: 2018,
+    price: 115000,
+    mileage: 38000,
+    fuelType: 'Essence',
+    gearbox: 'Automatique',
+    canton: 'ZG',
+    description: 'Iconique Porsche 911 (991.2) en excellent état. Échappement sport. Pack Sport Chrono.',
+    features: ['Échappement sport', 'Pack Sport Chrono', 'Sièges sport Plus', 'Porsche Active Suspension Management (PASM)'],
+    images: [
+      'https://picsum.photos/seed/porsche1/1200/800',
+      'https://picsum.photos/seed/porsche2/1200/800',
+      'https://picsum.photos/seed/porsche3/1200/800'
+    ]
+  },
 ];
 
 
@@ -49,7 +139,9 @@ export const getVehicleById = async (firestore: any, id: string): Promise<Vehicl
 
 export const getMakes = async (firestore: any): Promise<string[]> => {
   const vehicles = await getVehicles(firestore);
-  return [...new Set(vehicles.map(v => v.make))].sort();
+   // Also include makes from initial vehicles to populate the filter
+  const allMakes = [...vehicles.map(v => v.make), ...initialVehicles.map(v => v.make)];
+  return [...new Set(allMakes)].sort();
 }
 
 export const getModelsByMake = async (firestore: any, make: string): Promise<string[]> => {
@@ -58,7 +150,9 @@ export const getModelsByMake = async (firestore: any, make: string): Promise<str
   const q = query(vehiclesCollection, where('make', '==', make));
   const snapshot = await getDocs(q);
    if (snapshot.empty) {
-      return [];
+      // If no vehicles in DB for that make, check initialVehicles
+      const initialModels = initialVehicles.filter(v => v.make === make).map(v => v.model);
+      return [...new Set(initialModels)].sort();
     }
   const vehicles: Vehicle[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle));
   return [...new Set(vehicles.map(v => v.model))].sort();

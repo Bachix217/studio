@@ -46,7 +46,7 @@ export default function VehicleSearchForm({
   onFilterChange,
 }: VehicleSearchFormProps) {
   const { firestore } = useFirebase();
-  const { control, watch, reset, setValue } = useForm<Filters>({
+  const { control, watch, reset, setValue, handleSubmit } = useForm<Filters>({
     defaultValues: filters,
   });
 
@@ -55,6 +55,10 @@ export default function VehicleSearchForm({
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
 
   const selectedMake = watch('make');
+  
+  const onSubmit = (data: Filters) => {
+    onFilterChange(data);
+  };
 
   useEffect(() => {
     if (!firestore) return;
@@ -69,6 +73,7 @@ export default function VehicleSearchForm({
     if (!firestore) return;
     const fetchModels = async () => {
       if (selectedMake) {
+        setValue('model', '');
         const modelsData = await getModelsByMake(firestore, selectedMake);
         setModels(modelsData);
       } else {
@@ -76,20 +81,21 @@ export default function VehicleSearchForm({
       }
     };
     fetchModels();
-    setValue('model', '');
   }, [selectedMake, setValue, firestore]);
-
-  useEffect(() => {
-    const subscription = watch(value => {
-      onFilterChange(value as Filters);
-    });
-    return () => subscription.unsubscribe();
-  }, [watch, onFilterChange]);
 
   const handleReset = () => {
     reset(defaultFilters);
     onFilterChange(defaultFilters);
   };
+  
+  useEffect(() => {
+     const subscription = watch((value, { name }) => {
+      // We trigger search on every change
+       onFilterChange(value as Filters);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, onFilterChange]);
+
 
   const currentPriceRange = watch('priceRange') || defaultFilters.priceRange;
   const currentMileageRange =
@@ -97,205 +103,82 @@ export default function VehicleSearchForm({
   const currentYearRange = watch('yearRange') || defaultFilters.yearRange;
 
   return (
-    <Card className="shadow-lg">
-      <CardContent className="p-4 md:p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-end">
-          <div className="lg:col-span-3">
-            <label className="text-sm font-medium text-muted-foreground">
-              Marque
-            </label>
-            <Controller
-              name="make"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  onValueChange={value =>
-                    field.onChange(value === 'all' ? '' : value)
-                  }
-                  value={field.value || 'all'}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Toutes les marques" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toutes les marques</SelectItem>
-                    {makes.map(make => (
-                      <SelectItem key={make} value={make}>
-                        {make}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-
-          <div className="lg:col-span-3">
-            <label className="text-sm font-medium text-muted-foreground">
-              Modèle
-            </label>
-            <Controller
-              name="model"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  onValueChange={value =>
-                    field.onChange(value === 'all' ? '' : value)
-                  }
-                  value={field.value || 'all'}
-                  disabled={!selectedMake || models.length === 0}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Tous les modèles" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tous les modèles</SelectItem>
-                    {models.map(model => (
-                      <SelectItem key={model} value={model}>
-                        {model}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-
-          <div className="lg:col-span-4">
-            <label className="text-sm font-medium text-muted-foreground">
-              Canton
-            </label>
-            <Controller
-              name="canton"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  onValueChange={value =>
-                    field.onChange(value === 'all' ? '' : value)
-                  }
-                  value={field.value || 'all'}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Toute la Suisse" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Toute la Suisse</SelectItem>
-                    {CANTONS.map(canton => (
-                      <SelectItem key={canton.value} value={canton.value}>
-                        {canton.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-
-          <div className="lg:col-span-2">
-            <Button size="lg" className="w-full">
-              <Search className="mr-2 h-4 w-4" />
-              Rechercher
-            </Button>
-          </div>
-        </div>
-
-        <Collapsible
-          open={isAdvancedSearchOpen}
-          onOpenChange={setIsAdvancedSearchOpen}
-          className="w-full mt-4"
-        >
-          <CollapsibleTrigger asChild>
-            <Button
-              variant="link"
-              className="p-0 h-auto text-primary flex items-center gap-2"
-            >
-              <SlidersHorizontal size={16} />
-              Recherche avancée
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-6">
-            <Separator className="mb-6" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Prix</label>
+    <Card className="shadow-lg overflow-hidden">
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <CardContent className="p-4 md:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Marque
+                </label>
                 <Controller
-                  name="priceRange"
+                  name="make"
                   control={control}
                   render={({ field }) => (
-                    <Slider
-                      min={0}
-                      max={200000}
-                      step={1000}
-                      value={field.value}
+                    <Select
                       onValueChange={field.onChange}
-                    />
+                      value={field.value || ''}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Toutes les marques" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Toutes les marques</SelectItem>
+                        {makes.map(make => (
+                          <SelectItem key={make} value={make}>
+                            {make}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 />
-                <div className="text-sm text-muted-foreground flex justify-between">
-                  <span>{formatCurrency(currentPriceRange![0])}</span>
-                  <span>{formatCurrency(currentPriceRange![1])}</span>
-                </div>
               </div>
 
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Kilométrage</label>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Modèle
+                </label>
                 <Controller
-                  name="mileageRange"
+                  name="model"
                   control={control}
                   render={({ field }) => (
-                    <Slider
-                      min={0}
-                      max={300000}
-                      step={5000}
-                      value={field.value}
+                    <Select
                       onValueChange={field.onChange}
-                    />
+                      value={field.value || ''}
+                      disabled={!selectedMake || models.length === 0}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Tous les modèles" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Tous les modèles</SelectItem>
+                        {models.map(model => (
+                          <SelectItem key={model} value={model}>
+                            {model}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 />
-                <div className="text-sm text-muted-foreground flex justify-between">
-                  <span>{currentMileageRange![0].toLocaleString('fr-CH')} km</span>
-                  <span>{currentMileageRange![1].toLocaleString('fr-CH')} km</span>
-                </div>
               </div>
 
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Année</label>
-                <Controller
-                  name="yearRange"
-                  control={control}
-                  render={({ field }) => (
-                    <Slider
-                      min={1990}
-                      max={new Date().getFullYear()}
-                      step={1}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    />
-                  )}
-                />
-                <div className="text-sm text-muted-foreground flex justify-between">
-                  <span>{currentYearRange![0]}</span>
-                  <span>{currentYearRange![1]}</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Carburant</label>
-                <Controller
+               <div>
+                <label className="text-sm font-medium text-muted-foreground">Carburant</label>
+                 <Controller
                   name="fuelType"
                   control={control}
                   render={({ field }) => (
                     <Select
-                      onValueChange={value =>
-                        field.onChange(value === 'all' ? '' : value)
-                      }
-                      value={field.value || 'all'}
+                      onValueChange={field.onChange}
+                      value={field.value || ''}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Tous types" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Tous types</SelectItem>
+                        <SelectItem value="">Tous types</SelectItem>
                         {FUEL_TYPES.map(type => (
                           <SelectItem key={type} value={type}>
                             {type}
@@ -307,26 +190,26 @@ export default function VehicleSearchForm({
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Boîte</label>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Canton
+                </label>
                 <Controller
-                  name="gearbox"
+                  name="canton"
                   control={control}
                   render={({ field }) => (
                     <Select
-                      onValueChange={value =>
-                        field.onChange(value === 'all' ? '' : value)
-                      }
-                      value={field.value || 'all'}
+                      onValueChange={field.onChange}
+                      value={field.value || ''}
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Toutes" />
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Toute la Suisse" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Toutes</SelectItem>
-                        {GEARBOX_TYPES.map(type => (
-                          <SelectItem key={type} value={type}>
-                            {type}
+                        <SelectItem value="">Toute la Suisse</SelectItem>
+                        {CANTONS.map(canton => (
+                          <SelectItem key={canton.value} value={canton.value}>
+                            {canton.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -335,20 +218,135 @@ export default function VehicleSearchForm({
                 />
               </div>
 
-              <div>
-                <Button
-                  variant="ghost"
-                  className="text-muted-foreground"
-                  onClick={handleReset}
-                >
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Réinitialiser
-                </Button>
-              </div>
             </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </CardContent>
+
+            <Collapsible
+              open={isAdvancedSearchOpen}
+              onOpenChange={setIsAdvancedSearchOpen}
+              className="w-full mt-4"
+            >
+              <div className="flex items-center justify-between">
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto text-primary flex items-center gap-2"
+                  >
+                    <SlidersHorizontal size={16} />
+                    Filtres additionnels
+                  </Button>
+                </CollapsibleTrigger>
+              </div>
+
+              <CollapsibleContent className="mt-6">
+                <Separator className="mb-6" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">Prix</label>
+                    <Controller
+                      name="priceRange"
+                      control={control}
+                      render={({ field }) => (
+                        <Slider
+                          min={0}
+                          max={200000}
+                          step={1000}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        />
+                      )}
+                    />
+                    <div className="text-sm text-muted-foreground flex justify-between">
+                      <span>{formatCurrency(currentPriceRange![0])}</span>
+                      <span>{formatCurrency(currentPriceRange![1])}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">Kilométrage</label>
+                    <Controller
+                      name="mileageRange"
+                      control={control}
+                      render={({ field }) => (
+                        <Slider
+                          min={0}
+                          max={300000}
+                          step={5000}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        />
+                      )}
+                    />
+                    <div className="text-sm text-muted-foreground flex justify-between">
+                      <span>{currentMileageRange![0].toLocaleString('fr-CH')} km</span>
+                      <span>{currentMileageRange![1].toLocaleString('fr-CH')} km</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">Année</label>
+                    <Controller
+                      name="yearRange"
+                      control={control}
+                      render={({ field }) => (
+                        <Slider
+                          min={1990}
+                          max={new Date().getFullYear()}
+                          step={1}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        />
+                      )}
+                    />
+                    <div className="text-sm text-muted-foreground flex justify-between">
+                      <span>{currentYearRange![0]}</span>
+                      <span>{currentYearRange![1]}</span>
+                    </div>
+                  </div>
+                </div>
+
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end mt-4">
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Boîte</label>
+                    <Controller
+                      name="gearbox"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                           onValueChange={field.onChange}
+                           value={field.value || ''}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Toutes" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">Toutes</SelectItem>
+                            {GEARBOX_TYPES.map(type => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                 </div>
+
+                <div className="flex justify-end mt-6">
+                    <Button
+                      variant="ghost"
+                      className="text-muted-foreground"
+                      onClick={handleReset}
+                      type="button"
+                    >
+                      <RotateCcw className="mr-2 h-4 w-4" />
+                      Réinitialiser les filtres
+                    </Button>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </CardContent>
+        </form>
     </Card>
   );
 }
