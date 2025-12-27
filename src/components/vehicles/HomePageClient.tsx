@@ -6,8 +6,7 @@ import VehicleSearchForm from './VehicleSearchForm';
 import VehicleList from './VehicleList';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFirebase } from '@/firebase';
-import { collection, onSnapshot, orderBy, query, getDocs, writeBatch, serverTimestamp } from 'firebase/firestore';
-import { initialVehicles } from '@/lib/data';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 
 export type Filters = {
   make: string | undefined;
@@ -41,27 +40,6 @@ export default function HomePageClient() {
     setLoading(true);
     const vehiclesCollection = collection(firestore, 'vehicles');
     
-    const seedDatabaseIfNeeded = async () => {
-      const snapshot = await getDocs(vehiclesCollection);
-      if (snapshot.empty) {
-        console.log('Vehicles collection is empty. Seeding database...');
-        const batch = writeBatch(firestore);
-        initialVehicles.forEach(vehicle => {
-          const docRef = collection(firestore, 'vehicles');
-          // Firestore will auto-generate an ID, so we don't set it
-          const vehicleData = {
-            ...vehicle,
-            createdAt: serverTimestamp(),
-            userId: 'system', // or a generic user id
-          };
-          delete (vehicleData as any).id;
-          batch.set(docRef.doc(), vehicleData);
-        });
-        await batch.commit();
-        console.log('Database seeded.');
-      }
-    };
-
     const q = query(vehiclesCollection, orderBy('createdAt', 'desc'));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -72,8 +50,6 @@ export default function HomePageClient() {
       console.error("Error fetching vehicles: ", error);
       setLoading(false);
     });
-    
-    seedDatabaseIfNeeded();
 
     return () => unsubscribe();
   }, [firestore]);
@@ -81,6 +57,7 @@ export default function HomePageClient() {
 
   const filteredVehicles = useMemo(() => {
     return vehicles.filter(v => {
+      if (!v) return false; // Add a guard clause to prevent error on undefined vehicle
       if (filters.make && v.make !== filters.make) return false;
       if (filters.model && v.model !== filters.model) return false;
       if (filters.priceRange && (v.price < filters.priceRange[0] || v.price > filters.priceRange[1])) return false;
