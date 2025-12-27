@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Car, Menu, List, User as UserIcon, LogOut, UserCircle } from 'lucide-react';
+import { Car, Menu, List, User as UserIcon, LogOut, UserCircle, X } from 'lucide-react';
 import { useState } from 'react';
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useUser } from '@/firebase/auth/use-user';
@@ -22,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { signOut } from 'firebase/auth';
 import { useFirebase } from '@/firebase/provider';
 import { useRouter } from 'next/navigation';
+import { Separator } from '../ui/separator';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -30,14 +32,16 @@ export default function Header() {
   const router = useRouter();
 
   const handleLogout = async () => {
+    setIsMenuOpen(false);
     await signOut(auth);
   };
   
   const navigateTo = (path: string) => {
+    setIsMenuOpen(false);
     router.push(path);
   }
 
-  const UserMenu = () => (
+  const UserMenuDesktop = () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -82,16 +86,69 @@ export default function Header() {
     </>
   );
   
-  const GuestLinks = () => (
+  const GuestLinks = ({ isMobile = false }) => (
     <>
-      <Button variant="ghost" asChild>
+      <Button variant={isMobile ? "outline" : "ghost"} className={isMobile ? "w-full" : ""} asChild>
         <Link href="/login" onClick={() => setIsMenuOpen(false)}>Connexion</Link>
       </Button>
-      <Button asChild>
+      <Button asChild className={isMobile ? "w-full" : ""}>
         <Link href="/signup" onClick={() => setIsMenuOpen(false)}>Inscription</Link>
       </Button>
     </>
   );
+  
+  const MobileSheetMenu = () => (
+     <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <Menu />
+            <span className="sr-only">Ouvrir le menu</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="w-[85vw] max-w-sm p-0">
+          <SheetHeader className="p-4 border-b">
+              <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-primary" onClick={() => setIsMenuOpen(false)}>
+                <Car size={28} />
+                <span>Tacoto.ch</span>
+              </Link>
+          </SheetHeader>
+          <div className="flex flex-col h-full p-4">
+              {user ? (
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center gap-3 mb-4">
+                     <Avatar className="h-12 w-12">
+                      <AvatarImage src={user?.photoURL || ''} alt={user?.displayName || 'Utilisateur'} />
+                      <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || <UserIcon />}</AvatarFallback>
+                    </Avatar>
+                     <div className="flex flex-col space-y-0.5">
+                      <p className="text-base font-medium leading-none">{user?.displayName || 'Mon Compte'}</p>
+                      <p className="text-sm leading-none text-muted-foreground">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </div>
+                  <Separator />
+                  <nav className="flex flex-col space-y-2 mt-4 text-lg">
+                     <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/sell')}>Vendre ma voiture</Button>
+                     <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/profile')}>Profil</Button>
+                     <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/my-listings')}>Mes annonces</Button>
+                  </nav>
+                  <div className="mt-auto">
+                    <Button variant="outline" className="w-full" onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Déconnexion
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <GuestLinks isMobile={true} />
+                </div>
+              )}
+          </div>
+        </SheetContent>
+      </Sheet>
+  )
 
   return (
     <header className="bg-card border-b shadow-sm sticky top-0 z-40">
@@ -110,24 +167,11 @@ export default function Header() {
 
           <div className="flex items-center gap-4">
             <div className="hidden md:flex items-center space-x-2">
-              {user ? <UserMenu /> : <GuestLinks />}
+              {user ? <UserMenuDesktop /> : <GuestLinks />}
             </div>
 
             <div className="md:hidden">
-              <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu />
-                    <span className="sr-only">Ouvrir le menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right">
-                  <div className="flex flex-col space-y-4 pt-10">
-                    {user ? <AuthLinks /> : <GuestLinks />}
-                  </div>
-                </SheetContent>
-              </Sheet>
-               {user && <div className="md:hidden"><UserMenu /></div>}
+              <MobileSheetMenu />
             </div>
           </div>
         </div>
