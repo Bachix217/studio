@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { useFirebase } from '@/firebase';
 import type { Vehicle, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function VehiclePage() {
@@ -24,24 +24,45 @@ export default function VehiclePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id && firestore) {
-      getVehicleById(firestore, id).then(async vehicleData => {
-        if (vehicleData) {
-          setVehicle(vehicleData);
-          if (vehicleData.userId) {
-            const sellerDocRef = doc(firestore, 'users', vehicleData.userId);
-            const sellerDocSnap = await getDoc(sellerDocRef);
+    if (!id || !firestore) return;
+
+    setLoading(true);
+    const vehicleDocRef = doc(firestore, 'vehicles', id);
+    const unsubscribeVehicle = onSnapshot(vehicleDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const vehicleData = { id: docSnap.id, ...docSnap.data() } as Vehicle;
+        setVehicle(vehicleData);
+
+        if (vehicleData.userId) {
+          const sellerDocRef = doc(firestore, 'users', vehicleData.userId);
+          const unsubscribeSeller = onSnapshot(sellerDocRef, (sellerDocSnap) => {
             if (sellerDocSnap.exists()) {
               setSeller(sellerDocSnap.data() as UserProfile);
+            } else {
+              setSeller(null);
             }
-          }
+            setLoading(false);
+          }, (error) => {
+            console.error("Error fetching seller profile:", error);
+            setSeller(null);
+            setLoading(false);
+          });
+          
+          return () => unsubscribeSeller();
         } else {
-          notFound();
+          setLoading(false);
         }
-        setLoading(false);
-      });
-    }
+      } else {
+        notFound();
+      }
+    }, (error) => {
+      console.error("Error fetching vehicle:", error);
+      notFound();
+    });
+
+    return () => unsubscribeVehicle();
   }, [id, firestore]);
+
 
   if (loading || !vehicle) {
      return (
