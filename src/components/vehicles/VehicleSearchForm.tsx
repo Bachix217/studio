@@ -33,7 +33,7 @@ interface VehicleSearchFormProps {
 const defaultFilters: Filters = {
   make: undefined,
   model: undefined,
-  priceRange: [0, 500000],
+  priceRange: [0, 100000000],
   mileageRange: [0, 300000],
   yearRange: [1990, new Date().getFullYear()],
   fuelType: undefined,
@@ -245,7 +245,7 @@ export default function VehicleSearchForm({
                       render={({ field }) => (
                         <Slider
                           min={0}
-                          max={500000}
+                          max={100000000}
                           step={1000}
                           value={field.value}
                           onValueChange={field.onChange}
