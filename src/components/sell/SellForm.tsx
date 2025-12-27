@@ -30,7 +30,7 @@ import { useUser } from '@/firebase/auth/use-user';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
-import { useState, useRef, ChangeEvent } from 'react';
+import { useState, ChangeEvent } from 'react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 
@@ -49,9 +49,9 @@ const formSchema = z.object({
   description: z.string().min(20, "Veuillez fournir une description plus détaillée."),
   features: z.string().optional(),
   images: z.any()
-    .refine((files) => files instanceof FileList && files.length > 0, 'Au moins une image est requise.')
-    .refine((files) => files instanceof FileList && files.length <= MAX_IMAGES, `Vous ne pouvez téléverser que ${MAX_IMAGES} images maximum.`)
-    .refine((files) => files instanceof FileList && Array.from(files).every(file => file.size <= MAX_FILE_SIZE), `Chaque image doit peser moins de 5 Mo.`),
+    .refine((files) => files?.length > 0, 'Au moins une image est requise.')
+    .refine((files) => files?.length <= MAX_IMAGES, `Vous ne pouvez téléverser que ${MAX_IMAGES} images maximum.`)
+    .refine((files) => Array.from(files).every((file: any) => file.size <= MAX_FILE_SIZE), `Chaque image doit peser moins de 5 Mo.`),
 });
 
 export default function SellForm() {
@@ -78,15 +78,14 @@ export default function SellForm() {
     },
   });
 
-  const imageField = form.register('images');
-
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    imageField.onChange(e);
     const files = e.target.files;
     if (files) {
+        form.setValue('images', files);
         const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
         setImagePreviews(newPreviews);
     } else {
+        form.setValue('images', null);
         setImagePreviews([]);
     }
   };
@@ -337,7 +336,6 @@ export default function SellForm() {
                           className="hidden" 
                           multiple 
                           accept="image/png, image/jpeg, image/gif"
-                          {...imageField}
                           onChange={handleImageChange}
                           disabled={isSubmitting}
                         />
