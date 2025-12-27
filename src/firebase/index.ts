@@ -20,4 +20,6 @@ function initializeFirebase() {
   return { firebaseApp, auth, firestore };
 }
 
+export * from './provider';
+export * from './auth/use-user';
 export { initializeFirebase };
