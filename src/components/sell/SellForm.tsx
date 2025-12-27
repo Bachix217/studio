@@ -48,7 +48,6 @@ const formSchema = z.object({
   canton: z.string().min(2, "Le canton est requis."),
   description: z.string().min(20, "Veuillez fournir une description plus détaillée."),
   features: z.string().optional(),
-  // images validation will be handled manually
 });
 
 export default function SellForm() {
@@ -59,7 +58,7 @@ export default function SellForm() {
   
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [imageFiles, setImageFiles] = useState<FileList | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
 
@@ -76,7 +75,7 @@ export default function SellForm() {
     },
   });
   
-  const validateImages = (files: FileList | null): boolean => {
+  const validateImages = (files: File[]): boolean => {
     if (!files || files.length === 0) {
       setImageError('Au moins une image est requise.');
       return false;
@@ -85,7 +84,7 @@ export default function SellForm() {
       setImageError(`Vous ne pouvez téléverser que ${MAX_IMAGES} images maximum.`);
       return false;
     }
-    for (const file of Array.from(files)) {
+    for (const file of files) {
       if (file.size > MAX_FILE_SIZE) {
         setImageError(`Chaque image doit peser moins de 5 Mo.`);
         return false;
@@ -96,25 +95,25 @@ export default function SellForm() {
   };
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
+    const files = e.target.files ? Array.from(e.target.files) : [];
+    if (files.length > 0) {
         if(validateImages(files)) {
           setImageFiles(files);
-          const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
+          const newPreviews = files.map(file => URL.createObjectURL(file));
           setImagePreviews(newPreviews);
         } else {
           e.target.value = ''; // Clear the input if validation fails
-          setImageFiles(null);
+          setImageFiles([]);
           setImagePreviews([]);
         }
     } else {
-        setImageFiles(null);
+        setImageFiles([]);
         setImagePreviews([]);
-        validateImages(null);
+        validateImages([]);
     }
   };
 
-  async function onSubmit(values: Omit<z.infer<typeof formSchema>, 'images'>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!validateImages(imageFiles)) {
       return;
     }
@@ -133,10 +132,9 @@ export default function SellForm() {
 
     try {
       const imageUrls: string[] = [];
-      const filesToUpload = Array.from(imageFiles!);
-
-      for (let i = 0; i < filesToUpload.length; i++) {
-        const file = filesToUpload[i];
+      
+      for (let i = 0; i < imageFiles.length; i++) {
+        const file = imageFiles[i];
         const storageRef = ref(storage, `vehicles/${user.uid}/${Date.now()}-${file.name}`);
         const uploadTask = uploadBytesResumable(storageRef, file);
 
@@ -144,7 +142,7 @@ export default function SellForm() {
           uploadTask.on('state_changed',
             (snapshot) => {
               const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              const totalProgress = (i / filesToUpload.length) * 100 + progress / filesToUpload.length;
+              const totalProgress = (i / imageFiles.length) * 100 + progress / imageFiles.length;
               setUploadProgress(totalProgress);
             },
             (error) => {
@@ -178,7 +176,7 @@ export default function SellForm() {
       
       form.reset();
       setImagePreviews([]);
-      setImageFiles(null);
+      setImageFiles([]);
       router.push(`/vehicles/${docRef.id}`);
 
     } catch (error: any) {
@@ -355,7 +353,7 @@ export default function SellForm() {
                         type="file" 
                         className="hidden" 
                         multiple 
-                        accept="image/png, image/jpeg, image/gif"
+                        accept="image/png, image/jpeg, image/gif, image/webp"
                         onChange={handleImageChange}
                         disabled={isSubmitting}
                       />
