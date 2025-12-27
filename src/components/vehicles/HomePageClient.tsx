@@ -9,13 +9,13 @@ import { useFirebase } from '@/firebase';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 
 export type Filters = {
-  make: string | undefined;
-  model: string | undefined;
+  make?: string;
+  model?: string;
   mileageRange?: number[];
   yearRange?: number[];
-  fuelType: string | undefined;
-  gearbox: string | undefined;
-  canton: string | undefined;
+  fuelType?: string;
+  gearbox?: string;
+  canton?: string;
 };
 
 const initialFilters: Filters = {
@@ -59,14 +59,14 @@ export default function HomePageClient() {
   const filteredVehicles = useMemo(() => {
     return vehicles.filter(v => {
       if (!v) return false;
-      const makeFilter = filters.make || '';
-      const modelFilter = filters.model || '';
-      const fuelTypeFilter = filters.fuelType || '';
-      const gearboxFilter = filters.gearbox || '';
-      const cantonFilter = filters.canton || '';
+      const makeFilter = filters.make;
+      const modelFilter = filters.model;
+      const fuelTypeFilter = filters.fuelType;
+      const gearboxFilter = filters.gearbox;
+      const cantonFilter = filters.canton;
 
       if (makeFilter && v.make !== makeFilter) return false;
-      if (makeFilter && modelFilter && v.model !== modelFilter) return false;
+      if (modelFilter && v.model !== modelFilter) return false;
       
       if (filters.mileageRange && (v.mileage < filters.mileageRange[0] || v.mileage > filters.mileageRange[1])) return false;
       if (filters.yearRange && (v.year < filters.yearRange[0] || v.year > filters.yearRange[1])) return false;

@@ -22,7 +22,6 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
-import { Input } from '../ui/input';
 
 interface VehicleSearchFormProps {
   filters: Filters;
@@ -78,7 +77,6 @@ export default function VehicleSearchForm({
 
   const handleReset = () => {
     reset(defaultFilters);
-    onFilterChange(defaultFilters);
   };
   
   useEffect(() => {
@@ -108,16 +106,15 @@ export default function VehicleSearchForm({
                   render={({ field }) => (
                     <Select
                       onValueChange={(value) => {
-                        field.onChange(value);
+                        field.onChange(value === '' ? undefined : value);
                         setValue('model', undefined); 
                       }}
-                      value={field.value || ''}
+                      value={field.value}
                     >
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Toutes les marques" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Toutes les marques</SelectItem>
                         {makes.map(make => (
                           <SelectItem key={make} value={make}>
                             {make}
@@ -138,15 +135,14 @@ export default function VehicleSearchForm({
                   control={control}
                   render={({ field }) => (
                     <Select
-                      onValueChange={field.onChange}
-                      value={field.value || ''}
+                      onValueChange={(value) => field.onChange(value === '' ? undefined : value)}
+                      value={field.value}
                       disabled={!selectedMake || models.length === 0}
                     >
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Tous les modèles" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Tous les modèles</SelectItem>
                         {models.map(model => (
                           <SelectItem key={model} value={model}>
                             {model}
@@ -165,14 +161,13 @@ export default function VehicleSearchForm({
                   control={control}
                   render={({ field }) => (
                     <Select
-                      onValueChange={field.onChange}
-                      value={field.value || ''}
+                      onValueChange={(value) => field.onChange(value === '' ? undefined : value)}
+                      value={field.value}
                     >
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Tous types" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Tous types</SelectItem>
                         {FUEL_TYPES.map(type => (
                           <SelectItem key={type} value={type}>
                             {type}
@@ -193,14 +188,13 @@ export default function VehicleSearchForm({
                   control={control}
                   render={({ field }) => (
                     <Select
-                      onValueChange={field.onChange}
-                      value={field.value || ''}
+                      onValueChange={(value) => field.onChange(value === '' ? undefined : value)}
+                      value={field.value}
                     >
                       <SelectTrigger className="mt-1">
                         <SelectValue placeholder="Toute la Suisse" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Toute la Suisse</SelectItem>
                         {CANTONS.map(canton => (
                           <SelectItem key={canton.value} value={canton.value}>
                             {canton.label}
@@ -285,14 +279,13 @@ export default function VehicleSearchForm({
                       control={control}
                       render={({ field }) => (
                         <Select
-                           onValueChange={field.onChange}
-                           value={field.value || ''}
+                           onValueChange={(value) => field.onChange(value === '' ? undefined : value)}
+                           value={field.value}
                         >
                           <SelectTrigger className="mt-1">
                             <SelectValue placeholder="Toutes" />
                           </SelectTrigger>
                           <SelectContent>
-                             <SelectItem value="">Toutes</SelectItem>
                             {GEARBOX_TYPES.map(type => (
                               <SelectItem key={type} value={type}>
                                 {type}
