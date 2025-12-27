@@ -22,7 +22,7 @@ export type Filters = {
 const initialFilters: Filters = {
   make: undefined,
   model: undefined,
-  priceRange: [0, 100000000],
+  priceRange: [undefined, undefined],
   mileageRange: [0, 300000],
   yearRange: [1990, new Date().getFullYear()],
   fuelType: undefined,
@@ -67,12 +67,15 @@ export default function HomePageClient() {
       const gearboxFilter = filters.gearbox || '';
       const cantonFilter = filters.canton || '';
 
-      const minPrice = filters.priceRange?.[0] ?? 0;
-      const maxPrice = filters.priceRange?.[1] ?? 100000000;
+      const minPrice = filters.priceRange?.[0];
+      const maxPrice = filters.priceRange?.[1];
 
       if (makeFilter && v.make !== makeFilter) return false;
       if (makeFilter && modelFilter && v.model !== modelFilter) return false;
-      if (v.price < minPrice || v.price > maxPrice) return false;
+      
+      if (minPrice !== undefined && v.price < minPrice) return false;
+      if (maxPrice !== undefined && v.price > maxPrice) return false;
+      
       if (filters.mileageRange && (v.mileage < filters.mileageRange[0] || v.mileage > filters.mileageRange[1])) return false;
       if (filters.yearRange && (v.year < filters.yearRange[0] || v.year > filters.yearRange[1])) return false;
       if (fuelTypeFilter && v.fuelType !== fuelTypeFilter) return false;

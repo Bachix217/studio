@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import { CANTONS, FUEL_TYPES, GEARBOX_TYPES } from '@/lib/constants';
 import { Filters } from './HomePageClient';
 import type { Vehicle } from '@/lib/types';
-import { formatCurrency } from '@/lib/utils';
 import { RotateCcw, SlidersHorizontal } from 'lucide-react';
 import {
   Collapsible,
@@ -34,7 +33,7 @@ interface VehicleSearchFormProps {
 const defaultFilters: Filters = {
   make: undefined,
   model: undefined,
-  priceRange: [0, 100000000],
+  priceRange: [undefined, undefined],
   mileageRange: [0, 300000],
   yearRange: [1990, new Date().getFullYear()],
   fuelType: undefined,
@@ -47,18 +46,14 @@ export default function VehicleSearchForm({
   onFilterChange,
   allVehicles,
 }: VehicleSearchFormProps) {
-  const { control, watch, reset, setValue, handleSubmit, register } = useForm<Filters>({
+  const { control, watch, reset, setValue, handleSubmit } = useForm<Filters>({
     defaultValues: filters,
   });
 
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
 
   const selectedMake = watch('make');
-  
-  const onSubmit = (data: Filters) => {
-    onFilterChange(data);
-  };
-  
+
   const makes = useMemo(() => {
     const vehicleMakes = allVehicles.map(v => v.make);
     return [...new Set(vehicleMakes)].sort();
@@ -85,14 +80,14 @@ export default function VehicleSearchForm({
   };
   
   useEffect(() => {
-     const subscription = watch((value, { name }) => {
-        const newValues = {
-            ...value,
-            priceRange: [
-                Number(value.priceRange?.[0] || 0),
-                Number(value.priceRange?.[1] || 100000000)
-            ]
-        };
+     const subscription = watch((value) => {
+       const newValues = {
+         ...value,
+         priceRange: [
+           value.priceRange?.[0] === '' ? undefined : Number(value.priceRange?.[0]),
+           value.priceRange?.[1] === '' ? undefined : Number(value.priceRange?.[1])
+         ]
+       };
        onFilterChange(newValues as Filters);
     });
     return () => subscription.unsubscribe();
@@ -105,7 +100,7 @@ export default function VehicleSearchForm({
 
   return (
     <Card className="shadow-lg overflow-hidden">
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form>
           <CardContent className="p-4 md:p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
               <div>
@@ -251,7 +246,7 @@ export default function VehicleSearchForm({
                             name="priceRange.0"
                             control={control}
                             render={({ field }) => (
-                                <Input type="number" placeholder="Prix min." {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
+                                <Input type="number" placeholder="Prix min." {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
                             )}
                         />
                          <span>-</span>
@@ -259,7 +254,7 @@ export default function VehicleSearchForm({
                             name="priceRange.1"
                             control={control}
                             render={({ field }) => (
-                                <Input type="number" placeholder="Prix max." {...field} onChange={e => field.onChange(parseInt(e.target.value, 10))} />
+                                <Input type="number" placeholder="Prix max." {...field} value={field.value ?? ''} onChange={e => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
                             )}
                         />
                      </div>
