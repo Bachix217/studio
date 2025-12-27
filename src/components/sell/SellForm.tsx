@@ -30,14 +30,12 @@ import { useUser } from '@/firebase/auth/use-user';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
-import { useState, useRef } from 'react';
+import { useState, useRef, ChangeEvent } from 'react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 
 const MAX_IMAGES = 5;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-
-const imageSchema = z.custom<File>(file => file instanceof File, "Veuillez téléverser un fichier valide.");
 
 const formSchema = z.object({
   make: z.string().min(2, "La marque est requise."),
@@ -50,10 +48,10 @@ const formSchema = z.object({
   canton: z.string().min(2, "Le canton est requis."),
   description: z.string().min(20, "Veuillez fournir une description plus détaillée."),
   features: z.string().optional(),
-  images: z.array(imageSchema)
-    .min(1, 'Au moins une image est requise.')
-    .max(MAX_IMAGES, `Vous ne pouvez téléverser que ${MAX_IMAGES} images maximum.`)
-    .refine(files => files.every(file => file.size <= MAX_FILE_SIZE), `Chaque image doit peser moins de 5 Mo.`),
+  images: z.any()
+    .refine((files) => files instanceof FileList && files.length > 0, 'Au moins une image est requise.')
+    .refine((files) => files instanceof FileList && files.length <= MAX_IMAGES, `Vous ne pouvez téléverser que ${MAX_IMAGES} images maximum.`)
+    .refine((files) => files instanceof FileList && Array.from(files).every(file => file.size <= MAX_FILE_SIZE), `Chaque image doit peser moins de 5 Mo.`),
 });
 
 export default function SellForm() {
@@ -61,8 +59,7 @@ export default function SellForm() {
   const { firestore, storage } = useFirebase();
   const { user } = useUser();
   const router = useRouter();
-  const imageInputRef = useRef<HTMLInputElement>(null);
-
+  
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,17 +74,20 @@ export default function SellForm() {
       mileage: undefined,
       description: '',
       features: '',
-      images: [],
+      images: undefined,
     },
   });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, fieldChange: (files: File[]) => void) => {
+  const imageField = form.register('images');
+
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    imageField.onChange(e);
     const files = e.target.files;
     if (files) {
-      const fileArray = Array.from(files);
-      const newPreviews = fileArray.map(file => URL.createObjectURL(file));
-      setImagePreviews(newPreviews);
-      fieldChange(fileArray);
+        const newPreviews = Array.from(files).map(file => URL.createObjectURL(file));
+        setImagePreviews(newPreviews);
+    } else {
+        setImagePreviews([]);
     }
   };
 
@@ -106,7 +106,7 @@ export default function SellForm() {
 
     try {
       const imageUrls: string[] = [];
-      const imageFiles = values.images;
+      const imageFiles = Array.from(values.images);
 
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
@@ -156,9 +156,6 @@ export default function SellForm() {
       
       form.reset();
       setImagePreviews([]);
-      if (imageInputRef.current) {
-        imageInputRef.current.value = '';
-      }
       router.push(`/vehicles/${docRef.id}`);
 
     } catch (error: any) {
@@ -166,7 +163,7 @@ export default function SellForm() {
       toast({
         variant: "destructive",
         title: "Erreur lors de la publication",
-        description: "Une erreur est survenue. Veuillez réessayer.",
+        description: error.message || "Une erreur est survenue. Veuillez réessayer.",
       });
     } finally {
         setIsSubmitting(false);
@@ -323,7 +320,7 @@ export default function SellForm() {
             <FormField
               control={form.control}
               name="images"
-              render={({ field: { onChange, value, ...rest } }) => (
+              render={() => (
                 <FormItem>
                   <FormLabel>Photos ({imagePreviews.length}/{MAX_IMAGES})</FormLabel>
                    <FormControl>
@@ -340,10 +337,9 @@ export default function SellForm() {
                           className="hidden" 
                           multiple 
                           accept="image/png, image/jpeg, image/gif"
-                          onChange={(e) => handleImageChange(e, onChange)}
+                          {...imageField}
+                          onChange={handleImageChange}
                           disabled={isSubmitting}
-                          ref={imageInputRef}
-                          {...rest}
                         />
                       </label>
                     </div> 
@@ -379,5 +375,3 @@ export default function SellForm() {
     </Card>
   );
 }
-
-    
