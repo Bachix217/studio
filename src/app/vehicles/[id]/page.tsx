@@ -3,9 +3,8 @@ import { notFound, useParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
-import { Calendar, Cog, Fuel, Gauge, Mail, MessageCircle, CheckCircle, User, Globe, Building, MapPin, Phone, Car, Users, Settings, Palette, CigaretteOff, Check } from 'lucide-react';
+import { Calendar, Cog, Fuel, Gauge, CheckCircle, User, Building, MapPin, Globe, Car, Users, Settings, Palette, CigaretteOff, Check } from 'lucide-react';
 import ImageGallery from '@/components/vehicles/ImageGallery';
 import { useEffect, useState } from 'react';
 import { useFirebase } from '@/firebase';
@@ -14,6 +13,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import ProtectedContactButtons from '@/components/vehicles/ProtectedContactButtons';
+import { useUser } from '@/firebase/auth/use-user';
+
 
 export default function VehiclePage() {
   const { firestore } = useFirebase();
@@ -22,6 +24,7 @@ export default function VehiclePage() {
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [seller, setSeller] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user: currentUser } = useUser();
 
   useEffect(() => {
     if (!id || !firestore) return;
@@ -190,28 +193,9 @@ export default function VehiclePage() {
                         </div>
                       )}
                      
-                      <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                       {seller.sharePhoneNumber && seller.phone && (
-                        seller.userType === 'professionnel' ? (
-                          <Button asChild className="w-full" size="lg">
-                            <a href={`tel:${seller.phone}`}>
-                              <Phone className="mr-2" /> Appeler
-                            </a>
-                          </Button>
-                        ) : (
-                          <Button asChild className="w-full" size="lg">
-                            <a href={`https://wa.me/${seller.phone.replace(/\s/g, '')}`} target="_blank" rel="noopener noreferrer">
-                              <MessageCircle className="mr-2" /> WhatsApp
-                            </a>
-                          </Button>
-                        )
+                      {vehicle.userId !== currentUser?.uid && (
+                        <ProtectedContactButtons seller={seller} vehicle={vehicle} />
                       )}
-                      <Button asChild className="w-full" variant="outline" size="lg" disabled={!seller.email}>
-                         <a href={mailtoLink}>
-                          <Mail className="mr-2" /> E-mail
-                        </a>
-                      </Button>
-                    </div>
                     </CardContent>
                   </Card>
                 ) : (
