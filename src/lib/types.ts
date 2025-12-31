@@ -15,6 +15,16 @@ export type Vehicle = {
   images: string[];
   userId: string;
   createdAt: Timestamp;
+  // New fields
+  doors: 3 | 5;
+  seats: 2 | 5 | 7;
+  drive: 'Traction avant' | 'Propulsion' | '4x4';
+  power: number;
+  powerUnit: 'cv' | 'kw';
+  exteriorColor: string;
+  interiorColor: string;
+  condition: 'Neuf' | 'Occasion' | 'Véhicule de démonstration';
+  nonSmoker: boolean;
 };
 
 export type UserProfile = {

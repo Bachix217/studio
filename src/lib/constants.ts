@@ -31,3 +31,8 @@ export const CANTONS = [
 
 export const FUEL_TYPES: Vehicle['fuelType'][] = ['Essence', 'Diesel', 'Hybride', 'Électrique'];
 export const GEARBOX_TYPES: Vehicle['gearbox'][] = ['Manuelle', 'Automatique'];
+
+export const DOORS_TYPES: Vehicle['doors'][] = [3, 5];
+export const SEATS_TYPES: Vehicle['seats'][] = [2, 5, 7];
+export const DRIVE_TYPES: Vehicle['drive'][] = ['Traction avant', 'Propulsion', '4x4'];
+export const CONDITION_TYPES: Vehicle['condition'][] = ['Neuf', 'Occasion', 'Véhicule de démonstration'];

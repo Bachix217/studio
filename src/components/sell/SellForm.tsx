@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -22,9 +23,9 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { CANTONS, FUEL_TYPES, GEARBOX_TYPES } from '@/lib/constants';
+import { CANTONS, FUEL_TYPES, GEARBOX_TYPES, DOORS_TYPES, SEATS_TYPES, DRIVE_TYPES, CONDITION_TYPES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud } from 'lucide-react';
+import { UploadCloud, Check } from 'lucide-react';
 import { useFirebase } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
@@ -35,6 +36,8 @@ import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Label } from '@/components/ui/label';
 import imageCompression from 'browser-image-compression';
+import { Switch } from '../ui/switch';
+import { Separator } from '../ui/separator';
 
 const MAX_IMAGES = 5;
 
@@ -49,6 +52,16 @@ const formSchema = z.object({
   canton: z.string().min(2, "Le canton est requis."),
   description: z.string().min(20, "Veuillez fournir une description plus détaillée."),
   features: z.string().optional(),
+  // New fields
+  doors: z.coerce.number().min(1).max(7).positive(),
+  seats: z.coerce.number().min(1).max(9).positive(),
+  drive: z.enum(DRIVE_TYPES, { required_error: "Le type de traction est requis."}),
+  power: z.coerce.number().min(10, "La puissance est requise."),
+  powerUnit: z.enum(['cv', 'kw']),
+  exteriorColor: z.string().min(3, "La couleur est requise."),
+  interiorColor: z.string().min(3, "La couleur est requise."),
+  condition: z.enum(CONDITION_TYPES, { required_error: "L'état est requis."}),
+  nonSmoker: z.boolean().default(false),
 });
 
 export default function SellForm() {
@@ -76,6 +89,8 @@ export default function SellForm() {
       mileage: undefined,
       description: '',
       features: '',
+      powerUnit: 'cv',
+      nonSmoker: false,
     },
   });
 
@@ -307,7 +322,6 @@ export default function SellForm() {
                   </div>
                 </div>
 
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <FormField
                     control={form.control}
@@ -368,7 +382,7 @@ export default function SellForm() {
                     )}
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <FormField
                     control={form.control}
@@ -402,16 +416,16 @@ export default function SellForm() {
                       </FormItem>
                     )}
                   />
-                  <FormField
+                   <FormField
                     control={form.control}
-                    name="canton"
+                    name="drive"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Canton</FormLabel>
+                        <FormLabel>Type de traction</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger></FormControl>
                           <SelectContent>
-                            {CANTONS.map(canton => <SelectItem key={canton.value} value={canton.value}>{canton.label}</SelectItem>)}
+                            {DRIVE_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -419,6 +433,154 @@ export default function SellForm() {
                     )}
                   />
                 </div>
+
+                 <Separator />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <FormField
+                    control={form.control}
+                    name="doors"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre de portes</FormLabel>
+                         <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={String(field.value)}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {DOORS_TYPES.map(type => <SelectItem key={type} value={String(type)}>{type}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <FormField
+                    control={form.control}
+                    name="seats"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre de places</FormLabel>
+                        <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={String(field.value)}>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger></FormControl>
+                          <SelectContent>
+                            {SEATS_TYPES.map(type => <SelectItem key={type} value={String(type)}>{type}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                   <div className="flex gap-2">
+                        <FormField
+                        control={form.control}
+                        name="power"
+                        render={({ field }) => (
+                            <FormItem className="flex-grow">
+                                <FormLabel>Puissance</FormLabel>
+                                <FormControl><Input type="number" placeholder="ex: 150" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        <FormField
+                        control={form.control}
+                        name="powerUnit"
+                        render={({ field }) => (
+                            <FormItem className="flex-shrink-0 self-end">
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger className="w-[80px]"><SelectValue /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="cv">cv</SelectItem>
+                                        <SelectItem value="kw">kW</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </FormItem>
+                        )}
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <FormField
+                        control={form.control}
+                        name="exteriorColor"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Couleur extérieure</FormLabel>
+                            <FormControl><Input placeholder="ex: Gris Nardo" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="interiorColor"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Couleur intérieure</FormLabel>
+                            <FormControl><Input placeholder="ex: Cuir noir" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
+
+                 <Separator />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <FormField
+                        control={form.control}
+                        name="condition"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>État du véhicule</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger></FormControl>
+                            <SelectContent>
+                                {CONDITION_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                            </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="nonSmoker"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 mt-4 md:mt-0">
+                                <div className="space-y-0.5">
+                                <FormLabel>Véhicule non-fumeur</FormLabel>
+                                <FormDescription>
+                                    Cochez si le véhicule est non-fumeur.
+                                </FormDescription>
+                                </div>
+                                <FormControl>
+                                <Switch
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                />
+                                </FormControl>
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="canton"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Canton</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          {CANTONS.map(canton => <SelectItem key={canton.value} value={canton.value}>{canton.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={form.control}

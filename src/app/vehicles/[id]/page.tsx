@@ -1,19 +1,19 @@
 'use client';
-import { getVehicleById } from '@/lib/data';
 import { notFound, useParams } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
-import { Calendar, Cog, Fuel, Gauge, Mail, MessageCircle, CheckCircle, User, Globe, Building, MapPin, Phone } from 'lucide-react';
+import { Calendar, Cog, Fuel, Gauge, Mail, MessageCircle, CheckCircle, User, Globe, Building, MapPin, Phone, Car, Users, Settings, Palette, CigaretteOff, Check } from 'lucide-react';
 import ImageGallery from '@/components/vehicles/ImageGallery';
 import { useEffect, useState } from 'react';
 import { useFirebase } from '@/firebase';
 import type { Vehicle, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 
 export default function VehiclePage() {
   const { firestore } = useFirebase();
@@ -105,11 +105,21 @@ export default function VehiclePage() {
     );
   }
 
-  const specs = [
+  const mainSpecs = [
     { icon: Calendar, label: 'Année', value: vehicle.year },
     { icon: Gauge, label: 'Kilométrage', value: `${vehicle.mileage.toLocaleString('fr-CH')} km` },
     { icon: Fuel, label: 'Carburant', value: vehicle.fuelType },
     { icon: Cog, label: 'Boîte', value: vehicle.gearbox },
+  ];
+  
+  const secondarySpecs = [
+    { icon: Car, label: 'Portes', value: vehicle.doors },
+    { icon: Users, label: 'Places', value: vehicle.seats },
+    { icon: Settings, label: 'Traction', value: vehicle.drive },
+    { icon: Gauge, label: 'Puissance', value: `${vehicle.power} ${vehicle.powerUnit}` },
+    { icon: Palette, label: 'Extérieur', value: vehicle.exteriorColor },
+    { icon: Palette, label: 'Intérieur', value: vehicle.interiorColor },
+    { icon: Check, label: 'État', value: vehicle.condition },
   ];
   
   const mailSubject = encodeURIComponent(`Intérêt pour votre ${vehicle.make} ${vehicle.model} sur Tacoto.ch`);
@@ -131,7 +141,7 @@ export default function VehiclePage() {
               <p className="text-2xl font-semibold text-primary mt-2">{formatCurrency(vehicle.price)}</p>
               
               <div className="grid grid-cols-2 gap-4 mt-6 text-sm">
-                {specs.map(spec => (
+                {mainSpecs.map(spec => (
                   <div key={spec.label} className="flex items-center gap-2 text-muted-foreground">
                     <spec.icon className="text-primary" size={20} />
                     <div>
@@ -213,24 +223,55 @@ export default function VehiclePage() {
             </div>
           </div>
           
-          <div className="p-6 border-t">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Description</h2>
-                <p className="text-muted-foreground whitespace-pre-wrap">{vehicle.description}</p>
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold mb-4">Équipements</h2>
-                <ul className="space-y-2">
-                  {vehicle.features.map(feature => (
-                    <li key={feature} className="flex items-center gap-3">
-                      <CheckCircle className="text-green-500" size={18} />
-                      <span className="text-muted-foreground">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+          <div className="p-6 border-t space-y-8">
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Description</h2>
+              <p className="text-muted-foreground whitespace-pre-wrap">{vehicle.description}</p>
+            </div>
+
+            <Separator />
+            
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Caractéristiques</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                {secondarySpecs.map(spec => (
+                  spec.value && <div key={spec.label} className="flex items-center gap-3 bg-muted/50 p-3 rounded-md">
+                    <spec.icon className="text-primary" size={18} />
+                    <div>
+                      <p className="text-muted-foreground">{spec.label}</p>
+                      <p className="font-semibold text-foreground">{spec.value}</p>
+                    </div>
+                  </div>
+                ))}
+                 {vehicle.nonSmoker && (
+                  <div className="flex items-center gap-3 bg-muted/50 p-3 rounded-md">
+                    <CigaretteOff className="text-primary" size={18} />
+                    <div>
+                      <p className="text-muted-foreground">Non-fumeur</p>
+                      <p className="font-semibold text-foreground">Oui</p>
+                    </div>
+                  </div>
+                 )}
               </div>
             </div>
+
+            {vehicle.features && vehicle.features.length > 0 && (
+                <>
+                <Separator />
+                <div>
+                    <h2 className="text-xl font-semibold mb-4">Équipements</h2>
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2">
+                    {vehicle.features.map(feature => (
+                        <li key={feature} className="flex items-center gap-3 py-1">
+                        <CheckCircle className="text-green-500" size={18} />
+                        <span className="text-muted-foreground">{feature}</span>
+                        </li>
+                    ))}
+                    </ul>
+                </div>
+                </>
+            )}
+
           </div>
         </div>
       </main>
