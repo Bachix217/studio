@@ -1,4 +1,3 @@
-import type { Vehicle } from './types';
 
 export const CANTONS = [
   { value: 'AG', label: 'Argovie' },
@@ -29,10 +28,13 @@ export const CANTONS = [
   { value: 'ZH', label: 'Zurich' },
 ];
 
-export const FUEL_TYPES: readonly Vehicle['fuelType'][] = ['Essence', 'Diesel', 'Hybride', 'Électrique'];
-export const GEARBOX_TYPES: readonly Vehicle['gearbox'][] = ['Manuelle', 'Automatique'];
+export const FUEL_TYPES = ['Essence', 'Diesel', 'Hybride', 'Électrique'] as const;
+export const GEARBOX_TYPES = ['Manuelle', 'Automatique'] as const;
+export const DOORS_TYPES = [3, 5] as const;
+export const SEATS_TYPES = [2, 5, 7] as const;
+export const DRIVE_TYPES = ['Traction avant', 'Propulsion', '4x4'] as const;
+export const CONDITION_TYPES = ['Neuf', 'Occasion', 'Véhicule de démonstration'] as const;
+export const POWER_UNITS = ['cv', 'kw'] as const;
 
-export const DOORS_TYPES: readonly Vehicle['doors'][] = [3, 5];
-export const SEATS_TYPES: readonly Vehicle['seats'][] = [2, 5, 7];
-export const DRIVE_TYPES: readonly Vehicle['drive'][] = ['Traction avant', 'Propulsion', '4x4'];
-export const CONDITION_TYPES: readonly Vehicle['condition'][] = ['Neuf', 'Occasion', 'Véhicule de démonstration'];
+export const EXTERIOR_COLORS = ['Noir', 'Blanc', 'Gris', 'Argenté', 'Bleu', 'Rouge', 'Vert', 'Jaune', 'Orange', 'Brun', 'Beige', 'Violet', 'Autre'] as const;
+export const INTERIOR_COLORS = ['Noir', 'Gris', 'Beige', 'Brun', 'Blanc', 'Rouge', 'Bleu', 'Autre'] as const;

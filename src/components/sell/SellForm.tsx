@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { CANTONS, FUEL_TYPES, GEARBOX_TYPES, DOORS_TYPES, SEATS_TYPES, DRIVE_TYPES, CONDITION_TYPES } from '@/lib/constants';
+import { CANTONS, FUEL_TYPES, GEARBOX_TYPES, DOORS_TYPES, SEATS_TYPES, DRIVE_TYPES, CONDITION_TYPES, POWER_UNITS, EXTERIOR_COLORS, INTERIOR_COLORS } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
 import { UploadCloud, Check } from 'lucide-react';
 import { useFirebase } from '@/firebase';
@@ -52,14 +52,13 @@ const formSchema = z.object({
   canton: z.string().min(2, "Le canton est requis."),
   description: z.string().min(20, "Veuillez fournir une description plus détaillée."),
   features: z.string().optional(),
-  // New fields
-  doors: z.coerce.number().min(1).max(7).positive(),
-  seats: z.coerce.number().min(1).max(9).positive(),
+  doors: z.coerce.number({invalid_type_error: "Requis"}).min(2).max(7),
+  seats: z.coerce.number({invalid_type_error: "Requis"}).min(2).max(9),
   drive: z.enum(DRIVE_TYPES, { required_error: "Le type de traction est requis."}),
   power: z.coerce.number().min(10, "La puissance est requise."),
-  powerUnit: z.enum(['cv', 'kw']),
-  exteriorColor: z.string().min(3, "La couleur est requise."),
-  interiorColor: z.string().min(3, "La couleur est requise."),
+  powerUnit: z.enum(POWER_UNITS),
+  exteriorColor: z.enum(EXTERIOR_COLORS, { required_error: "La couleur est requise."}),
+  interiorColor: z.enum(INTERIOR_COLORS, { required_error: "La couleur est requise."}),
   condition: z.enum(CONDITION_TYPES, { required_error: "L'état est requis."}),
   nonSmoker: z.boolean().default(false),
 });
@@ -254,16 +253,16 @@ export default function SellForm() {
             <div className="space-y-8">
               <div>
                 <h3 className="text-lg font-medium">Étape 1 sur 2 : Photos du véhicule</h3>
-                <p className="text-sm text-muted-foreground">Téléversez jusqu'à {MAX_IMAGES} photos de votre voiture.</p>
+                <p className="text-sm text-muted-foreground">Téléversez jusqu'à ${MAX_IMAGES} photos de votre voiture.</p>
               </div>
               <div className="space-y-2">
-                  <Label htmlFor="dropzone-file">Photos ({imagePreviews.length}/{MAX_IMAGES})</Label>
+                  <Label htmlFor="dropzone-file">Photos (${imagePreviews.length}/${MAX_IMAGES})</Label>
                   <div className="flex items-center justify-center w-full">
                     <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-background hover:bg-muted transition">
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
                         <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
-                        <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images, elles seront compressées</p>
+                        <p className="text-xs text-muted-foreground">Jusqu'à ${MAX_IMAGES} images, elles seront compressées</p>
                       </div>
                       <Input 
                         id="dropzone-file" 
@@ -489,8 +488,7 @@ export default function SellForm() {
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                     <FormControl><SelectTrigger className="w-[80px]"><SelectValue /></SelectTrigger></FormControl>
                                     <SelectContent>
-                                        <SelectItem value="cv">cv</SelectItem>
-                                        <SelectItem value="kw">kW</SelectItem>
+                                        {POWER_UNITS.map(unit => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </FormItem>
@@ -506,7 +504,12 @@ export default function SellForm() {
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>Couleur extérieure</FormLabel>
-                            <FormControl><Input placeholder="ex: Gris Nardo" {...field} /></FormControl>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {EXTERIOR_COLORS.map(color => <SelectItem key={color} value={color}>{color}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
                             <FormMessage />
                         </FormItem>
                         )}
@@ -517,7 +520,12 @@ export default function SellForm() {
                         render={({ field }) => (
                         <FormItem>
                             <FormLabel>Couleur intérieure</FormLabel>
-                            <FormControl><Input placeholder="ex: Cuir noir" {...field} /></FormControl>
+                             <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {INTERIOR_COLORS.map(color => <SelectItem key={color} value={color}>{color}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
                             <FormMessage />
                         </FormItem>
                         )}

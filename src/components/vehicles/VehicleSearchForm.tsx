@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
-import { CANTONS, FUEL_TYPES, GEARBOX_TYPES, DRIVE_TYPES, SEATS_TYPES, CONDITION_TYPES } from '@/lib/constants';
+import { CANTONS, FUEL_TYPES, GEARBOX_TYPES, DRIVE_TYPES, SEATS_TYPES, CONDITION_TYPES, EXTERIOR_COLORS, INTERIOR_COLORS } from '@/lib/constants';
 import { Filters } from './HomePageClient';
 import type { Vehicle } from '@/lib/types';
 import { RotateCcw, SlidersHorizontal } from 'lucide-react';
@@ -36,6 +36,8 @@ const defaultFilters: Filters = {
   drive: undefined,
   seats: undefined,
   condition: undefined,
+  exteriorColor: undefined,
+  interiorColor: undefined,
 };
 
 interface VehicleSearchFormProps {
@@ -413,6 +415,54 @@ export default function VehicleSearchForm({
                           </SelectTrigger>
                           <SelectContent>
                             {CONDITION_TYPES.map(type => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                   <div>
+                    <label className="text-sm font-medium text-muted-foreground">Couleur extérieure</label>
+                    <Controller
+                      name="exteriorColor"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                           onValueChange={(value) => field.onChange(value)}
+                           value={field.value || ''}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Toutes" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {EXTERIOR_COLORS.map(type => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                   <div>
+                    <label className="text-sm font-medium text-muted-foreground">Couleur intérieure</label>
+                    <Controller
+                      name="interiorColor"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                           onValueChange={(value) => field.onChange(value)}
+                           value={field.value || ''}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Toutes" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {INTERIOR_COLORS.map(type => (
                               <SelectItem key={type} value={type}>
                                 {type}
                               </SelectItem>

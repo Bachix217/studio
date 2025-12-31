@@ -7,6 +7,7 @@ import VehicleList from './VehicleList';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFirebase } from '@/firebase';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { EXTERIOR_COLORS, INTERIOR_COLORS } from '@/lib/constants';
 
 export type Filters = {
   make?: string;
@@ -20,6 +21,8 @@ export type Filters = {
   drive?: string;
   seats?: number;
   condition?: string;
+  exteriorColor?: typeof EXTERIOR_COLORS[number];
+  interiorColor?: typeof INTERIOR_COLORS[number];
 };
 
 const initialFilters: Filters = {
@@ -34,6 +37,8 @@ const initialFilters: Filters = {
   drive: undefined,
   seats: undefined,
   condition: undefined,
+  exteriorColor: undefined,
+  interiorColor: undefined,
 };
 
 
@@ -80,6 +85,8 @@ export default function HomePageClient() {
         drive,
         seats,
         condition,
+        exteriorColor,
+        interiorColor,
       } = filters;
 
       const [minPrice, maxPrice] = priceRange || [undefined, undefined];
@@ -99,6 +106,8 @@ export default function HomePageClient() {
       if (drive && v.drive !== drive) return false;
       if (seats && v.seats !== seats) return false;
       if (condition && v.condition !== condition) return false;
+      if (exteriorColor && v.exteriorColor !== exteriorColor) return false;
+      if (interiorColor && v.interiorColor !== interiorColor) return false;
       
       return true;
     });

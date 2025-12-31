@@ -1,4 +1,6 @@
 import { Timestamp } from "firebase/firestore";
+import { CONDITION_TYPES, DRIVE_TYPES, DOORS_TYPES, FUEL_TYPES, GEARBOX_TYPES, SEATS_TYPES, POWER_UNITS, EXTERIOR_COLORS, INTERIOR_COLORS } from "./constants";
+
 
 export type Vehicle = {
   id: string;
@@ -7,8 +9,8 @@ export type Vehicle = {
   year: number;
   price: number;
   mileage: number;
-  fuelType: 'Essence' | 'Diesel' | 'Hybride' | 'Électrique';
-  gearbox: 'Manuelle' | 'Automatique';
+  fuelType: typeof FUEL_TYPES[number];
+  gearbox: typeof GEARBOX_TYPES[number];
   canton: string;
   description: string;
   features: string[];
@@ -16,14 +18,14 @@ export type Vehicle = {
   userId: string;
   createdAt: Timestamp;
   // New fields
-  doors: 3 | 5;
-  seats: 2 | 5 | 7;
-  drive: 'Traction avant' | 'Propulsion' | '4x4';
+  doors: typeof DOORS_TYPES[number];
+  seats: typeof SEATS_TYPES[number];
+  drive: typeof DRIVE_TYPES[number];
   power: number;
-  powerUnit: 'cv' | 'kw';
-  exteriorColor: string;
-  interiorColor: string;
-  condition: 'Neuf' | 'Occasion' | 'Véhicule de démonstration';
+  powerUnit: typeof POWER_UNITS[number];
+  exteriorColor: typeof EXTERIOR_COLORS[number];
+  interiorColor: typeof INTERIOR_COLORS[number];
+  condition: typeof CONDITION_TYPES[number];
   nonSmoker: boolean;
 };
 
