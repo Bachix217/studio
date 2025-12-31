@@ -34,9 +34,9 @@ import { useState, ChangeEvent } from 'react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Label } from '@/components/ui/label';
+import imageCompression from 'browser-image-compression';
 
 const MAX_IMAGES = 5;
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const formSchema = z.object({
   make: z.string().min(2, "La marque est requise."),
@@ -63,6 +63,7 @@ export default function SellForm() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -87,35 +88,54 @@ export default function SellForm() {
       setImageError(`Vous ne pouvez téléverser que ${MAX_IMAGES} images maximum.`);
       return false;
     }
-    for (const file of files) {
-      if (file.size > MAX_FILE_SIZE) {
-        setImageError(`Chaque image doit peser moins de 5 Mo.`);
-        return false;
-      }
-    }
     setImageError(null);
     return true;
   };
-
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+  
+  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
-    if (files.length > 0) {
-        if (!validateImages(files)) {
-          setImageFiles([]);
-          setImagePreviews([]);
-          return;
-        }
-        setImageFiles(files);
-        const newPreviews = files.map(file => URL.createObjectURL(file));
+    if (files.length === 0) {
+        setImageFiles([]);
+        setImagePreviews([]);
+        setImageError(null);
+        return;
+    }
+
+    if (!validateImages(files)) {
+        setImageFiles([]);
+        setImagePreviews([]);
+        return;
+    }
+    
+    setIsCompressing(true);
+    toast({ title: 'Compression des images...', description: 'Veuillez patienter.' });
+    
+    try {
+        const compressionOptions = {
+            maxSizeMB: 2,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+        };
+
+        const compressedFiles = await Promise.all(
+            files.map(file => imageCompression(file, compressionOptions))
+        );
+
+        setImageFiles(compressedFiles);
+        const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
         setImagePreviews(newPreviews);
         setImageError(null);
-    } else {
-      setImageFiles([]);
-      setImagePreviews([]);
-      setImageError('Au moins une image est requise.');
+        toast({ title: 'Compression terminée !', description: 'Vos images sont prêtes à être téléversées.' });
+
+    } catch (error) {
+        console.error('Image compression error:', error);
+        setImageError('Une erreur est survenue lors de la compression des images.');
+        toast({ variant: 'destructive', title: 'Erreur de compression', description: 'Impossible de compresser les images.' });
+    } finally {
+        setIsCompressing(false);
     }
-  };
-  
+};
+
   const handleImageUpload = async () => {
     if (!validateImages(imageFiles) || !user) return;
 
@@ -228,7 +248,7 @@ export default function SellForm() {
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
                         <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
-                        <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images (max 5Mo chacune)</p>
+                        <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images, elles seront compressées</p>
                       </div>
                       <Input 
                         id="dropzone-file" 
@@ -237,7 +257,7 @@ export default function SellForm() {
                         multiple 
                         accept="image/png, image/jpeg, image/gif, image/webp"
                         onChange={handleImageChange}
-                        disabled={isUploading}
+                        disabled={isUploading || isCompressing}
                       />
                     </label>
                   </div> 
@@ -261,8 +281,8 @@ export default function SellForm() {
                 </div>
               )}
 
-              <Button onClick={handleImageUpload} disabled={isUploading || imageFiles.length === 0 || !!imageError}>
-                {isUploading ? 'Téléversement...' : 'Continuer'}
+              <Button onClick={handleImageUpload} disabled={isUploading || isCompressing || imageFiles.length === 0 || !!imageError}>
+                {isUploading ? 'Téléversement...' : (isCompressing ? 'Compression...' : 'Continuer')}
               </Button>
             </div>
           )}
