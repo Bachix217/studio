@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RecaptchaVerifier, linkWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
 import { useUser } from '@/firebase/auth/use-user';
@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 declare global {
   interface Window {
     recaptchaVerifier?: RecaptchaVerifier;
-    grecaptcha?: any;
+    confirmationResult?: ConfirmationResult;
   }
 }
 
@@ -30,22 +30,9 @@ export default function VerifyPhonePage() {
 
   const [phoneNumber, setPhoneNumber] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [codeSent, setCodeSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!auth) return;
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': () => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-        }
-      });
-    }
-  }, [auth]);
 
   useEffect(() => {
     if (!userLoading && user?.phoneNumber) {
@@ -60,16 +47,24 @@ export default function VerifyPhonePage() {
       setError('Veuillez entrer un numéro de téléphone suisse valide (ex: +41791234567).');
       return;
     }
-    if (!auth || !user || !window.recaptchaVerifier) {
+    if (!auth || !user) {
       setError('Le service d\'authentification n\'est pas prêt.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const appVerifier = window.recaptchaVerifier;
-      const confirmation = await linkWithPhoneNumber(user, phoneNumber, appVerifier);
-      setConfirmationResult(confirmation);
+      // Initialize RecaptchaVerifier on demand
+      const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': (response: any) => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        }
+      });
+      window.recaptchaVerifier = recaptchaVerifier;
+
+      const confirmation = await linkWithPhoneNumber(user, phoneNumber, recaptchaVerifier);
+      window.confirmationResult = confirmation;
       setCodeSent(true);
       toast({
         title: 'Code envoyé !',
@@ -78,12 +73,6 @@ export default function VerifyPhonePage() {
     } catch (e: any) {
       console.error("Error sending verification code:", e);
       setError(e.message || "Une erreur est survenue lors de l'envoi du code.");
-      // Reset reCAPTCHA so user can try again
-      if (window.grecaptcha && window.recaptchaVerifier) {
-        window.recaptchaVerifier.render().then(widgetId => {
-            window.grecaptcha.reset(widgetId);
-        });
-      }
     } finally {
       setIsSubmitting(false);
     }
@@ -95,14 +84,14 @@ export default function VerifyPhonePage() {
       setError('Veuillez entrer un code de vérification à 6 chiffres.');
       return;
     }
-    if (!confirmationResult) {
+    if (!window.confirmationResult) {
       setError('Veuillez d\'abord demander un code de vérification.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await confirmationResult.confirm(verificationCode);
+      await window.confirmationResult.confirm(verificationCode);
       toast({
         title: 'Numéro vérifié !',
         description: 'Votre numéro de téléphone a été vérifié avec succès.',
