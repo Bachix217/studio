@@ -79,11 +79,11 @@ export default function VerifyPhonePage() {
       console.error("Error sending verification code:", e);
       setError(e.message || "Une erreur est survenue lors de l'envoi du code.");
       // Reset reCAPTCHA so user can try again
-      window.recaptchaVerifier?.render().then(widgetId => {
-          if (window.grecaptcha) {
-              window.grecaptcha.reset(widgetId);
-          }
-      });
+      if (window.grecaptcha && window.recaptchaVerifier) {
+        window.recaptchaVerifier.render().then(widgetId => {
+            window.grecaptcha.reset(widgetId);
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
