@@ -28,7 +28,8 @@ export default function BottomNavBar() {
   const { user } = useUser();
   const pathname = usePathname();
 
-  const isFullUser = user && !user.isAnonymous;
+  // An authenticated user must have an email. Anonymous users do not.
+  const isFullUser = user && user.email;
 
   const hiddenOnPages = ['/login', '/signup', '/sell'];
 

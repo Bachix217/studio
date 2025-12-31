@@ -49,7 +49,8 @@ export default function Header() {
     router.push(path);
   }
 
-  const isFullUser = user && !user.isAnonymous;
+  // An authenticated user must have an email. Anonymous users do not.
+  const isFullUser = user && user.email;
 
   const UserMenuDesktop = () => (
     <DropdownMenu>
