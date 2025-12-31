@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
-import { CANTONS, FUEL_TYPES, GEARBOX_TYPES } from '@/lib/constants';
+import { CANTONS, FUEL_TYPES, GEARBOX_TYPES, DRIVE_TYPES, SEATS_TYPES, CONDITION_TYPES } from '@/lib/constants';
 import { Filters } from './HomePageClient';
 import type { Vehicle } from '@/lib/types';
 import { RotateCcw, SlidersHorizontal } from 'lucide-react';
@@ -33,7 +33,16 @@ const defaultFilters: Filters = {
   fuelType: undefined,
   gearbox: undefined,
   canton: undefined,
+  drive: undefined,
+  seats: undefined,
+  condition: undefined,
 };
+
+interface VehicleSearchFormProps {
+  filters: Filters;
+  onFilterChange: (filters: Filters) => void;
+  allVehicles: Vehicle[];
+}
 
 export default function VehicleSearchForm({
   filters,
@@ -86,6 +95,10 @@ export default function VehicleSearchForm({
         isNaN(minPrice as number) ? undefined : minPrice,
         isNaN(maxPrice as number) ? undefined : maxPrice
       ];
+      
+      if (value.seats && typeof value.seats === 'string') {
+        newFilters.seats = parseInt(value.seats, 10);
+      }
       
       onFilterChange(newFilters as Filters);
     });
@@ -160,30 +173,56 @@ export default function VehicleSearchForm({
                 />
               </div>
 
-               <div>
-                <label className="text-sm font-medium text-muted-foreground">Carburant</label>
-                 <Controller
-                  name="fuelType"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      onValueChange={(value) => field.onChange(value)}
-                      value={field.value || ''}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Tous types" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {FUEL_TYPES.map(type => (
-                          <SelectItem key={type} value={type}>
-                            {type}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
+               <div className="grid grid-cols-2 gap-4">
+                 <div>
+                    <label className="text-sm font-medium text-muted-foreground">Carburant</label>
+                    <Controller
+                      name="fuelType"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          onValueChange={(value) => field.onChange(value)}
+                          value={field.value || ''}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Tous" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {FUEL_TYPES.map(type => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                 </div>
+                 <div>
+                    <label className="text-sm font-medium text-muted-foreground">Boîte</label>
+                    <Controller
+                      name="gearbox"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                           onValueChange={(value) => field.onChange(value)}
+                           value={field.value || ''}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Toutes" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {GEARBOX_TYPES.map(type => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+               </div>
 
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
@@ -233,7 +272,7 @@ export default function VehicleSearchForm({
 
               <CollapsibleContent className="mt-6">
                 <Separator className="mb-6" />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
                   <div className="space-y-3">
                     <label className="text-sm font-medium">Prix (CHF)</label>
                     <div className="flex items-center gap-2">
@@ -308,11 +347,11 @@ export default function VehicleSearchForm({
                       <span>{currentYearRange![1]}</span>
                     </div>
                   </div>
-
-                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Boîte</label>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Traction</label>
                     <Controller
-                      name="gearbox"
+                      name="drive"
                       control={control}
                       render={({ field }) => (
                         <Select
@@ -323,7 +362,7 @@ export default function VehicleSearchForm({
                             <SelectValue placeholder="Toutes" />
                           </SelectTrigger>
                           <SelectContent>
-                            {GEARBOX_TYPES.map(type => (
+                            {DRIVE_TYPES.map(type => (
                               <SelectItem key={type} value={type}>
                                 {type}
                               </SelectItem>
@@ -333,6 +372,57 @@ export default function VehicleSearchForm({
                       )}
                     />
                   </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Places</label>
+                    <Controller
+                      name="seats"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                           onValueChange={(value) => field.onChange(value)}
+                           value={field.value ? String(field.value) : ''}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Toutes" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SEATS_TYPES.map(type => (
+                              <SelectItem key={type} value={String(type)}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">État</label>
+                    <Controller
+                      name="condition"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                           onValueChange={(value) => field.onChange(value)}
+                           value={field.value || ''}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Tous" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CONDITION_TYPES.map(type => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+
                  </div>
 
                 <div className="flex justify-end mt-6">

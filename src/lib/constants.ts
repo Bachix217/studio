@@ -29,10 +29,10 @@ export const CANTONS = [
   { value: 'ZH', label: 'Zurich' },
 ];
 
-export const FUEL_TYPES: Vehicle['fuelType'][] = ['Essence', 'Diesel', 'Hybride', 'Électrique'];
-export const GEARBOX_TYPES: Vehicle['gearbox'][] = ['Manuelle', 'Automatique'];
+export const FUEL_TYPES: readonly Vehicle['fuelType'][] = ['Essence', 'Diesel', 'Hybride', 'Électrique'];
+export const GEARBOX_TYPES: readonly Vehicle['gearbox'][] = ['Manuelle', 'Automatique'];
 
-export const DOORS_TYPES: Vehicle['doors'][] = [3, 5];
-export const SEATS_TYPES: Vehicle['seats'][] = [2, 5, 7];
-export const DRIVE_TYPES: Vehicle['drive'][] = ['Traction avant', 'Propulsion', '4x4'];
-export const CONDITION_TYPES: Vehicle['condition'][] = ['Neuf', 'Occasion', 'Véhicule de démonstration'];
+export const DOORS_TYPES: readonly Vehicle['doors'][] = [3, 5];
+export const SEATS_TYPES: readonly Vehicle['seats'][] = [2, 5, 7];
+export const DRIVE_TYPES: readonly Vehicle['drive'][] = ['Traction avant', 'Propulsion', '4x4'];
+export const CONDITION_TYPES: readonly Vehicle['condition'][] = ['Neuf', 'Occasion', 'Véhicule de démonstration'];

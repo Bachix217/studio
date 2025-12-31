@@ -17,6 +17,9 @@ export type Filters = {
   fuelType?: string;
   gearbox?: string;
   canton?: string;
+  drive?: string;
+  seats?: number;
+  condition?: string;
 };
 
 const initialFilters: Filters = {
@@ -28,6 +31,9 @@ const initialFilters: Filters = {
   fuelType: undefined,
   gearbox: undefined,
   canton: undefined,
+  drive: undefined,
+  seats: undefined,
+  condition: undefined,
 };
 
 
@@ -61,25 +67,39 @@ export default function HomePageClient() {
   const filteredVehicles = useMemo(() => {
     return vehicles.filter(v => {
       if (!v) return false;
-      const makeFilter = filters.make;
-      const modelFilter = filters.model;
-      const fuelTypeFilter = filters.fuelType;
-      const gearboxFilter = filters.gearbox;
-      const cantonFilter = filters.canton;
+      
+      const {
+        make,
+        model,
+        priceRange,
+        mileageRange,
+        yearRange,
+        fuelType,
+        gearbox,
+        canton,
+        drive,
+        seats,
+        condition,
+      } = filters;
 
-      const [minPrice, maxPrice] = filters.priceRange || [undefined, undefined];
+      const [minPrice, maxPrice] = priceRange || [undefined, undefined];
 
-      if (makeFilter && v.make !== makeFilter) return false;
-      if (modelFilter && v.model !== modelFilter) return false;
+      if (make && v.make !== make) return false;
+      if (model && v.model !== model) return false;
 
       if (typeof minPrice === 'number' && v.price < minPrice) return false;
       if (typeof maxPrice === 'number' && v.price > maxPrice) return false;
       
-      if (filters.mileageRange && (v.mileage < filters.mileageRange[0] || v.mileage > filters.mileageRange[1])) return false;
-      if (filters.yearRange && (v.year < filters.yearRange[0] || v.year > filters.yearRange[1])) return false;
-      if (fuelTypeFilter && v.fuelType !== fuelTypeFilter) return false;
-      if (gearboxFilter && v.gearbox !== gearboxFilter) return false;
-      if (cantonFilter && v.canton !== cantonFilter) return false;
+      if (mileageRange && (v.mileage < mileageRange[0] || v.mileage > mileageRange[1])) return false;
+      if (yearRange && (v.year < yearRange[0] || v.year > yearRange[1])) return false;
+      
+      if (fuelType && v.fuelType !== fuelType) return false;
+      if (gearbox && v.gearbox !== gearbox) return false;
+      if (canton && v.canton !== canton) return false;
+      if (drive && v.drive !== drive) return false;
+      if (seats && v.seats !== seats) return false;
+      if (condition && v.condition !== condition) return false;
+      
       return true;
     });
   }, [filters, vehicles]);
