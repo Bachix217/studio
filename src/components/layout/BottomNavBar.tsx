@@ -28,6 +28,8 @@ export default function BottomNavBar() {
   const { user } = useUser();
   const pathname = usePathname();
 
+  const isFullUser = user && !user.isAnonymous;
+
   const hiddenOnPages = ['/login', '/signup', '/sell'];
 
   if (!isMobile || hiddenOnPages.includes(pathname)) {
@@ -38,7 +40,7 @@ export default function BottomNavBar() {
     <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-card border-t z-50">
       <div className="container h-full mx-auto px-4">
         <div className="flex justify-around items-center h-full">
-          {user ? (
+          {isFullUser ? (
             <>
               <NavLink href="/" icon={Home} label="Accueil" />
               <NavLink href="/sell" icon={PlusCircle} label="Vendre" />

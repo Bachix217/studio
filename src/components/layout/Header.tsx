@@ -49,6 +49,8 @@ export default function Header() {
     router.push(path);
   }
 
+  const isFullUser = user && !user.isAnonymous;
+
   const UserMenuDesktop = () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -114,7 +116,7 @@ export default function Header() {
           </SheetHeader>
           <div className="flex flex-col h-full p-4">
               <div className="flex-grow">
-                {user ? (
+                {isFullUser ? (
                   <div className="flex flex-col h-full">
                     <div className="flex items-center gap-3 mb-4">
                       <Avatar className="h-12 w-12">
@@ -157,7 +159,7 @@ export default function Header() {
                          </Button>
                     ))}
                  </nav>
-                {user && (
+                {isFullUser && (
                   <>
                   <Separator className="my-4" />
                   <Button variant="outline" className="w-full" onClick={handleLogout}>
@@ -182,7 +184,7 @@ export default function Header() {
               <Car size={28} />
               <span>Tacoto.ch</span>
             </Link>
-             {user && (
+             {isFullUser && (
               <nav className="hidden md:flex items-center gap-2">
                  <Button variant="ghost" asChild>
                   <Link href="/sell" className="font-semibold">Vendre ma voiture</Link>
@@ -195,7 +197,7 @@ export default function Header() {
           </div>
           
           <div className="hidden md:flex items-center gap-4">
-            {user ? <UserMenuDesktop /> : <GuestLinks />}
+            {isFullUser ? <UserMenuDesktop /> : <GuestLinks />}
           </div>
 
           <div className="md:hidden">
