@@ -72,7 +72,17 @@ export default function VerifyPhonePage() {
       });
     } catch (e: any) {
       console.error("Error sending verification code:", e);
-      setError(e.message || "Une erreur est survenue lors de l'envoi du code.");
+      let errorMessage = "Une erreur est survenue lors de l'envoi du code.";
+      if (e.code === 'auth/missing-sms-code') {
+          errorMessage = 'Code de vérification manquant.';
+      } else if (e.code === 'auth/invalid-phone-number') {
+          errorMessage = 'Le numéro de téléphone est invalide.';
+      } else if (e.code === 'auth/too-many-requests') {
+          errorMessage = 'Trop de tentatives. Veuillez réessayer plus tard.';
+      } else {
+          errorMessage = "Impossible d'envoyer le code. Assurez-vous que votre projet Firebase est configuré pour l'authentification par téléphone (plan Blaze ou numéros de test).";
+      }
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
