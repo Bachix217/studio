@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { RecaptchaVerifier, signInWithPhoneNumber, linkWithPhoneNumber, PhoneAuthProvider, type ConfirmationResult } from 'firebase/auth';
+import { RecaptchaVerifier, linkWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
 import { useUser } from '@/firebase/auth/use-user';
 import { useFirebase } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 declare global {
   interface Window {
     recaptchaVerifier?: RecaptchaVerifier;
+    grecaptcha?: any;
   }
 }
 
@@ -34,7 +35,7 @@ export default function VerifyPhonePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const setupRecaptcha = useCallback(() => {
+  useEffect(() => {
     if (!auth) return;
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
@@ -45,10 +46,6 @@ export default function VerifyPhonePage() {
       });
     }
   }, [auth]);
-
-  useEffect(() => {
-    setupRecaptcha();
-  }, [setupRecaptcha]);
 
   useEffect(() => {
     if (!userLoading && user?.phoneNumber) {
