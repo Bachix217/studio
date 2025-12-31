@@ -33,7 +33,7 @@ export type UserProfile = {
   uid: string;
   email: string;
   displayName: string;
-  phone?: string;
+  phone: string;
   sharePhoneNumber?: boolean;
   createdAt: Timestamp | Date;
   userType?: 'particulier' | 'professionnel';

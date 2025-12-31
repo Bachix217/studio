@@ -28,10 +28,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Phone, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères.'),
-  phone: z.string().optional(),
+  // Phone number is now read-only from the form, it is set via SMS verification
   sharePhoneNumber: z.boolean().optional(),
   userType: z.enum(['particulier', 'professionnel']).default('particulier'),
   companyName: z.string().optional(),
@@ -59,7 +62,6 @@ export default function ProfilePage() {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       displayName: '',
-      phone: '',
       sharePhoneNumber: false,
       userType: 'particulier',
       companyName: '',
@@ -86,13 +88,18 @@ export default function ProfilePage() {
 
       if (docSnap.exists()) {
         userProfile = docSnap.data() as UserProfile;
+        // Sync phone number from auth to firestore profile
+        if (user.phoneNumber && userProfile.phone !== user.phoneNumber) {
+          userProfile.phone = user.phoneNumber;
+          await setDoc(profileDocRef, { phone: user.phoneNumber }, { merge: true });
+        }
       } else {
         // Profile doesn't exist, create a new one
         const newProfile: UserProfile = {
           uid: user.uid,
           email: user.email || '',
           displayName: user.displayName || user.email?.split('@')[0] || 'Utilisateur',
-          phone: '',
+          phone: user.phoneNumber || '',
           sharePhoneNumber: false,
           createdAt: serverTimestamp(),
           userType: 'particulier',
@@ -104,7 +111,6 @@ export default function ProfilePage() {
       setProfile(userProfile);
       form.reset({
         displayName: userProfile.displayName,
-        phone: userProfile.phone || '',
         sharePhoneNumber: userProfile.sharePhoneNumber || false,
         userType: userProfile.userType || 'particulier',
         companyName: userProfile.companyName || '',
@@ -123,7 +129,7 @@ export default function ProfilePage() {
 
     const profileDocRef = doc(firestore, 'users', user.uid);
     try {
-      const updateData: Partial<UserProfile> = {
+      const updateData: Partial<Omit<UserProfile, 'phone'>> = {
         ...values,
         uid: user.uid,
       };
@@ -193,6 +199,19 @@ export default function ProfilePage() {
               </p>
           </header>
 
+          {!user?.phoneNumber && (
+             <Alert variant="destructive" className="mb-8">
+                <Phone className="h-4 w-4" />
+                <AlertTitle>Vérification requise</AlertTitle>
+                <AlertDescription>
+                  Vous devez vérifier votre numéro de téléphone pour pouvoir publier des annonces.
+                  <Button asChild variant="link" className="font-bold p-0 ml-1 h-auto">
+                      <Link href="/verify-phone?redirect=/profile">Vérifier maintenant</Link>
+                  </Button>
+                </AlertDescription>
+            </Alert>
+          )}
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
               
@@ -260,47 +279,56 @@ export default function ProfilePage() {
                       </FormItem>
                     )}
                   />
-                  {userType === 'particulier' && (
-                    <>
-                    <Separator />
-                     <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Téléphone de contact (pour WhatsApp)</FormLabel>
-                            <FormControl>
-                              <Input type="tel" placeholder="+41 79 123 45 67" {...field} value={field.value ?? ''} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                       <FormField
-                        control={form.control}
-                        name="sharePhoneNumber"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                              <FormLabel className="text-base">
-                                Partager mon numéro
-                              </FormLabel>
-                              <FormDescription>
-                                Autoriser les acheteurs à vous contacter via WhatsApp.
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </>
-                  )}
                 </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Numéro de téléphone</CardTitle>
+                </CardHeader>
+                 <CardContent className="space-y-6">
+                    {user?.phoneNumber ? (
+                         <div className="space-y-4">
+                            <Alert>
+                                <CheckCircle className="h-4 w-4" />
+                                <AlertTitle>Numéro vérifié</AlertTitle>
+                                <AlertDescription>
+                                    Votre numéro de contact est le <strong>{user.phoneNumber}</strong>.
+                                </AlertDescription>
+                            </Alert>
+
+                            <FormField
+                                control={form.control}
+                                name="sharePhoneNumber"
+                                render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                    <div className="space-y-0.5">
+                                    <FormLabel className="text-base">
+                                        Partager mon numéro
+                                    </FormLabel>
+                                    <FormDescription>
+                                        Autoriser les acheteurs à vous contacter via ce numéro.
+                                    </FormDescription>
+                                    </div>
+                                    <FormControl>
+                                    <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                    />
+                                    </FormControl>
+                                </FormItem>
+                                )}
+                            />
+                         </div>
+                    ) : (
+                         <div className="space-y-2">
+                             <p className="text-sm text-muted-foreground">Aucun numéro de téléphone n'a été vérifié.</p>
+                             <Button asChild variant="secondary">
+                                 <Link href="/verify-phone?redirect=/profile">Vérifier un numéro</Link>
+                             </Button>
+                         </div>
+                    )}
+                 </CardContent>
               </Card>
 
               {userType === 'professionnel' && (
@@ -346,42 +374,6 @@ export default function ProfilePage() {
                               <Input type="url" placeholder="https://www.votregarage.ch" {...field} value={field.value ?? ''}/>
                             </FormControl>
                             <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Separator />
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Téléphone de contact</FormLabel>
-                            <FormControl>
-                              <Input type="tel" placeholder="+41 22 123 45 67" {...field} value={field.value ?? ''} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                       <FormField
-                        control={form.control}
-                        name="sharePhoneNumber"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                            <div className="space-y-0.5">
-                              <FormLabel className="text-base">
-                                Partager le numéro de téléphone
-                              </FormLabel>
-                              <FormDescription>
-                                Autoriser les acheteurs à vous appeler via vos annonces.
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
                           </FormItem>
                         )}
                       />

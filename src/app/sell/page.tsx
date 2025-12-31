@@ -14,33 +14,26 @@ export default function SellPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+
+    if (!user) {
       router.push('/login');
+      return;
     }
+    
+    // Check if the user has a verified phone number
+    if (!user.phoneNumber) {
+      router.push('/verify-phone?redirect=/sell');
+    }
+
   }, [user, loading, router]);
 
-  if (loading) {
+  if (loading || !user || !user.phoneNumber) {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow flex items-center justify-center">
-          <p>Chargement...</p>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col items-center justify-center text-center">
-            <h1 className="text-2xl font-bold">Accès refusé</h1>
-            <p className="mt-2 text-muted-foreground">Vous devez être connecté pour vendre un véhicule.</p>
-            <Button asChild className="mt-4">
-              <Link href="/login">Se connecter</Link>
-            </Button>
+          <p>Vérification du statut...</p>
         </main>
         <Footer />
       </div>
