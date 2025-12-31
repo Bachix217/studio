@@ -12,6 +12,7 @@ import type { Vehicle } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function EditListingPage() {
   const { user, loading: userLoading } = useUser();
@@ -40,7 +41,7 @@ export default function EditListingPage() {
           const vehicleData = { id: docSnap.id, ...docSnap.data() } as Vehicle;
           // Security check: ensure the current user owns this vehicle
           if (vehicleData.userId !== user.uid) {
-            setError('Vous n\'êtes pas autorisé à modifier cette annonce.');
+            setError("Vous n'êtes pas autorisé à modifier cette annonce.");
           } else {
             setVehicle(vehicleData);
           }
