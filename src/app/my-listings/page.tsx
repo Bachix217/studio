@@ -49,6 +49,10 @@ export default function MyListingsPage() {
 
   }, [user, userLoading, firestore, router]);
   
+  const handleDeletionSuccess = (deletedVehicleId: string) => {
+    setVehicles(prevVehicles => prevVehicles.filter(v => v.id !== deletedVehicleId));
+  };
+
   if (userLoading || loading) {
     return (
       <div className="flex flex-col min-h-screen">
@@ -83,7 +87,11 @@ export default function MyListingsPage() {
           </Button>
         </div>
         {vehicles.length > 0 ? (
-          <VehicleList vehicles={vehicles} showControls={true} />
+          <VehicleList 
+            vehicles={vehicles} 
+            showControls={true} 
+            onDeletionSuccess={handleDeletionSuccess} 
+          />
         ) : (
           <div className="text-center py-16 bg-card rounded-lg shadow-sm">
             <h2 className="text-xl font-semibold">Vous n'avez aucune annonce active.</h2>

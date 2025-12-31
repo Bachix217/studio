@@ -25,6 +25,7 @@ import type { Vehicle } from '@/lib/types';
 
 interface DeleteListingButtonProps {
   vehicleId: string;
+  onDeletionSuccess?: (vehicleId: string) => void;
 }
 
 const deletionReasons = [
@@ -35,7 +36,7 @@ const deletionReasons = [
     { id: "other", label: "Autre" },
 ];
 
-export default function DeleteListingButton({ vehicleId }: DeleteListingButtonProps) {
+export default function DeleteListingButton({ vehicleId, onDeletionSuccess }: DeleteListingButtonProps) {
   const { firestore } = useFirebase();
   const { toast } = useToast();
   const [reason, setReason] = useState('');
@@ -85,7 +86,8 @@ export default function DeleteListingButton({ vehicleId }: DeleteListingButtonPr
         title: 'Annonce supprimée',
         description: 'Votre annonce a été retirée de la plateforme.',
       });
-
+      
+      onDeletionSuccess?.(vehicleId);
       setIsOpen(false);
       setReason('');
       setOtherReason('');

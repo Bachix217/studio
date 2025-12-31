@@ -10,9 +10,10 @@ import DeleteListingButton from './DeleteListingButton';
 interface VehicleCardProps {
   vehicle: Vehicle;
   showControls?: boolean;
+  onDeletionSuccess?: (vehicleId: string) => void;
 }
 
-export default function VehicleCard({ vehicle, showControls = false }: VehicleCardProps) {
+export default function VehicleCard({ vehicle, showControls = false, onDeletionSuccess }: VehicleCardProps) {
   const imageUrl = vehicle.images && vehicle.images.length > 0 ? vehicle.images[0] : null;
 
   return (
@@ -67,7 +68,7 @@ export default function VehicleCard({ vehicle, showControls = false }: VehicleCa
 
        {showControls && (
           <CardFooter className="p-4 pt-2 mt-auto border-t">
-              <DeleteListingButton vehicleId={vehicle.id} />
+              <DeleteListingButton vehicleId={vehicle.id} onDeletionSuccess={onDeletionSuccess} />
           </CardFooter>
       )}
 
