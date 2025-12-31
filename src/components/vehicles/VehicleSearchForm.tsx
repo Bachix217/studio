@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 const defaultFilters: Filters = {
   make: undefined,
   model: undefined,
-  priceRange: [undefined, undefined],
+  priceRange: [0, 200000],
   mileageRange: [0, 300000],
   yearRange: [1990, new Date().getFullYear()],
   powerRange: [10, 800],
@@ -113,6 +113,7 @@ export default function VehicleSearchForm({
     watch('mileageRange') || defaultFilters.mileageRange;
   const currentYearRange = watch('yearRange') || defaultFilters.yearRange;
   const currentPowerRange = watch('powerRange') || defaultFilters.powerRange;
+  const currentPriceRange = watch('priceRange') || defaultFilters.priceRange;
 
   return (
     <Card className="shadow-lg overflow-hidden">
@@ -279,34 +280,22 @@ export default function VehicleSearchForm({
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
                   <div className="space-y-3">
                     <label className="text-sm font-medium">Prix (CHF)</label>
-                    <div className="flex items-center gap-2">
-                       <Controller
-                          name="priceRange.0"
-                          control={control}
-                          render={({ field }) => (
-                            <Input
-                              type="number"
-                              placeholder="Min"
-                              {...field}
-                              onChange={e => field.onChange(e.target.value)}
-                              value={field.value || ''}
-                            />
-                          )}
+                     <Controller
+                      name="priceRange"
+                      control={control}
+                      render={({ field }) => (
+                        <Slider
+                          min={0}
+                          max={200000}
+                          step={1000}
+                          value={field.value}
+                          onValueChange={field.onChange}
                         />
-                        <span className="text-muted-foreground">-</span>
-                        <Controller
-                          name="priceRange.1"
-                          control={control}
-                          render={({ field }) => (
-                            <Input
-                              type="number"
-                              placeholder="Max"
-                              {...field}
-                              onChange={e => field.onChange(e.target.value)}
-                              value={field.value || ''}
-                            />
-                          )}
-                        />
+                      )}
+                    />
+                    <div className="text-sm text-muted-foreground flex justify-between">
+                      <span>{currentPriceRange![0].toLocaleString('fr-CH')} CHF</span>
+                      <span>{currentPriceRange![1].toLocaleString('fr-CH')} CHF</span>
                     </div>
                   </div>
 

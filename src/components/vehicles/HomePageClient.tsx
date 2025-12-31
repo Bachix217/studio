@@ -29,7 +29,7 @@ export type Filters = {
 const initialFilters: Filters = {
   make: undefined,
   model: undefined,
-  priceRange: [undefined, undefined],
+  priceRange: [0, 200000],
   mileageRange: [0, 300000],
   yearRange: [1990, new Date().getFullYear()],
   powerRange: [10, 800],
