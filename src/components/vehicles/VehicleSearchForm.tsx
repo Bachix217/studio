@@ -30,6 +30,7 @@ const defaultFilters: Filters = {
   priceRange: [undefined, undefined],
   mileageRange: [0, 300000],
   yearRange: [1990, new Date().getFullYear()],
+  powerRange: [10, 800],
   fuelType: undefined,
   gearbox: undefined,
   canton: undefined,
@@ -111,6 +112,7 @@ export default function VehicleSearchForm({
   const currentMileageRange =
     watch('mileageRange') || defaultFilters.mileageRange;
   const currentYearRange = watch('yearRange') || defaultFilters.yearRange;
+  const currentPowerRange = watch('powerRange') || defaultFilters.powerRange;
 
   return (
     <Card className="shadow-lg overflow-hidden">
@@ -347,6 +349,26 @@ export default function VehicleSearchForm({
                     <div className="text-sm text-muted-foreground flex justify-between">
                       <span>{currentYearRange![0]}</span>
                       <span>{currentYearRange![1]}</span>
+                    </div>
+                  </div>
+                   <div className="space-y-3">
+                    <label className="text-sm font-medium">Puissance (cv)</label>
+                    <Controller
+                      name="powerRange"
+                      control={control}
+                      render={({ field }) => (
+                        <Slider
+                          min={10}
+                          max={800}
+                          step={10}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        />
+                      )}
+                    />
+                    <div className="text-sm text-muted-foreground flex justify-between">
+                      <span>{currentPowerRange![0]} cv</span>
+                      <span>{currentPowerRange![1]} cv</span>
                     </div>
                   </div>
                   

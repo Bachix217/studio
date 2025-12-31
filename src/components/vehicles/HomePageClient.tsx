@@ -15,6 +15,7 @@ export type Filters = {
   priceRange?: (number | undefined)[];
   mileageRange?: number[];
   yearRange?: number[];
+  powerRange?: number[];
   fuelType?: string;
   gearbox?: string;
   canton?: string;
@@ -31,6 +32,7 @@ const initialFilters: Filters = {
   priceRange: [undefined, undefined],
   mileageRange: [0, 300000],
   yearRange: [1990, new Date().getFullYear()],
+  powerRange: [10, 800],
   fuelType: undefined,
   gearbox: undefined,
   canton: undefined,
@@ -79,6 +81,7 @@ export default function HomePageClient() {
         priceRange,
         mileageRange,
         yearRange,
+        powerRange,
         fuelType,
         gearbox,
         canton,
@@ -99,6 +102,7 @@ export default function HomePageClient() {
       
       if (mileageRange && (v.mileage < mileageRange[0] || v.mileage > mileageRange[1])) return false;
       if (yearRange && (v.year < yearRange[0] || v.year > yearRange[1])) return false;
+      if (powerRange && (v.power < powerRange[0] || v.power > powerRange[1])) return false;
       
       if (fuelType && v.fuelType !== fuelType) return false;
       if (gearbox && v.gearbox !== gearbox) return false;
