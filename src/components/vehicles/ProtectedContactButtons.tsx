@@ -4,8 +4,12 @@ import { useUser } from "@/firebase/auth/use-user";
 import type { UserProfile, Vehicle } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Mail, MessageCircle, Phone, ShieldAlert, LogIn } from "lucide-react";
+import { Mail, MessageCircle, Phone, ShieldAlert, LogIn, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { useFirebase } from "@/firebase";
+import { signInAnonymously } from "firebase/auth";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProtectedContactButtonsProps {
     seller: UserProfile;
@@ -13,9 +17,35 @@ interface ProtectedContactButtonsProps {
 }
 
 export default function ProtectedContactButtons({ seller, vehicle }: ProtectedContactButtonsProps) {
-    const { user, loading } = useUser();
+    const { user, loading: userLoading } = useUser();
+    const { auth } = useFirebase();
+    const { toast } = useToast();
+    const [isSigningInAnonymously, setIsSigningInAnonymously] = useState(false);
 
-    if (loading) {
+    const handleAnonymousVerification = async () => {
+        if (!auth) return;
+        setIsSigningInAnonymously(true);
+        try {
+            await signInAnonymously(auth);
+            // The useUser hook will pick up the new anonymous user state,
+            // and the component will re-render, showing the "verify phone" message.
+            toast({
+                title: "Session anonyme créée",
+                description: "Veuillez maintenant vérifier votre numéro de téléphone.",
+            });
+        } catch (error) {
+            console.error("Anonymous sign-in error:", error);
+            toast({
+                variant: "destructive",
+                title: "Erreur",
+                description: "Impossible de démarrer la vérification. Veuillez réessayer.",
+            });
+        } finally {
+            setIsSigningInAnonymously(false);
+        }
+    };
+
+    if (userLoading) {
         return (
             <div className="pt-2">
                 <div className="h-10 w-full bg-muted animate-pulse rounded-md"></div>
@@ -26,18 +56,23 @@ export default function ProtectedContactButtons({ seller, vehicle }: ProtectedCo
     if (!user) {
         return (
             <Alert>
-                <LogIn className="h-4 w-4" />
-                <AlertTitle>Connectez-vous pour contacter</AlertTitle>
+                <ShieldAlert className="h-4 w-4" />
+                <AlertTitle>Vérifiez votre numéro pour contacter</AlertTitle>
                 <AlertDescription>
-                    <Button asChild variant="link" className="p-0 h-auto font-semibold">
-                         <Link href="/login">Connectez-vous</Link>
-                    </Button>
-                    {' '}ou{' '}
-                    <Button asChild variant="link" className="p-0 h-auto font-semibold">
-                        <Link href="/signup">créez un compte</Link>
-                    </Button>
-                    {' '}pour voir les informations du vendeur.
+                    Pour assurer la sécurité de notre communauté, veuillez vérifier votre numéro de téléphone suisse. C'est rapide et ne nécessite pas de compte.
                 </AlertDescription>
+                <div className="mt-3">
+                    <Button onClick={handleAnonymousVerification} disabled={isSigningInAnonymously} className="w-full">
+                        {isSigningInAnonymously && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Commencer la vérification
+                    </Button>
+                     <p className="text-xs text-center mt-2 text-muted-foreground">
+                        Déjà un compte ?{' '}
+                        <Button asChild variant="link" className="p-0 h-auto text-xs">
+                             <Link href="/login">Connectez-vous</Link>
+                        </Button>
+                    </p>
+                </div>
             </Alert>
         );
     }
@@ -59,7 +94,7 @@ export default function ProtectedContactButtons({ seller, vehicle }: ProtectedCo
         );
     }
     
-    // User is logged in and phone is verified
+    // User is logged in (or anonymous) and phone is verified
     const mailSubject = encodeURIComponent(`Intérêt pour votre ${vehicle.make} ${vehicle.model} sur Tacoto.ch`);
     const mailtoLink = `mailto:${seller?.email}?subject=${mailSubject}`;
 
