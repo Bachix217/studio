@@ -33,12 +33,16 @@ export default function ProtectedContactButtons({ seller, vehicle }: ProtectedCo
                 title: "Session anonyme créée",
                 description: "Veuillez maintenant vérifier votre numéro de téléphone.",
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error("Anonymous sign-in error:", error);
+            let description = "Impossible de démarrer la vérification. Veuillez réessayer.";
+            if (error.code === 'auth/operation-not-allowed') {
+                description = "L'authentification anonyme n'est pas activée. Veuillez l'activer dans votre console Firebase (Authentication > Sign-in method).";
+            }
             toast({
                 variant: "destructive",
                 title: "Erreur",
-                description: "Impossible de démarrer la vérification. Veuillez réessayer.",
+                description: description,
             });
         } finally {
             setIsSigningInAnonymously(false);
