@@ -25,19 +25,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { CANTONS, FUEL_TYPES, GEARBOX_TYPES, DOORS_TYPES, SEATS_TYPES, DRIVE_TYPES, CONDITION_TYPES, POWER_UNITS, EXTERIOR_COLORS, INTERIOR_COLORS } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Check } from 'lucide-react';
+import { UploadCloud } from 'lucide-react';
 import { useFirebase } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
-import { useState, ChangeEvent } from 'react';
+import { useState, ChangeEvent, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Label } from '@/components/ui/label';
 import imageCompression from 'browser-image-compression';
 import { Switch } from '../ui/switch';
 import { Separator } from '../ui/separator';
+import type { Vehicle } from '@/lib/types';
 
 const MAX_IMAGES = 5;
 
@@ -63,16 +64,22 @@ const formSchema = z.object({
   nonSmoker: z.boolean().default(false),
 });
 
-export default function SellForm() {
+interface SellFormProps {
+  vehicleToEdit?: Vehicle;
+}
+
+export default function SellForm({ vehicleToEdit }: SellFormProps) {
   const { toast } = useToast();
   const { firestore, storage } = useFirebase();
   const { user } = useUser();
   const router = useRouter();
 
-  const [step, setStep] = useState(1);
+  const isEditMode = !!vehicleToEdit;
+
+  const [step, setStep] = useState(isEditMode ? 2 : 1);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>(isEditMode ? vehicleToEdit.images : []);
+  const [imageUrls, setImageUrls] = useState<string[]>(isEditMode ? vehicleToEdit.images : []);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
@@ -93,12 +100,24 @@ export default function SellForm() {
     },
   });
 
+  useEffect(() => {
+    if (isEditMode) {
+      form.reset({
+        ...vehicleToEdit,
+        features: vehicleToEdit.features.join(', '),
+      });
+    }
+  }, [isEditMode, vehicleToEdit, form]);
+
+
   const validateImages = (files: File[]): boolean => {
-    if (files.length === 0) {
+    const totalImages = imagePreviews.length - (isEditMode ? vehicleToEdit.images.length : 0) + files.length;
+    
+    if (totalImages === 0 && !isEditMode) {
       setImageError('Au moins une image est requise.');
       return false;
     }
-    if (files.length > MAX_IMAGES) {
+    if (totalImages > MAX_IMAGES) {
       setImageError(`Vous ne pouvez téléverser que ${MAX_IMAGES} images maximum.`);
       return false;
     }
@@ -109,15 +128,17 @@ export default function SellForm() {
   const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (files.length === 0) {
-        setImageFiles([]);
-        setImagePreviews([]);
+        if (!isEditMode) {
+            setImageFiles([]);
+            setImagePreviews([]);
+        }
         setImageError(null);
         return;
     }
 
     if (!validateImages(files)) {
         setImageFiles([]);
-        setImagePreviews([]);
+        // Don't clear previews in edit mode unless we decide to
         return;
     }
     
@@ -134,10 +155,10 @@ export default function SellForm() {
         const compressedFiles = await Promise.all(
             files.map(file => imageCompression(file, compressionOptions))
         );
-
-        setImageFiles(compressedFiles);
+        
+        setImageFiles(prev => [...prev, ...compressedFiles]);
         const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
-        setImagePreviews(newPreviews);
+        setImagePreviews(prev => [...prev, ...newPreviews]);
         setImageError(null);
         toast({ title: 'Compression terminée !', description: 'Vos images sont prêtes à être téléversées.' });
 
@@ -151,6 +172,11 @@ export default function SellForm() {
 };
 
   const handleImageUpload = async () => {
+    if (imageFiles.length === 0) {
+        // If no new files, just proceed
+        setStep(2);
+        return;
+    }
     if (!validateImages(imageFiles) || !user) return;
 
     setIsUploading(true);
@@ -182,7 +208,11 @@ export default function SellForm() {
           );
         });
       }
-      setImageUrls(uploadedUrls);
+
+      // In edit mode, we are adding to existing images, not replacing
+      const finalImageUrls = isEditMode ? [...imageUrls, ...uploadedUrls] : uploadedUrls;
+      setImageUrls(finalImageUrls);
+
       toast({ title: "Images téléversées avec succès !" });
       setStep(2);
 
@@ -217,7 +247,7 @@ export default function SellForm() {
 
 
     try {
-      const docRef = await addDoc(collection(firestore, 'vehicles'), {
+      const dataToSave = {
         ...values,
         year: Number(values.year),
         price: Number(values.price),
@@ -225,21 +255,34 @@ export default function SellForm() {
         features: values.features ? values.features.split(',').map(f => f.trim()) : [],
         images: imageUrls,
         userId: user.uid,
-        createdAt: serverTimestamp(),
-      });
-      
-      toast({
-        title: "Annonce publiée !",
-        description: "Votre annonce a été ajoutée avec succès.",
-      });
-      
-      router.push(`/vehicles/${docRef.id}`);
+      };
 
+      if (isEditMode) {
+        const docRef = doc(firestore, 'vehicles', vehicleToEdit.id);
+        await updateDoc(docRef, dataToSave);
+        toast({
+          title: "Annonce modifiée !",
+          description: "Votre annonce a été mise à jour avec succès.",
+        });
+        router.push(`/vehicles/${vehicleToEdit.id}`);
+
+      } else {
+        const docRef = await addDoc(collection(firestore, 'vehicles'), {
+          ...dataToSave,
+          createdAt: serverTimestamp(),
+        });
+        toast({
+          title: "Annonce publiée !",
+          description: "Votre annonce a été ajoutée avec succès.",
+        });
+        router.push(`/vehicles/${docRef.id}`);
+      }
+      
     } catch (error: any) {
-      console.error("Error adding document: ", error);
+      console.error("Error saving document: ", error);
       toast({
         variant: "destructive",
-        title: "Erreur lors de la publication",
+        title: isEditMode ? "Erreur de modification" : "Erreur lors de la publication",
         description: error.message || "Une erreur est survenue. Veuillez réessayer.",
       });
     }
@@ -295,7 +338,7 @@ export default function SellForm() {
                 </div>
               )}
 
-              <Button onClick={handleImageUpload} disabled={isUploading || isCompressing || imageFiles.length === 0 || !!imageError}>
+              <Button onClick={handleImageUpload} disabled={isUploading || isCompressing || imageFiles.length === 0 && !isEditMode || !!imageError}>
                 {isUploading ? 'Téléversement...' : (isCompressing ? 'Compression...' : 'Continuer')}
               </Button>
             </div>
@@ -306,7 +349,7 @@ export default function SellForm() {
                 <div>
                   <div className="flex items-center justify-between">
                       <div>
-                          <h3 className="text-lg font-medium">Étape 2 sur 2 : Détails de l'annonce</h3>
+                          <h3 className="text-lg font-medium">{isEditMode ? 'Modifier les détails' : 'Étape 2 sur 2 : Détails de l\'annonce'}</h3>
                           <p className="text-sm text-muted-foreground">Renseignez les informations sur votre véhicule.</p>
                       </div>
                       <Button variant="outline" size="sm" onClick={() => setStep(1)}>Modifier les photos</Button>
@@ -620,7 +663,7 @@ export default function SellForm() {
                 />
 
                 <Button type="submit" size="lg" className="w-full md:w-auto" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? 'Publication en cours...' : "Soumettre l'annonce"}
+                    {form.formState.isSubmitting ? 'Sauvegarde...' : (isEditMode ? 'Enregistrer les modifications' : 'Soumettre l\'annonce')}
                 </Button>
               </form>
           )}

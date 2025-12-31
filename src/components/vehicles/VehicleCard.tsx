@@ -4,8 +4,9 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import type { Vehicle } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
-import { Calendar, Cog, Fuel, Gauge, MapPin, ImageIcon } from 'lucide-react';
+import { Calendar, Cog, Fuel, Gauge, MapPin, ImageIcon, Edit } from 'lucide-react';
 import DeleteListingButton from './DeleteListingButton';
+import { Button } from '../ui/button';
 
 interface VehicleCardProps {
   vehicle: Vehicle;
@@ -67,7 +68,13 @@ export default function VehicleCard({ vehicle, showControls = false, onDeletionS
       </div>
 
        {showControls && (
-          <CardFooter className="p-4 pt-2 mt-auto border-t">
+          <CardFooter className="p-4 pt-2 mt-auto border-t flex items-center justify-between">
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/edit-listing/${vehicle.id}`}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Modifier
+                </Link>
+              </Button>
               <DeleteListingButton vehicleId={vehicle.id} onDeletionSuccess={onDeletionSuccess} />
           </CardFooter>
       )}
