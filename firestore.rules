@@ -4,39 +4,53 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Fonction pour vérifier si l'utilisateur est l'admin via son email
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == "info@tacoto.ch";
+    }
+
     // Règles pour les véhicules
     match /vehicles/{vehicleId} {
-      // Tout le monde peut voir les annonces.
-      // Le filtrage des annonces publiées/non publiées se fait côté client.
+      // Tout le monde peut voir les annonces
       allow read: if true;
 
-      // Création : L'utilisateur doit être connecté et son UID doit être dans le champ 'userId' de l'annonce
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Création : Connecté + (Admin OU UID correspond au userId)
+      allow create: if request.auth != null && (isAdmin() || request.auth.uid == request.resource.data.userId);
 
-      // Modification/Suppression : Seul celui qui a créé l'annonce (le propriétaire) peut la changer
-      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      // Modification/Suppression : Connecté + (Admin OU Propriétaire)
+      allow update, delete: if request.auth != null && (isAdmin() || request.auth.uid == resource.data.userId);
     }
     
     // Règles pour les annonces archivées
     match /deleted-vehicles/{vehicleId} {
-        // Seul le propriétaire peut archiver son annonce
-        allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
-        // Personne ne peut lire, modifier ou supprimer les archives (sauf via la console Firebase)
-        allow read, update, delete: if false;
+        // Seul le propriétaire ou l'admin peut archiver
+        allow create: if request.auth != null && (isAdmin() || request.auth.uid == request.resource.data.userId);
+        
+        // Seul l'admin peut éventuellement lire les archives, sinon personne
+        allow read: if isAdmin();
+        allow update, delete: if false;
     }
 
     // Profils utilisateurs
     match /users/{userId} {
-      // Tout le monde peut lire les profils
-      allow read: if true;
-      // Seul le propriétaire du profil peut le modifier
-      allow write: if request.auth != null && request.auth.uid == userId;
-
+      // Tout le monde peut lire les profils (get)
+      allow get: if true;
+      // L'admin peut lister tous les utilisateurs
+      allow list: if isAdmin();
+      // Seul le propriétaire du profil ou l'admin peut le modifier
+      allow write: if request.auth != null && (isAdmin() || request.auth.uid == userId);
+      
       // Favoris de l'utilisateur
       match /favorites/{vehicleId} {
         // Seul le propriétaire du profil peut lire et écrire ses favoris
         allow read, write, delete: if request.auth != null && request.auth.uid == userId;
       }
+    }
+    
+    // Règle spécifique pour la requête de groupe de collections "images"
+    match /{path=**}/images/{imageId} {
+      // Seul un admin peut lire toutes les images pour la surveillance
+      allow get, list: if isAdmin();
     }
   }
 }
