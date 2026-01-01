@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Car, Menu, List, User as UserIcon, LogOut, UserCircle, X, FileText, Shield, HelpCircle, BookUser, Heart } from 'lucide-react';
+import { Car, Menu, List, User as UserIcon, LogOut, UserCircle, X, FileText, Shield, HelpCircle, BookUser, Heart, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import {
   Sheet,
@@ -138,6 +138,7 @@ export default function Header() {
                     <Separator />
                     <nav className="flex flex-col space-y-2 mt-4 text-lg">
                       <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/sell')}>Vendre ma voiture</Button>
+                       <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/catch-car')}>CatchCar</Button>
                       <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/my-listings')}>Mes annonces</Button>
                       <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/my-favorites')}>Mes favoris</Button>
                       <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/profile')}>Profil</Button>
@@ -169,10 +170,6 @@ export default function Header() {
                          </Button>
                     ))}
                  </nav>
-                {isFullUser && (
-                  <>
-                  </>
-                )}
               </div>
           </div>
         </SheetContent>
@@ -193,6 +190,12 @@ export default function Header() {
               <nav className="hidden md:flex items-center gap-2">
                  <Button variant="ghost" asChild>
                   <Link href="/sell" className="font-semibold">Vendre ma voiture</Link>
+                </Button>
+                <Button variant="ghost" asChild>
+                  <Link href="/catch-car" className="font-semibold flex items-center gap-2">
+                    <Sparkles size={16} className="text-amber-500" />
+                    CatchCar
+                  </Link>
                 </Button>
                  <Button variant="ghost" asChild>
                   <Link href="/my-listings" className="font-semibold">Mes annonces</Link>
