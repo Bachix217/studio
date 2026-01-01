@@ -247,7 +247,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
 
 
     try {
-      const dataToSave = {
+      const dataToSave: any = {
         ...values,
         year: Number(values.year),
         price: Number(values.price),
@@ -255,12 +255,13 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
         features: values.features ? values.features.split(',').map(f => f.trim()) : [],
         images: imageUrls,
         userId: user.uid,
-        status: 'pending' as const,
+        status: 'pending',
         published: false,
       };
 
       if (isEditMode && vehicleToEdit) {
         const docRef = doc(firestore, 'vehicles', vehicleToEdit.id);
+        dataToSave.updatedAt = serverTimestamp();
         await updateDoc(docRef, dataToSave);
         toast({
           title: "Annonce modifiée !",
