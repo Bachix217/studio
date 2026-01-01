@@ -71,9 +71,9 @@ export default function SignupForm() {
       
       toast({
         title: 'Inscription réussie !',
-        description: 'Veuillez vérifier votre téléphone pour pouvoir vendre des véhicules.',
+        description: 'Vous êtes maintenant connecté et pouvez créer des annonces.',
       });
-      router.push('/verify-phone');
+      router.push('/');
     } catch (error: any) {
       console.error(error);
       toast({

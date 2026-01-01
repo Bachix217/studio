@@ -17,18 +17,13 @@ export default function SellPage() {
     if (loading) return;
 
     if (!user) {
-      router.push('/login');
+      router.push('/login?redirect=/sell');
       return;
-    }
-    
-    // Check if the user has a verified phone number
-    if (!user.phoneNumber) {
-      router.push('/verify-phone?redirect=/sell');
     }
 
   }, [user, loading, router]);
 
-  if (loading || !user || !user.phoneNumber) {
+  if (loading || !user) {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />

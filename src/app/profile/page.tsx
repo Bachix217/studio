@@ -28,14 +28,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Phone, CheckCircle } from 'lucide-react';
-import Link from 'next/link';
 
 const profileFormSchema = z.object({
   displayName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères.'),
-  // Phone number is now read-only from the form, it is set via SMS verification
   sharePhoneNumber: z.boolean().optional(),
+  phone: z.string().optional(),
   userType: z.enum(['particulier', 'professionnel']).default('particulier'),
   companyName: z.string().optional(),
   address: z.string().optional(),
@@ -62,6 +59,7 @@ export default function ProfilePage() {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       displayName: '',
+      phone: '',
       sharePhoneNumber: false,
       userType: 'particulier',
       companyName: '',
@@ -88,11 +86,6 @@ export default function ProfilePage() {
 
       if (docSnap.exists()) {
         userProfile = docSnap.data() as UserProfile;
-        // Sync phone number from auth to firestore profile
-        if (user.phoneNumber && userProfile.phone !== user.phoneNumber) {
-          userProfile.phone = user.phoneNumber;
-          await setDoc(profileDocRef, { phone: user.phoneNumber }, { merge: true });
-        }
       } else {
         // Profile doesn't exist, create a new one
         const newProfile: UserProfile = {
@@ -111,6 +104,7 @@ export default function ProfilePage() {
       setProfile(userProfile);
       form.reset({
         displayName: userProfile.displayName,
+        phone: userProfile.phone || '',
         sharePhoneNumber: userProfile.sharePhoneNumber || false,
         userType: userProfile.userType || 'particulier',
         companyName: userProfile.companyName || '',
@@ -129,7 +123,7 @@ export default function ProfilePage() {
 
     const profileDocRef = doc(firestore, 'users', user.uid);
     try {
-      const updateData: Partial<Omit<UserProfile, 'phone'>> = {
+      const updateData: Partial<UserProfile> = {
         ...values,
         uid: user.uid,
       };
@@ -198,19 +192,6 @@ export default function ProfilePage() {
                 Gérez vos informations publiques et vos paramètres de compte.
               </p>
           </header>
-
-          {!user?.phoneNumber && (
-             <Alert variant="destructive" className="mb-8">
-                <Phone className="h-4 w-4" />
-                <AlertTitle>Vérification requise</AlertTitle>
-                <AlertDescription>
-                  Vous devez vérifier votre numéro de téléphone pour pouvoir publier des annonces.
-                  <Button asChild variant="link" className="font-bold p-0 ml-1 h-auto">
-                      <Link href="/verify-phone?redirect=/profile">Vérifier maintenant</Link>
-                  </Button>
-                </AlertDescription>
-            </Alert>
-          )}
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
@@ -287,47 +268,45 @@ export default function ProfilePage() {
                   <CardTitle>Numéro de téléphone</CardTitle>
                 </CardHeader>
                  <CardContent className="space-y-6">
-                    {user?.phoneNumber ? (
-                         <div className="space-y-4">
-                            <Alert>
-                                <CheckCircle className="h-4 w-4" />
-                                <AlertTitle>Numéro vérifié</AlertTitle>
-                                <AlertDescription>
-                                    Votre numéro de contact est le <strong>{user.phoneNumber}</strong>.
-                                </AlertDescription>
-                            </Alert>
+                    <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Numéro de contact</FormLabel>
+                            <FormControl>
+                              <Input type="tel" placeholder="+41 79 123 45 67" {...field} value={field.value ?? ''}/>
+                            </FormControl>
+                            <FormDescription>
+                                Votre numéro de téléphone pour être contacté.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                            <FormField
-                                control={form.control}
-                                name="sharePhoneNumber"
-                                render={({ field }) => (
-                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                                    <div className="space-y-0.5">
-                                    <FormLabel className="text-base">
-                                        Partager mon numéro
-                                    </FormLabel>
-                                    <FormDescription>
-                                        Autoriser les acheteurs à vous contacter via ce numéro.
-                                    </FormDescription>
-                                    </div>
-                                    <FormControl>
-                                    <Switch
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                    />
-                                    </FormControl>
-                                </FormItem>
-                                )}
+                    <FormField
+                        control={form.control}
+                        name="sharePhoneNumber"
+                        render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                            <FormLabel className="text-base">
+                                Partager mon numéro
+                            </FormLabel>
+                            <FormDescription>
+                                Autoriser les acheteurs à vous contacter via ce numéro.
+                            </FormDescription>
+                            </div>
+                            <FormControl>
+                            <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
                             />
-                         </div>
-                    ) : (
-                         <div className="space-y-2">
-                             <p className="text-sm text-muted-foreground">Aucun numéro de téléphone n'a été vérifié.</p>
-                             <Button asChild variant="secondary">
-                                 <Link href="/verify-phone?redirect=/profile">Vérifier un numéro</Link>
-                             </Button>
-                         </div>
-                    )}
+                            </FormControl>
+                        </FormItem>
+                        )}
+                    />
                  </CardContent>
               </Card>
 
