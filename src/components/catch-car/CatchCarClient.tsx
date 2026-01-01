@@ -25,8 +25,7 @@ export default function CatchCarClient() {
     const vehiclesQuery = query(
       collection(firestore, 'vehicles'), 
       where('published', '==', true),
-      where('status', '==', 'approved'),
-      orderBy('make', 'asc')
+      where('status', '==', 'approved')
     );
     const unsubscribeVehicles = onSnapshot(vehiclesQuery, (snapshot) => {
       const vehiclesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle));

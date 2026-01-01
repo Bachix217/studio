@@ -59,8 +59,7 @@ export default function HomePageClient() {
     const q = query(
       vehiclesCollection, 
       where('published', '==', true),
-      where('status', '==', 'approved'),
-      orderBy('make', 'asc')
+      where('status', '==', 'approved')
     );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
