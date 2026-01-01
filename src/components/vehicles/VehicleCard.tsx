@@ -4,17 +4,54 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Badge } from '@/components/ui/badge';
 import type { Vehicle } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
-import { Calendar, Cog, Fuel, Gauge, MapPin, ImageIcon, Edit } from 'lucide-react';
+import { Calendar, Cog, Fuel, Gauge, MapPin, ImageIcon, Edit, CheckCircle, Clock, XCircle } from 'lucide-react';
 import DeleteListingButton from './DeleteListingButton';
 import { Button } from '../ui/button';
 import FavoriteButton from './FavoriteButton';
 import { useUser } from '@/firebase/auth/use-user';
+import { cn } from '@/lib/utils';
 
 interface VehicleCardProps {
   vehicle: Vehicle;
   showControls?: boolean;
   onDeletionSuccess?: (vehicleId: string) => void;
 }
+
+const StatusBadge = ({ status, published }: { status: Vehicle['status'], published: Vehicle['published'] }) => {
+  if (status === 'approved' && published) {
+    return (
+      <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800">
+        <CheckCircle className="mr-1 h-3 w-3" />
+        Publiée
+      </Badge>
+    );
+  }
+  if (status === 'pending') {
+    return (
+      <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-800">
+        <Clock className="mr-1 h-3 w-3" />
+        En attente
+      </Badge>
+    );
+  }
+  if (status === 'rejected') {
+    return (
+      <Badge variant="destructive">
+        <XCircle className="mr-1 h-3 w-3" />
+        Rejetée
+      </Badge>
+    );
+  }
+   if (status === 'approved' && !published) {
+    return (
+      <Badge variant="secondary">
+        Approuvée (non publiée)
+      </Badge>
+    );
+  }
+  return null;
+};
+
 
 export default function VehicleCard({ vehicle, showControls = false, onDeletionSuccess }: VehicleCardProps) {
   const { user } = useUser();
@@ -23,10 +60,15 @@ export default function VehicleCard({ vehicle, showControls = false, onDeletionS
   return (
     <Card className="h-full flex flex-col overflow-hidden transition-all duration-300 group">
        <div className="relative">
-         {user && (
+         {user && !showControls && ( // Show favorite on public pages only
           <div className="absolute top-2 left-2 z-10">
             <FavoriteButton vehicleId={vehicle.id} />
           </div>
+        )}
+        {showControls && (
+             <div className="absolute top-2 left-2 z-10">
+                <StatusBadge status={vehicle.status} published={vehicle.published} />
+             </div>
         )}
         <Link href={`/vehicles/${vehicle.id}`} className="block">
             <CardHeader className="p-0 relative">
@@ -36,7 +78,7 @@ export default function VehicleCard({ vehicle, showControls = false, onDeletionS
                     src={imageUrl}
                     alt={`${vehicle.make} ${vehicle.model}`}
                     fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    className={cn("object-cover transition-transform duration-300 group-hover:scale-105", !vehicle.published && "grayscale opacity-75")}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     data-ai-hint="car exterior"
                   />
