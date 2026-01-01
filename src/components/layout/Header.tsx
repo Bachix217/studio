@@ -49,7 +49,7 @@ export default function Header() {
     router.push(path);
   }
 
-  // An authenticated user must have an email. Anonymous users do not.
+  // An authenticated user must have an email.
   const isFullUser = user && user.email;
 
   const UserMenuDesktop = () => (
@@ -136,6 +136,10 @@ export default function Header() {
                       <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/sell')}>Vendre ma voiture</Button>
                       <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/my-listings')}>Mes annonces</Button>
                       <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/profile')}>Profil</Button>
+                      <Button variant="ghost" className="justify-start text-base" onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Déconnexion
+                      </Button>
                     </nav>
                   </div>
                 ) : (
@@ -162,11 +166,6 @@ export default function Header() {
                  </nav>
                 {isFullUser && (
                   <>
-                  <Separator className="my-4" />
-                  <Button variant="outline" className="w-full" onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Déconnexion
-                  </Button>
                   </>
                 )}
               </div>
