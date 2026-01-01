@@ -6,7 +6,7 @@ import Footer from '@/components/layout/Footer';
 import VehicleList from '@/components/vehicles/VehicleList';
 import { useUser } from '@/firebase/auth/use-user';
 import { useFirebase } from '@/firebase';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import type { Vehicle } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -32,8 +32,7 @@ export default function MyListingsPage() {
     const vehiclesCollection = collection(firestore, 'vehicles');
     const q = query(
       vehiclesCollection,
-      where('userId', '==', user.uid),
-      orderBy('createdAt', 'desc')
+      where('userId', '==', user.uid)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
