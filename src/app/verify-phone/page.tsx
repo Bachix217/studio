@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { linkWithPhoneNumber, type ConfirmationResult, RecaptchaVerifier } from 'firebase/auth';
 import { useUser } from '@/firebase/auth/use-user';
@@ -13,11 +13,11 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { firebaseConfig } from '@/firebase/config';
 
 declare global {
   interface Window {
     confirmationResult?: ConfirmationResult;
+    recaptchaVerifier?: RecaptchaVerifier;
   }
 }
 
@@ -33,9 +33,6 @@ export default function VerifyPhonePage() {
   const [codeSent, setCodeSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [isRecaptchaReady, setIsRecaptchaReady] = useState(false);
 
   useEffect(() => {
     if (!userLoading && user?.phoneNumber) {
@@ -45,33 +42,19 @@ export default function VerifyPhonePage() {
   }, [user, userLoading, router, searchParams]);
 
   useEffect(() => {
-    const handleRecaptchaMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) {
-        return;
-      }
-      if (event.data.action === 'ready') {
-        setIsRecaptchaReady(true);
-      } else if (event.data.action === 'verified') {
-        sendCode(event.data.response);
-      } else if (event.data.action === 'error') {
-        console.error("reCAPTCHA error:", event.data.error);
-        setError("Erreur reCAPTCHA. Veuillez rafraîchir la page et réessayer.");
-        setIsSubmitting(false);
-      }
-    };
-    
-    window.addEventListener('message', handleRecaptchaMessage);
-    return () => window.removeEventListener('message', handleRecaptchaMessage);
-  }, []);
+    if (!auth) return;
 
-  const handleIframeLoad = () => {
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage({
-        action: 'init',
-        config: firebaseConfig
-      }, window.location.origin);
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': () => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        }
+      });
     }
-  };
+    
+  }, [auth]);
+
 
   const handleSendCode = async () => {
     setError(null);
@@ -79,30 +62,14 @@ export default function VerifyPhonePage() {
       setError('Veuillez entrer un numéro de téléphone suisse valide (ex: +41791234567).');
       return;
     }
-    if (!auth || !user) {
+    if (!auth || !user || !window.recaptchaVerifier) {
       setError('Le service d\'authentification n\'est pas prêt.');
       return;
     }
-    if (!isRecaptchaReady) {
-      setError("Le vérificateur reCAPTCHA n'est pas prêt. Veuillez patienter.");
-      return;
-    }
-    
-    setIsSubmitting(true);
-    iframeRef.current?.contentWindow?.postMessage({ action: 'verify' }, window.location.origin);
-  };
-  
-  const sendCode = async (recaptchaToken: string) => {
-     if (!auth || !user) return;
-     
-     // We need to create a dummy verifier to satisfy the SDK, but it's the token that matters.
-     const verifier = {
-        type: 'recaptcha',
-        verify: () => Promise.resolve(recaptchaToken)
-     } as RecaptchaVerifier;
 
+    setIsSubmitting(true);
     try {
-      const confirmation = await linkWithPhoneNumber(user, phoneNumber, verifier);
+      const confirmation = await linkWithPhoneNumber(user, phoneNumber, window.recaptchaVerifier);
       window.confirmationResult = confirmation;
       setCodeSent(true);
       toast({
@@ -112,23 +79,23 @@ export default function VerifyPhonePage() {
     } catch (e: any) {
       console.error("Error sending verification code:", e);
       let errorMessage = "Une erreur est survenue lors de l'envoi du code.";
-      if (e.code === 'auth/missing-sms-code') {
+       if (e.code === 'auth/missing-sms-code') {
           errorMessage = 'Code de vérification manquant.';
       } else if (e.code === 'auth/invalid-phone-number') {
           errorMessage = 'Le numéro de téléphone est invalide.';
       } else if (e.code === 'auth/too-many-requests') {
           errorMessage = 'Trop de tentatives. Veuillez réessayer plus tard.';
-      } else if (e.code === 'auth/operation-not-allowed') {
-          errorMessage = "Impossible d'envoyer le code. Assurez-vous que les numéros de test sont configurés dans Firebase ou que le projet est sur le plan Blaze.";
+      } else if (e.code === 'auth/operation-not-allowed' || e.code === 'auth/unconfigured-project' ) {
+          errorMessage = "Impossible d'envoyer de SMS. Veuillez vérifier que votre projet Firebase est sur le plan Blaze, ou que vous avez configuré des numéros de test.";
       }
       setError(errorMessage);
-       if (iframeRef.current?.contentWindow) {
-        iframeRef.current.contentWindow.postMessage({ action: 'reset' }, window.location.origin);
+       if (window.grecaptcha) {
+        window.grecaptcha.reset(window.recaptchaWidgetId);
       }
     } finally {
       setIsSubmitting(false);
     }
-  }
+  };
 
 
   const handleVerifyCode = async () => {
@@ -180,13 +147,7 @@ export default function VerifyPhonePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <iframe
-                ref={iframeRef}
-                src="/recaptcha.html"
-                onLoad={handleIframeLoad}
-                style={{ display: 'none' }}
-                title="reCAPTCHA"
-              ></iframe>
+                <div id="recaptcha-container"></div>
               {!codeSent ? (
                 <div className="space-y-4">
                    <div>
@@ -200,10 +161,9 @@ export default function VerifyPhonePage() {
                       disabled={isSubmitting}
                     />
                   </div>
-                  <Button onClick={handleSendCode} disabled={isSubmitting || !phoneNumber || !isRecaptchaReady} className="w-full">
+                  <Button id="sign-in-button" onClick={handleSendCode} disabled={isSubmitting || !phoneNumber} className="w-full">
                     {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {!isRecaptchaReady && !isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    {isSubmitting ? 'Envoi en cours...' : (isRecaptchaReady ? 'Envoyer le code' : 'Préparation...')}
+                    {isSubmitting ? 'Envoi en cours...' : 'Envoyer le code'}
                   </Button>
                 </div>
               ) : (
