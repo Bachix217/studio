@@ -112,7 +112,7 @@ export default function Header() {
           <SheetHeader className="p-4 border-b">
               <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-primary" onClick={() => setIsMenuOpen(false)}>
                 <Car size={28} />
-                <span>Tacoto.ch</span>
+                <span>Tacoto</span>
               </Link>
           </SheetHeader>
           <div className="flex flex-col h-full p-4">
@@ -183,7 +183,7 @@ export default function Header() {
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-primary">
               <Car size={28} />
-              <span>Tacoto.ch</span>
+              <span>Tacoto</span>
             </Link>
              {isFullUser && (
               <nav className="hidden md:flex items-center gap-2">
