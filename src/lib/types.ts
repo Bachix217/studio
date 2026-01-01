@@ -41,3 +41,8 @@ export type UserProfile = {
   address?: string;
   website?: string;
 };
+
+export type Favorite = {
+  vehicleId: string;
+  createdAt: Timestamp;
+}

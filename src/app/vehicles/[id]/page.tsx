@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import ProtectedContactButtons from '@/components/vehicles/ProtectedContactButtons';
 import { useUser } from '@/firebase/auth/use-user';
+import FavoriteButton from '@/components/vehicles/FavoriteButton';
 
 
 export default function VehiclePage() {
@@ -139,7 +140,12 @@ export default function VehiclePage() {
             </div>
 
             <div className="lg:col-span-2 p-6 flex flex-col">
-              <Badge className="w-fit mb-2" variant="secondary">{vehicle.canton}</Badge>
+              <div className="flex items-center justify-between">
+                <Badge className="w-fit mb-2" variant="secondary">{vehicle.canton}</Badge>
+                 {currentUser && (
+                  <FavoriteButton vehicleId={vehicle.id} />
+                )}
+              </div>
               <h1 className="text-3xl font-bold">{vehicle.make} {vehicle.model}</h1>
               <p className="text-2xl font-semibold text-primary mt-2">{formatCurrency(vehicle.price)}</p>
               

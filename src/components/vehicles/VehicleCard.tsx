@@ -7,6 +7,8 @@ import { formatCurrency } from '@/lib/utils';
 import { Calendar, Cog, Fuel, Gauge, MapPin, ImageIcon, Edit } from 'lucide-react';
 import DeleteListingButton from './DeleteListingButton';
 import { Button } from '../ui/button';
+import FavoriteButton from './FavoriteButton';
+import { useUser } from '@/firebase/auth/use-user';
 
 interface VehicleCardProps {
   vehicle: Vehicle;
@@ -15,11 +17,17 @@ interface VehicleCardProps {
 }
 
 export default function VehicleCard({ vehicle, showControls = false, onDeletionSuccess }: VehicleCardProps) {
+  const { user } = useUser();
   const imageUrl = vehicle.images && vehicle.images.length > 0 ? vehicle.images[0] : null;
 
   return (
     <Card className="h-full flex flex-col overflow-hidden transition-all duration-300 group">
        <div className="relative">
+         {user && (
+          <div className="absolute top-2 left-2 z-10">
+            <FavoriteButton vehicleId={vehicle.id} />
+          </div>
+        )}
         <Link href={`/vehicles/${vehicle.id}`} className="block">
             <CardHeader className="p-0 relative">
               <div className="aspect-[4/3] relative w-full overflow-hidden bg-muted">

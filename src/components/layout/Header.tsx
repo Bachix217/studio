@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Car, Menu, List, User as UserIcon, LogOut, UserCircle, X, FileText, Shield, HelpCircle, BookUser } from 'lucide-react';
+import { Car, Menu, List, User as UserIcon, LogOut, UserCircle, X, FileText, Shield, HelpCircle, BookUser, Heart } from 'lucide-react';
 import { useState } from 'react';
 import {
   Sheet,
@@ -80,6 +80,10 @@ export default function Header() {
           <List className="mr-2 h-4 w-4" />
           <span>Mes annonces</span>
         </DropdownMenuItem>
+         <DropdownMenuItem onClick={() => navigateTo('/my-favorites')}>
+          <Heart className="mr-2 h-4 w-4" />
+          <span>Mes favoris</span>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
@@ -135,6 +139,7 @@ export default function Header() {
                     <nav className="flex flex-col space-y-2 mt-4 text-lg">
                       <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/sell')}>Vendre ma voiture</Button>
                       <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/my-listings')}>Mes annonces</Button>
+                      <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/my-favorites')}>Mes favoris</Button>
                       <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/profile')}>Profil</Button>
                       <Button variant="ghost" className="justify-start text-base" onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" />
@@ -191,6 +196,9 @@ export default function Header() {
                 </Button>
                  <Button variant="ghost" asChild>
                   <Link href="/my-listings" className="font-semibold">Mes annonces</Link>
+                </Button>
+                  <Button variant="ghost" asChild>
+                  <Link href="/my-favorites" className="font-semibold">Mes favoris</Link>
                 </Button>
               </nav>
             )}

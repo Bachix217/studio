@@ -5,7 +5,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useUser } from '@/firebase/auth/use-user';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, PlusCircle, List, User, LogIn } from 'lucide-react';
+import { Home, PlusCircle, List, User, LogIn, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NavLink = ({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string }) => {
@@ -44,6 +44,7 @@ export default function BottomNavBar() {
           {isFullUser ? (
             <>
               <NavLink href="/" icon={Home} label="Accueil" />
+              <NavLink href="/my-favorites" icon={Heart} label="Favoris" />
               <NavLink href="/sell" icon={PlusCircle} label="Vendre" />
               <NavLink href="/my-listings" icon={List} label="Annonces" />
               <NavLink href="/profile" icon={User} label="Profil" />
