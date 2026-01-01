@@ -6,7 +6,8 @@ service cloud.firestore {
 
     // Règles pour les véhicules
     match /vehicles/{vehicleId} {
-      // Tout le monde peut voir les annonces
+      // Tout le monde peut voir les annonces.
+      // Le filtrage des annonces publiées/non publiées se fait côté client.
       allow read: if true;
 
       // Création : L'utilisateur doit être connecté et son UID doit être dans le champ 'userId' de l'annonce
