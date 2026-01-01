@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>reCAPTCHA</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script>
+    // Transmettez la configuration de Firebase depuis la page principale
+    let firebaseConfig;
+    let auth;
+
+    window.addEventListener('message', function(event) {
+      // Assurez-vous que le message vient d'une origine de confiance
+      // Remplacer '*' par l'origine de votre site en production
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+      
+      if (event.data.action === 'init') {
+        firebaseConfig = event.data.config;
+        firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        
+        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+            'size': 'invisible',
+        });
+
+        window.recaptchaVerifier.render().then(function(widgetId) {
+            window.recaptchaWidgetId = widgetId;
+            parent.postMessage({ action: 'ready' }, window.location.origin);
+        }).catch(function(error) {
+            parent.postMessage({ action: 'error', error: error.message }, window.location.origin);
+        });
+
+      } else if (event.data.action === 'verify') {
+        window.recaptchaVerifier.verify()
+          .then(function(response) {
+            parent.postMessage({ action: 'verified', response: response }, window.location.origin);
+          })
+          .catch(function(error) {
+            parent.postMessage({ action: 'error', error: error.message }, window.location.origin);
+          });
+      } else if (event.data.action === 'reset') {
+         if (typeof grecaptcha !== 'undefined' && typeof window.recaptchaWidgetId !== 'undefined') {
+             grecaptcha.reset(window.recaptchaWidgetId);
+         }
+      }
+    });
+  </script>
+</head>
+<body>
+  <div id="recaptcha-container"></div>
+</body>
+</html>
