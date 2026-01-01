@@ -296,16 +296,16 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             <div className="space-y-8">
               <div>
                 <h3 className="text-lg font-medium">Étape 1 sur 2 : Photos du véhicule</h3>
-                <p className="text-sm text-muted-foreground">Téléversez jusqu'à ${MAX_IMAGES} photos de votre voiture.</p>
+                <p className="text-sm text-muted-foreground">Téléversez jusqu'à {MAX_IMAGES} photos de votre voiture.</p>
               </div>
               <div className="space-y-2">
-                  <Label htmlFor="dropzone-file">Photos (${imagePreviews.length}/${MAX_IMAGES})</Label>
+                  <Label htmlFor="dropzone-file">Photos ({imagePreviews.length}/{MAX_IMAGES})</Label>
                   <div className="flex items-center justify-center w-full">
                     <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-background hover:bg-muted transition">
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
                         <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
-                        <p className="text-xs text-muted-foreground">Jusqu'à ${MAX_IMAGES} images, elles seront compressées</p>
+                        <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images, elles seront compressées</p>
                       </div>
                       <Input 
                         id="dropzone-file" 
