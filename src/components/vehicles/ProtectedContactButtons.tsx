@@ -4,7 +4,7 @@ import { useUser } from "@/firebase/auth/use-user";
 import type { UserProfile, Vehicle } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Mail, MessageCircle, Phone, LogIn, Loader2 } from "lucide-react";
+import { Mail, MessageCircle, Phone, LogIn, Loader2, ShieldCheck } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 
 interface ProtectedContactButtonsProps {
@@ -26,12 +26,12 @@ export default function ProtectedContactButtons({ seller, vehicle }: ProtectedCo
     if (!user) {
         return (
             <Alert>
-                <LogIn className="h-4 w-4" />
-                <AlertTitle>Connectez-vous pour contacter</AlertTitle>
+                <ShieldCheck className="h-4 w-4" />
+                <AlertTitle>Une communauté de confiance avant tout</AlertTitle>
                 <AlertDescription>
-                    Pour contacter le vendeur, veuillez vous connecter à votre compte.
+                   Pour protéger nos utilisateurs contre les tentatives de fraude, fréquentes sur les plateformes gratuites, un compte est requis pour contacter un vendeur. Cela nous permet de garantir des interactions plus sûres.
                 </AlertDescription>
-                <div className="mt-3">
+                <div className="mt-4">
                     <Button asChild className="w-full">
                          <Link href={`/login?redirect=/vehicles/${vehicle.id}`}>
                             Se connecter ou créer un compte
