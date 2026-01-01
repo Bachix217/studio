@@ -6,7 +6,7 @@ import VehicleSearchForm from './VehicleSearchForm';
 import VehicleList from './VehicleList';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFirebase } from '@/firebase';
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { EXTERIOR_COLORS, INTERIOR_COLORS } from '@/lib/constants';
 
 export type Filters = {
@@ -56,7 +56,11 @@ export default function HomePageClient() {
     setLoading(true);
     const vehiclesCollection = collection(firestore, 'vehicles');
     
-    const q = query(vehiclesCollection, orderBy('createdAt', 'desc'));
+    const q = query(
+      vehiclesCollection, 
+      where('published', '==', true),
+      orderBy('createdAt', 'desc')
+    );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const vehiclesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle));

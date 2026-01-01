@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useFirebase } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
-import { collection, onSnapshot, query, orderBy, doc, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, where, doc, getDocs } from 'firebase/firestore';
 import type { Vehicle } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import SwipeCard from './SwipeCard';
@@ -22,7 +22,11 @@ export default function CatchCarClient() {
     if (!firestore) return;
     setLoading(true);
 
-    const vehiclesQuery = query(collection(firestore, 'vehicles'), orderBy('createdAt', 'desc'));
+    const vehiclesQuery = query(
+      collection(firestore, 'vehicles'), 
+      where('published', '==', true),
+      orderBy('createdAt', 'desc')
+    );
     const unsubscribeVehicles = onSnapshot(vehiclesQuery, (snapshot) => {
       const vehiclesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle));
       setAllVehicles(vehiclesData);

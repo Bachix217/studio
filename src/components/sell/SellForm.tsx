@@ -101,17 +101,17 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   });
 
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && vehicleToEdit) {
       form.reset({
         ...vehicleToEdit,
-        features: vehicleToEdit.features.join(', '),
+        features: vehicleToEdit.features?.join(', '),
       });
     }
   }, [isEditMode, vehicleToEdit, form]);
 
 
   const validateImages = (files: File[]): boolean => {
-    const totalImages = imagePreviews.length - (isEditMode ? vehicleToEdit.images.length : 0) + files.length;
+    const totalImages = imagePreviews.length - (isEditMode && vehicleToEdit ? vehicleToEdit.images.length : 0) + files.length;
     
     if (totalImages === 0 && !isEditMode) {
       setImageError('Au moins une image est requise.');
@@ -255,16 +255,18 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
         features: values.features ? values.features.split(',').map(f => f.trim()) : [],
         images: imageUrls,
         userId: user.uid,
+        status: 'pending' as const,
+        published: false,
       };
 
-      if (isEditMode) {
+      if (isEditMode && vehicleToEdit) {
         const docRef = doc(firestore, 'vehicles', vehicleToEdit.id);
         await updateDoc(docRef, dataToSave);
         toast({
           title: "Annonce modifiée !",
-          description: "Votre annonce a été mise à jour avec succès.",
+          description: "Votre annonce a été soumise pour approbation.",
         });
-        router.push(`/vehicles/${vehicleToEdit.id}`);
+        router.push(`/my-listings`);
 
       } else {
         const docRef = await addDoc(collection(firestore, 'vehicles'), {
@@ -272,10 +274,10 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
           createdAt: serverTimestamp(),
         });
         toast({
-          title: "Annonce publiée !",
-          description: "Votre annonce a été ajoutée avec succès.",
+          title: "Annonce envoyée pour approbation !",
+          description: "Votre annonce sera vérifiée avant d'être publiée.",
         });
-        router.push(`/vehicles/${docRef.id}`);
+        router.push(`/my-listings`);
       }
       
     } catch (error: any) {
@@ -338,7 +340,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                 </div>
               )}
 
-              <Button onClick={handleImageUpload} disabled={isUploading || isCompressing || imageFiles.length === 0 && !isEditMode || !!imageError}>
+              <Button onClick={handleImageUpload} disabled={isUploading || isCompressing || (imageFiles.length === 0 && !isEditMode) || !!imageError}>
                 {isUploading ? 'Téléversement...' : (isCompressing ? 'Compression...' : 'Continuer')}
               </Button>
             </div>

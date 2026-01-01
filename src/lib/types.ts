@@ -27,6 +27,9 @@ export type Vehicle = {
   interiorColor: typeof INTERIOR_COLORS[number];
   condition: typeof CONDITION_TYPES[number];
   nonSmoker: boolean;
+  // Moderation fields
+  status: 'pending' | 'approved' | 'rejected';
+  published: boolean;
 };
 
 export type UserProfile = {
