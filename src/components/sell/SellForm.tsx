@@ -39,6 +39,7 @@ import imageCompression from 'browser-image-compression';
 import { Switch } from '../ui/switch';
 import { Separator } from '../ui/separator';
 import type { Vehicle } from '@/lib/types';
+import { getMakes, getModels, type Make, type Model } from '@/app/sell/actions';
 
 const MAX_IMAGES = 5;
 
@@ -75,6 +76,11 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   const router = useRouter();
 
   const isEditMode = !!vehicleToEdit;
+  
+  const [makes, setMakes] = useState<Make[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
+  const [isLoadingMakes, setIsLoadingMakes] = useState(true);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
 
   const [step, setStep] = useState(isEditMode ? 2 : 1);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -88,17 +94,66 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      make: '',
-      model: '',
-      year: new Date().getFullYear(),
-      price: undefined,
-      mileage: undefined,
-      description: '',
-      features: '',
-      powerUnit: 'cv',
-      nonSmoker: false,
+      make: vehicleToEdit?.make || '',
+      model: vehicleToEdit?.model || '',
+      year: vehicleToEdit?.year || new Date().getFullYear(),
+      price: vehicleToEdit?.price,
+      mileage: vehicleToEdit?.mileage,
+      description: vehicleToEdit?.description || '',
+      features: vehicleToEdit?.features?.join(', ') || '',
+      powerUnit: vehicleToEdit?.powerUnit || 'cv',
+      nonSmoker: vehicleToEdit?.nonSmoker || false,
     },
   });
+  
+  const selectedMakeName = form.watch('make');
+
+  useEffect(() => {
+    async function loadMakes() {
+      try {
+        setIsLoadingMakes(true);
+        const makesData = await getMakes();
+        setMakes(makesData);
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur de chargement",
+          description: "Impossible de charger la liste des marques.",
+        });
+      } finally {
+        setIsLoadingMakes(false);
+      }
+    }
+    loadMakes();
+  }, [toast]);
+  
+  useEffect(() => {
+    async function loadModels() {
+        if (!selectedMakeName) {
+            setModels([]);
+            return;
+        }
+        
+        const selectedMake = makes.find(m => m.name === selectedMakeName);
+        if (!selectedMake) return;
+
+        try {
+            setIsLoadingModels(true);
+            const modelsData = await getModels(selectedMake.id);
+            setModels(modelsData);
+        } catch (error) {
+             toast({
+                variant: "destructive",
+                title: "Erreur de chargement",
+                description: "Impossible de charger la liste des modèles.",
+            });
+        } finally {
+            setIsLoadingModels(false);
+        }
+    }
+    loadModels();
+  }, [selectedMakeName, makes, toast]);
+
 
   useEffect(() => {
     if (isEditMode && vehicleToEdit) {
@@ -111,7 +166,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
 
 
   const validateImages = (files: File[]): boolean => {
-    const totalImages = imagePreviews.length - (isEditMode && vehicleToEdit ? vehicleToEdit.images.length : 0) + files.length;
+    const totalImages = imagePreviews.length + files.length - (isEditMode ? vehicleToEdit.images.length : 0);
     
     if (totalImages === 0 && !isEditMode) {
       setImageError('Au moins une image est requise.');
@@ -138,7 +193,6 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
 
     if (!validateImages(files)) {
         setImageFiles([]);
-        // Don't clear previews in edit mode unless we decide to
         return;
     }
     
@@ -173,7 +227,6 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
 
   const handleImageUpload = async () => {
     if (imageFiles.length === 0) {
-        // If no new files, just proceed
         setStep(2);
         return;
     }
@@ -209,7 +262,6 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
         });
       }
 
-      // In edit mode, we are adding to existing images, not replacing
       const finalImageUrls = isEditMode ? [...imageUrls, ...uploadedUrls] : uploadedUrls;
       setImageUrls(finalImageUrls);
 
@@ -273,6 +325,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
         const docRef = await addDoc(collection(firestore, 'vehicles'), {
           ...dataToSave,
           createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
         });
         toast({
           title: "Annonce envoyée pour approbation !",
@@ -341,7 +394,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                 </div>
               )}
 
-              <Button onClick={handleImageUpload} disabled={isUploading || isCompressing || (imageFiles.length === 0 && !isEditMode) || !!imageError}>
+              <Button onClick={handleImageUpload} disabled={isUploading || isCompressing || (imagePreviews.length === 0 && !isEditMode) || !!imageError}>
                 {isUploading ? 'Téléversement...' : (isCompressing ? 'Compression...' : 'Continuer')}
               </Button>
             </div>
@@ -374,7 +427,19 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Marque</FormLabel>
-                        <FormControl><Input placeholder="ex: Volkswagen" {...field} /></FormControl>
+                        <Select onValueChange={(value) => {
+                            field.onChange(value);
+                            form.setValue('model', '');
+                        }} value={field.value} disabled={isLoadingMakes}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder={isLoadingMakes ? "Chargement..." : "Sélectionner la marque"} />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {makes.map(make => <SelectItem key={make.id} value={make.name}>{make.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -385,7 +450,16 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Modèle</FormLabel>
-                        <FormControl><Input placeholder="ex: Golf" {...field} /></FormControl>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedMakeName || isLoadingModels}>
+                             <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder={isLoadingModels ? "Chargement..." : "Sélectionner le modèle"} />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {models.map(model => <SelectItem key={model.id} value={model.name}>{model.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}

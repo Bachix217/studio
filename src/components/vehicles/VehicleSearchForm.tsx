@@ -22,7 +22,6 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
 
 const defaultFilters: Filters = {
   make: undefined,
@@ -294,8 +293,8 @@ export default function VehicleSearchForm({
                       )}
                     />
                     <div className="text-sm text-muted-foreground flex justify-between">
-                      <span>{currentPriceRange![0].toLocaleString('fr-CH')} CHF</span>
-                      <span>{currentPriceRange![1].toLocaleString('fr-CH')} CHF</span>
+                      <span>{currentPriceRange![0]?.toLocaleString('fr-CH')} CHF</span>
+                      <span>{currentPriceRange![1]?.toLocaleString('fr-CH')} CHF</span>
                     </div>
                   </div>
 
