@@ -46,9 +46,9 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
       throw new Error(`Failed to fetch from CarAPI endpoint: ${endpoint}. Status: ${response.status}`);
     }
     
-    // The API wraps the data in a "data" property
+    // The API returns the data array directly
     const data = await response.json();
-    return data.data;
+    return data;
 
   } catch (error) {
     console.error(`Error fetching from ${url.toString()}:`, error);
