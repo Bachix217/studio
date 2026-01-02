@@ -18,13 +18,19 @@ export type Model = z.infer<typeof ModelSchema>;
 
 const API_BASE_URL = 'https://carapi.app/api';
 let authToken: string | null = null;
+let authTokenExpires: number | null = null;
+
 
 async function getApiAuthToken(): Promise<string> {
+    if (authToken && authTokenExpires && Date.now() < authTokenExpires) {
+        return authToken;
+    }
+    
     const API_TOKEN = 'aa77f496-739d-429c-bb49-90e0644607cd';
     const API_SECRET = '3d27f6316acd408c116f788fbdfd256d';
 
     if (!API_TOKEN || !API_SECRET) {
-        throw new Error('CarAPI credentials are not set.');
+        throw new Error('CarAPI credentials are not set in environment variables.');
     }
 
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -46,16 +52,16 @@ async function getApiAuthToken(): Promise<string> {
     }
     
     const tokenData = await response.json();
-    return tokenData.token;
+    authToken = tokenData.token;
+    // Set expiration to 5 minutes before actual expiration to be safe
+    authTokenExpires = Date.now() + (tokenData.expires_in - 300) * 1000;
+    return authToken as string;
 }
 
 
 async function fetchFromApi(endpoint: string, params: Record<string, string> = {}) {
   try {
-    if (!authToken) {
-        authToken = await getApiAuthToken();
-    }
-
+    const token = await getApiAuthToken();
     const url = new URL(`${API_BASE_URL}/${endpoint}`);
     Object.entries(params).forEach(([key, value]) => {
         url.searchParams.append(key, value);
@@ -63,7 +69,7 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
     
     const response = await fetch(url.toString(), {
       headers: {
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${token}`,
         'Accept': 'application/json',
       },
        cache: 'no-store'
@@ -72,7 +78,7 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
     if (!response.ok) {
       if (response.status === 401) {
         console.log('API token expired or invalid, re-authenticating...');
-        authToken = await getApiAuthToken();
+        authToken = null; // Force re-authentication
         return fetchFromApi(endpoint, params);
       }
       const errorBody = await response.text();
@@ -92,7 +98,8 @@ export async function getMakes(): Promise<Make[]> {
   try {
     const makesData = await fetchFromApi('makes', { sort: 'name', direction: 'asc' });
     if (Array.isArray(makesData)) {
-      return MakeSchema.array().parse(makesData);
+      // Use passthrough to avoid stripping unknown fields, just validate known ones
+      return z.array(MakeSchema.passthrough()).parse(makesData);
     }
     console.error('getMakes did not receive an array:', makesData);
     return [];
@@ -107,7 +114,7 @@ export async function getModels(makeId: number): Promise<Model[]> {
    try {
      const modelsData = await fetchFromApi('models', { year: '2024', make_id: String(makeId), sort: 'name', direction: 'asc' });
      if (Array.isArray(modelsData)) {
-        return ModelSchema.array().parse(modelsData);
+        return z.array(ModelSchema.passthrough()).parse(modelsData);
      }
      console.error('getModels did not receive an array:', modelsData);
      return [];
