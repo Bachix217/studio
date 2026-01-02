@@ -58,7 +58,8 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
 
 export async function getMakes(): Promise<Make[]> {
   const makesData = await fetchFromApi('makes', { sort: 'name', direction: 'asc' });
-  const parsed = z.array(MakeSchema).safeParse(makesData);
+  // The API returns an object with a "data" property which is the array of makes
+  const parsed = z.array(MakeSchema).safeParse(makesData.data);
   if (!parsed.success) {
       console.error('Failed to parse makes:', parsed.error);
       return [];
@@ -68,8 +69,9 @@ export async function getMakes(): Promise<Make[]> {
 
 export async function getModels(makeId: number): Promise<Model[]> {
    if (!makeId) return [];
+   // The API returns an object with a "data" property which is the array of models
    const modelsData = await fetchFromApi('models', { year: '2024', make_id: String(makeId), sort: 'name', direction: 'asc' });
-   const parsed = z.array(ModelSchema).safeParse(modelsData);
+   const parsed = z.array(ModelSchema).safeParse(modelsData.data);
    if (!parsed.success) {
       console.error(`Failed to parse models for makeId ${makeId}:`, parsed.error);
       return [];
