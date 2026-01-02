@@ -17,7 +17,7 @@ export type Make = z.infer<typeof MakeSchema>;
 export type Model = z.infer<typeof ModelSchema>;
 
 const API_BASE_URL = 'https://carapi.app/api';
-let apiToken: string | null = null;
+let authToken: string | null = null;
 
 async function getApiAuthToken(): Promise<string> {
     const API_TOKEN = 'aa77f496-739d-429c-bb49-90e0644607cd';
@@ -45,16 +45,15 @@ async function getApiAuthToken(): Promise<string> {
         throw new Error('Failed to authenticate with CarAPI.');
     }
     
-    // The response body is the token itself
-    const token = await response.text();
-    return token;
+    const tokenData = await response.json();
+    return tokenData.token;
 }
 
 
 async function fetchFromApi(endpoint: string, params: Record<string, string> = {}) {
   try {
-    if (!apiToken) {
-        apiToken = await getApiAuthToken();
+    if (!authToken) {
+        authToken = await getApiAuthToken();
     }
 
     const url = new URL(`${API_BASE_URL}/${endpoint}`);
@@ -64,26 +63,24 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
     
     const response = await fetch(url.toString(), {
       headers: {
-        'Authorization': `Bearer ${apiToken}`,
+        'Authorization': `Bearer ${authToken}`,
         'Accept': 'application/json',
       },
        cache: 'no-store'
     });
 
     if (!response.ok) {
-      // If token is expired, try to re-authenticate
       if (response.status === 401) {
-        console.log('API token expired, re-authenticating...');
-        apiToken = await getApiAuthToken();
-        return fetchFromApi(endpoint, params); // Retry the request with the new token
+        console.log('API token expired or invalid, re-authenticating...');
+        authToken = await getApiAuthToken();
+        return fetchFromApi(endpoint, params);
       }
       const errorBody = await response.text();
       console.error(`API Error (${response.status}) fetching ${url.toString()}: ${errorBody}`);
       throw new Error(`Failed to fetch from CarAPI endpoint: ${endpoint}. Status: ${response.status}`);
     }
     
-    const data = await response.json();
-    return data;
+    return await response.json();
 
   } catch (error) {
     console.error(`Error in fetchFromApi for ${endpoint}:`, error);
@@ -94,15 +91,14 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
 export async function getMakes(): Promise<Make[]> {
   try {
     const makesData = await fetchFromApi('makes', { sort: 'name', direction: 'asc' });
-    // Ensure the response is an array before returning
     if (Array.isArray(makesData)) {
       return MakeSchema.array().parse(makesData);
     }
     console.error('getMakes did not receive an array:', makesData);
-    return []; // Return empty array on unexpected format
+    return [];
   } catch (error) {
     console.error('Error in getMakes:', error);
-    return []; // Return empty array on error
+    return [];
   }
 }
 
@@ -110,7 +106,6 @@ export async function getModels(makeId: number): Promise<Model[]> {
    if (!makeId) return [];
    try {
      const modelsData = await fetchFromApi('models', { year: '2024', make_id: String(makeId), sort: 'name', direction: 'asc' });
-     // Ensure the response is an array before returning
      if (Array.isArray(modelsData)) {
         return ModelSchema.array().parse(modelsData);
      }
