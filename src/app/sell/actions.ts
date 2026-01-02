@@ -20,13 +20,11 @@ const API_BASE_URL = 'https://carapi.app/api';
 let authToken: string | null = null;
 let authTokenExpires: number | null = null;
 
-
 async function getApiAuthToken(): Promise<string> {
     if (authToken && authTokenExpires && Date.now() < authTokenExpires) {
         return authToken;
     }
     
-    // NOTE: These are placeholders and should be replaced by environment variables in a real app
     const API_TOKEN = 'aa77f496-739d-429c-bb49-90e0644607cd';
     const API_SECRET = '3d27f6316acd408c116f788fbdfd256d';
 
@@ -54,7 +52,6 @@ async function getApiAuthToken(): Promise<string> {
     
     const tokenData = await response.json();
     authToken = tokenData.token;
-    // Set expiration to 5 minutes before actual expiration to be safe
     authTokenExpires = Date.now() + (tokenData.expires_in - 300) * 1000;
     return authToken as string;
 }
@@ -73,11 +70,10 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/json',
       },
-       cache: 'no-store'
+      cache: 'no-store',
     });
 
     if (!response.ok) {
-      // Don't retry automatically, just report the error
       const errorBody = await response.text();
       console.error(`API Error (${response.status}) fetching ${url.toString()}: ${errorBody}`);
       throw new Error(`Failed to fetch from CarAPI endpoint: ${endpoint}. Status: ${response.status}`);
@@ -94,11 +90,10 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
 export async function getMakes(): Promise<Make[]> {
   try {
     const makesData = await fetchFromApi('makes', { sort: 'name', direction: 'asc' });
-    if (Array.isArray(makesData)) {
-      // Use passthrough to avoid stripping unknown fields, just validate known ones
-      return z.array(MakeSchema.passthrough()).parse(makesData);
+    if (makesData && Array.isArray(makesData.data)) {
+      return z.array(MakeSchema.passthrough()).parse(makesData.data);
     }
-    console.error('getMakes did not receive an array:', makesData);
+    console.error('getMakes did not receive a valid data array:', makesData);
     return [];
   } catch (error) {
     console.error('Error in getMakes:', error);
@@ -110,10 +105,10 @@ export async function getModels(makeId: number): Promise<Model[]> {
    if (!makeId) return [];
    try {
      const modelsData = await fetchFromApi('models', { year: '2024', make_id: String(makeId), sort: 'name', direction: 'asc' });
-     if (Array.isArray(modelsData)) {
-        return z.array(ModelSchema.passthrough()).parse(modelsData);
+     if (modelsData && Array.isArray(modelsData.data)) {
+        return z.array(ModelSchema.passthrough()).parse(modelsData.data);
      }
-     console.error('getModels did not receive an array:', modelsData);
+     console.error('getModels did not receive a valid data array:', modelsData);
      return [];
    } catch(error) {
       console.error('Error in getModels:', error);
