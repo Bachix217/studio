@@ -77,11 +77,7 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
     });
 
     if (!response.ok) {
-      if (response.status === 401) {
-        console.log('API token expired or invalid, re-authenticating...');
-        authToken = null; // Force re-authentication
-        return fetchFromApi(endpoint, params);
-      }
+      // Don't retry automatically, just report the error
       const errorBody = await response.text();
       console.error(`API Error (${response.status}) fetching ${url.toString()}: ${errorBody}`);
       throw new Error(`Failed to fetch from CarAPI endpoint: ${endpoint}. Status: ${response.status}`);
