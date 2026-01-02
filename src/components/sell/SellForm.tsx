@@ -118,7 +118,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
 
   useEffect(() => {
     async function loadMakes() {
-      if (makes.length > 0 || step !== 2) return;
+      if (step !== 2) return;
       try {
         setIsLoadingMakes(true);
         const makesData = await getMakes();
@@ -143,7 +143,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             return;
         }
         
-        const selectedMake = makes.find(m => m.name.toLowerCase() === selectedMakeName.toLowerCase());
+        const selectedMake = makes.find(m => m.name === selectedMakeName);
         if (!selectedMake) return;
 
         try {
