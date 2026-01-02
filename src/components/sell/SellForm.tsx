@@ -134,7 +134,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
       }
     }
     loadMakes();
-  }, [step, toast, makes.length]);
+  }, [step, toast]);
   
   useEffect(() => {
     async function loadModels() {
