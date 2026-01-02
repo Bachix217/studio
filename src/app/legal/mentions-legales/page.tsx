@@ -8,7 +8,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
 async function getLegalContent(firestore: any) {
-  if (!firestore) return null;
+  if (!firestore) return 'Erreur lors du chargement du contenu.';
   try {
     const docRef = doc(firestore, 'legal', 'legal-mentions');
     const docSnap = await getDoc(docRef);
@@ -28,33 +28,18 @@ export default function MentionsLegalesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // We check if firestore is initialized before fetching the content
     if (firestore) {
       getLegalContent(firestore).then(data => {
         setContent(data);
         setLoading(false);
       });
+    } else {
+        // If firestore is not ready, we wait. The useFirebase hook will cause a re-render when it's ready.
+        setLoading(true);
     }
   }, [firestore]);
 
-  const renderContent = () => {
-    if (!content) return null;
-
-    // Split by numbers like "1.", "2." to create sections
-    const sections = content.split(/\d+\./).filter(Boolean);
-
-    return sections.map((section, index) => {
-      const lines = section.trim().split('\n');
-      const title = lines.shift() || `Section ${index + 1}`;
-      const body = lines.join('\n');
-
-      return (
-        <section key={index}>
-          <h2 className="text-xl font-semibold">{title.trim()}</h2>
-          <div className="prose prose-stone dark:prose-invert max-w-none text-card-foreground space-y-2 mt-2" dangerouslySetInnerHTML={{ __html: body.replace(/\n/g, '<br />') }} />
-        </section>
-      );
-    });
-  };
 
   return (
     <div className="flex flex-col min-h-screen">
