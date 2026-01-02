@@ -17,6 +17,7 @@ export type Vehicle = {
   images: string[];
   userId: string;
   createdAt: Timestamp;
+  updatedAt?: Timestamp;
   // New fields
   doors: typeof DOORS_TYPES[number];
   seats: typeof SEATS_TYPES[number];

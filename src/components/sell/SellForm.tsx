@@ -45,7 +45,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from '@/lib/utils';
 
 
-const MAX_IMAGES = 5;
+const MAX_IMAGES = 10;
 
 const formSchema = z.object({
   make: z.string().min(2, "La marque est requise."),
@@ -57,7 +57,7 @@ const formSchema = z.object({
   gearbox: z.enum(GEARBOX_TYPES, { required_error: "La boîte de vitesses est requise." }),
   canton: z.string().min(2, "Le canton est requis."),
   description: z.string().min(20, "Veuillez fournir une description plus détaillée."),
-  features: z.string().optional(),
+  features: z.array(z.string()).optional(),
   doors: z.coerce.number({invalid_type_error: "Requis"}).min(2).max(7),
   seats: z.coerce.number({invalid_type_error: "Requis"}).min(2).max(9),
   drive: z.enum(DRIVE_TYPES, { required_error: "Le type de traction est requis."}),
@@ -99,16 +99,18 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      make: vehicleToEdit?.make || '',
-      model: vehicleToEdit?.model || '',
+    defaultValues: isEditMode ? {
+      ...vehicleToEdit,
       year: vehicleToEdit?.year || new Date().getFullYear(),
       price: vehicleToEdit?.price,
       mileage: vehicleToEdit?.mileage,
-      description: vehicleToEdit?.description || '',
-      features: vehicleToEdit?.features?.join(', ') || '',
       powerUnit: vehicleToEdit?.powerUnit || 'cv',
       nonSmoker: vehicleToEdit?.nonSmoker || false,
+    } : {
+      year: new Date().getFullYear(),
+      powerUnit: 'cv',
+      nonSmoker: false,
+      features: [],
     },
   });
   
@@ -116,7 +118,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
 
   useEffect(() => {
     async function loadMakes() {
-      if (step !== 2 || makes.length > 0) return;
+      if (makes.length > 0 || step !== 2) return;
       try {
         setIsLoadingMakes(true);
         const makesData = await getMakes();
@@ -141,7 +143,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             return;
         }
         
-        const selectedMake = makes.find(m => m.name === selectedMakeName);
+        const selectedMake = makes.find(m => m.name.toLowerCase() === selectedMakeName.toLowerCase());
         if (!selectedMake) return;
 
         try {
@@ -166,9 +168,12 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
     if (isEditMode && vehicleToEdit) {
       form.reset({
         ...vehicleToEdit,
-        features: vehicleToEdit.features?.join(', '),
+        features: vehicleToEdit.features,
       });
-      // If we are in edit mode, we can directly go to step 2
+      if (vehicleToEdit.images && vehicleToEdit.images.length > 0) {
+        setImagePreviews(vehicleToEdit.images);
+        setImageUrls(vehicleToEdit.images);
+      }
       setStep(2);
     }
   }, [isEditMode, vehicleToEdit, form]);
@@ -313,7 +318,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
         year: Number(values.year),
         price: Number(values.price),
         mileage: Number(values.mileage),
-        features: values.features ? values.features.split(',').map(f => f.trim()) : [],
+        features: values.features,
         images: imageUrls,
         userId: user.uid,
         status: 'pending',
@@ -361,7 +366,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             <div className="space-y-8">
               <div>
                 <h3 className="text-lg font-medium">Étape 1 sur 2 : Photos du véhicule</h3>
-                <p className="text-sm text-muted-foreground">Téléversez jusqu'à ${MAX_IMAGES} photos de votre voiture.</p>
+                <p className="text-sm text-muted-foreground">Téléversez jusqu'à {MAX_IMAGES} photos de votre voiture.</p>
               </div>
               <div className="space-y-2">
                   <Label htmlFor="dropzone-file">Photos ({imagePreviews.length}/{MAX_IMAGES})</Label>
@@ -370,7 +375,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
                         <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
-                        <p className="text-xs text-muted-foreground">Jusqu'à ${MAX_IMAGES} images, elles seront compressées</p>
+                        <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images, elles seront compressées</p>
                       </div>
                       <Input 
                         id="dropzone-file" 
@@ -781,7 +786,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                     <FormItem>
                       <FormLabel>Équipements</FormLabel>
                       <FormControl>
-                        <Input placeholder="Climatisation, Sièges chauffants, Toit ouvrant..." {...field} />
+                        <Input placeholder="Climatisation, Sièges chauffants, Toit ouvrant..." {...field} value={field.value?.join(', ') || ''} onChange={(e) => field.onChange(e.target.value.split(',').map(s => s.trim()))}/>
                       </FormControl>
                       <p className="text-sm text-muted-foreground">Séparez les équipements par une virgule.</p>
                       <FormMessage />
