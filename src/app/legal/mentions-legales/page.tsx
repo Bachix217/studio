@@ -28,16 +28,22 @@ export default function MentionsLegalesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // We check if firestore is initialized before fetching the content
-    if (firestore) {
-      getLegalContent(firestore).then(data => {
-        setContent(data);
-        setLoading(false);
-      });
-    } else {
-        // If firestore is not ready, we wait. The useFirebase hook will cause a re-render when it's ready.
+    const fetchContent = async () => {
+      // On s'assure que firestore est bien initialisé avant de faire l'appel.
+      if (firestore) {
         setLoading(true);
-    }
+        try {
+          const data = await getLegalContent(firestore);
+          setContent(data);
+        } catch (err) {
+            setContent('Erreur lors du chargement du contenu.');
+        } finally {
+            setLoading(false);
+        }
+      }
+    };
+
+    fetchContent();
   }, [firestore]);
 
 
