@@ -25,7 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { CANTONS, FUEL_TYPES, GEARBOX_TYPES, DOORS_TYPES, SEATS_TYPES, DRIVE_TYPES, CONDITION_TYPES, POWER_UNITS, EXTERIOR_COLORS, INTERIOR_COLORS } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Check, ChevronsUpDown } from 'lucide-react';
+import { UploadCloud, Check, ChevronsUpDown, Info } from 'lucide-react';
 import { useFirebase } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
 import { addDoc, collection, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
@@ -43,6 +43,7 @@ import { getMakes, getModels, type Make, type Model } from '@/app/sell/actions';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 
 const MAX_IMAGES = 10;
@@ -138,17 +139,22 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   
   useEffect(() => {
     async function loadModels() {
-        if (!selectedMakeName) {
+        if (!selectedMakeName || makes.length === 0) {
             setModels([]);
             return;
         }
         
-        const selectedMake = makes.find(m => m.name === selectedMakeName);
-        if (!selectedMake) return;
+        const selectedMake = makes.find(m => m.name.toLowerCase() === selectedMakeName.toLowerCase());
+        
+        // Don't try to load models for a custom make
+        if (!selectedMake) {
+             setModels([]);
+             return;
+        }
 
         try {
             setIsLoadingModels(true);
-            const modelsData = await getModels(selectedMake.id);
+            const modelsData = await getModels(selectedMake.name); // Use name for CarAPI
             setModels(modelsData);
         } catch (error) {
              toast({
@@ -393,7 +399,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 pt-4">
                       {imagePreviews.map((src, index) => (
                         <div key={index} className="relative aspect-square w-full rounded-md overflow-hidden">
-                          <Image src={src} alt={`Aperçu ${index}`} fill className="object-cover" />
+                          <Image src={src} alt={`Aperçu ${index}`} sizes="100px" fill className="object-cover" />
                         </div>
                       ))}
                     </div>
@@ -416,6 +422,12 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
 
           {step === 2 && (
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                 <Alert variant="default" className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300">
+                    <Info className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
+                    <AlertDescription>
+                        Tacoto.ch est un projet entièrement gratuit. L'amélioration de l'automatisation (comme la liste des modèles) prend du temps. Nous vous remercions pour votre compréhension et votre contribution !
+                    </AlertDescription>
+                </Alert>
                 <div>
                   <div className="flex items-center justify-between">
                       <div>
@@ -428,7 +440,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-4">
                       {imageUrls.map((src, index) => (
                         <div key={index} className="relative aspect-square w-full rounded-md overflow-hidden">
-                          <Image src={src} alt={`Véhicule ${index}`} fill className="object-cover" />
+                          <Image src={src} alt={`Véhicule ${index}`} sizes="100px" fill className="object-cover" />
                         </div>
                       ))}
                   </div>
@@ -444,36 +456,33 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                         <Popover open={isMakePopoverOpen} onOpenChange={setIsMakePopoverOpen}>
                           <PopoverTrigger asChild>
                             <FormControl>
-                              <Button
-                                variant="outline"
-                                role="combobox"
-                                className={cn(
-                                  "w-full justify-between",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                                disabled={isLoadingMakes}
-                              >
-                                {isLoadingMakes ? "Chargement..." : field.value
-                                  ? makes.find(
-                                      (make) => make.name === field.value
-                                    )?.name
-                                  : "Sélectionner la marque"}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                              </Button>
+                               <div className="relative">
+                                <Input
+                                    placeholder={isLoadingMakes ? "Chargement..." : "Rechercher ou taper la marque"}
+                                    className="w-full"
+                                    {...field}
+                                    onChange={(e) => {
+                                        field.onChange(e);
+                                        if(!isMakePopoverOpen) setIsMakePopoverOpen(true);
+                                    }}
+                                    disabled={isLoadingMakes}
+                                />
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 absolute right-3 top-1/2 -translate-y-1/2" />
+                               </div>
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                             <Command>
                               <CommandInput placeholder="Rechercher une marque..." />
                               <CommandList>
-                                <CommandEmpty>Aucune marque trouvée.</CommandEmpty>
+                                <CommandEmpty>Aucune marque trouvée. Vous pouvez l'entrer manuellement.</CommandEmpty>
                                 <CommandGroup>
                                   {makes.map((make) => (
                                     <CommandItem
                                       value={make.name}
                                       key={make.id}
-                                      onSelect={() => {
-                                        form.setValue("make", make.name)
+                                      onSelect={(currentValue) => {
+                                        form.setValue("make", currentValue === field.value ? "" : currentValue)
                                         form.setValue("model", '')
                                         setIsMakePopoverOpen(false)
                                       }}
@@ -494,6 +503,9 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                             </Command>
                           </PopoverContent>
                         </Popover>
+                         <FormDescription>
+                          Si votre marque n'est pas dans la liste, tapez-la simplement.
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -505,16 +517,13 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Modèle</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={!selectedMakeName || isLoadingModels}>
-                             <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder={isLoadingModels ? "Chargement..." : "Sélectionner le modèle"} />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {models.map(model => <SelectItem key={model.id} value={model.name}>{model.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                        <FormControl>
+                            <Input 
+                                placeholder={isLoadingModels ? "Chargement..." : "Entrez le modèle"} 
+                                {...field} 
+                                disabled={!selectedMakeName}
+                            />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

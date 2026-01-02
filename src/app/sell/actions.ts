@@ -3,16 +3,15 @@
 
 import { z } from 'zod';
 
-// Schéma pour les marques de CarQueryAPI
 const MakeSchema = z.object({
   make_id: z.string(),
   make_display: z.string(),
 });
 
-// Schéma pour les modèles de CarQueryAPI
 const ModelSchema = z.object({
   model_name: z.string(),
 });
+
 
 export type Make = {
   id: string;
@@ -40,9 +39,9 @@ export async function getMakes(): Promise<Make[]> {
     }
 
     const data = await response.json();
-
-    // CarQueryAPI retourne { Makes: [...] }
+    
     if (!data.Makes || !Array.isArray(data.Makes)) {
+        console.error("Format de réponse inattendu de l'API pour les marques:", data);
         throw new Error("Format de réponse inattendu de l'API pour les marques.");
     }
     
@@ -65,11 +64,11 @@ export async function getMakes(): Promise<Make[]> {
 /**
  * Récupère les modèles pour une marque donnée en utilisant le nom de la marque.
  */
-export async function getModels(makeId: string): Promise<Model[]> {
-   if (!makeId) return [];
+export async function getModels(makeName: string): Promise<Model[]> {
+   if (!makeName) return [];
 
    try {
-     const response = await fetch(`${API_BASE_URL}getModels&make=${makeId}`, {
+     const response = await fetch(`${API_BASE_URL}getModels&make=${makeName}`, {
         next: { revalidate: 60 * 60 * 24 }
      });
 
@@ -80,6 +79,7 @@ export async function getModels(makeId: string): Promise<Model[]> {
      const data = await response.json();
 
      if (!data.Models || !Array.isArray(data.Models)) {
+        console.error(`Format de réponse inattendu pour les modèles de la marque ${makeName}:`, data);
         throw new Error("Format de réponse inattendu de l'API pour les modèles.");
      }
      
@@ -92,7 +92,7 @@ export async function getModels(makeId: string): Promise<Model[]> {
      return models.sort((a,b) => a.name.localeCompare(b.name));
 
    } catch(error) {
-      console.error(`Error fetching models for makeId ${makeId}:`, error);
+      console.error(`Error fetching models for make ${makeName}:`, error);
       return [];
    }
 }
