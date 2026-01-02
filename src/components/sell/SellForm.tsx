@@ -25,7 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { CANTONS, FUEL_TYPES, GEARBOX_TYPES, DOORS_TYPES, SEATS_TYPES, DRIVE_TYPES, CONDITION_TYPES, POWER_UNITS, EXTERIOR_COLORS, INTERIOR_COLORS } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud } from 'lucide-react';
+import { UploadCloud, Check, ChevronsUpDown } from 'lucide-react';
 import { useFirebase } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
 import { addDoc, collection, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
@@ -40,6 +40,10 @@ import { Switch } from '../ui/switch';
 import { Separator } from '../ui/separator';
 import type { Vehicle } from '@/lib/types';
 import { getMakes, getModels, type Make, type Model } from '@/app/sell/actions';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
+
 
 const MAX_IMAGES = 5;
 
@@ -90,6 +94,8 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [isMakePopoverOpen, setIsMakePopoverOpen] = useState(false);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -355,7 +361,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             <div className="space-y-8">
               <div>
                 <h3 className="text-lg font-medium">Étape 1 sur 2 : Photos du véhicule</h3>
-                <p className="text-sm text-muted-foreground">Téléversez jusqu'à {MAX_IMAGES} photos de votre voiture.</p>
+                <p className="text-sm text-muted-foreground">Téléversez jusqu'à ${MAX_IMAGES} photos de votre voiture.</p>
               </div>
               <div className="space-y-2">
                   <Label htmlFor="dropzone-file">Photos ({imagePreviews.length}/{MAX_IMAGES})</Label>
@@ -364,7 +370,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
                         <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
-                        <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images, elles seront compressées</p>
+                        <p className="text-xs text-muted-foreground">Jusqu'à ${MAX_IMAGES} images, elles seront compressées</p>
                       </div>
                       <Input 
                         id="dropzone-file" 
@@ -424,29 +430,70 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <FormField
+                   <FormField
                     control={form.control}
                     name="make"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel>Marque</FormLabel>
-                        <Select onValueChange={(value) => {
-                            field.onChange(value);
-                            form.setValue('model', '');
-                        }} value={field.value} disabled={isLoadingMakes}>
+                        <Popover open={isMakePopoverOpen} onOpenChange={setIsMakePopoverOpen}>
+                          <PopoverTrigger asChild>
                             <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder={isLoadingMakes ? "Chargement..." : "Sélectionner la marque"} />
-                                </SelectTrigger>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                                disabled={isLoadingMakes}
+                              >
+                                {isLoadingMakes ? "Chargement..." : field.value
+                                  ? makes.find(
+                                      (make) => make.name === field.value
+                                    )?.name
+                                  : "Sélectionner la marque"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
                             </FormControl>
-                            <SelectContent>
-                                {makes.map(make => <SelectItem key={make.id} value={make.name}>{make.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                              <CommandInput placeholder="Rechercher une marque..." />
+                              <CommandList>
+                                <CommandEmpty>Aucune marque trouvée.</CommandEmpty>
+                                <CommandGroup>
+                                  {makes.map((make) => (
+                                    <CommandItem
+                                      value={make.name}
+                                      key={make.id}
+                                      onSelect={() => {
+                                        form.setValue("make", make.name)
+                                        form.setValue("model", '')
+                                        setIsMakePopoverOpen(false)
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          make.name === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                      />
+                                      {make.name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
                   <FormField
                     control={form.control}
                     name="model"
