@@ -16,16 +16,16 @@ const ModelSchema = z.object({
 export type Make = z.infer<typeof MakeSchema>;
 export type Model = z.infer<typeof ModelSchema>;
 
-// Correctly named variables for clarity
-const API_TOKEN = process.env.CAR_API_TOKEN; 
-const API_SECRET = process.env.CAR_API_SECRET;
 const API_BASE_URL = 'https://carapi.app/api';
 
-if (!API_TOKEN || !API_SECRET) {
-  throw new Error('CarAPI credentials are not set in environment variables.');
-}
-
 async function fetchFromApi(endpoint: string, params: Record<string, string> = {}) {
+  const API_TOKEN = process.env.CAR_API_TOKEN; 
+  const API_SECRET = process.env.CAR_API_SECRET;
+
+  if (!API_TOKEN || !API_SECRET) {
+    throw new Error('CarAPI credentials are not set in environment variables.');
+  }
+
   const url = new URL(`${API_BASE_URL}/${endpoint}`);
   Object.entries(params).forEach(([key, value]) => {
     url.searchParams.append(key, value);
@@ -38,7 +38,7 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
         'X-API-KEY': API_TOKEN, 
         'Accept': 'application/json',
       },
-       cache: 'no-store' // Force a fresh fetch every time
+       cache: 'no-store'
     });
 
     if (!response.ok) {
@@ -58,7 +58,6 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
 
 export async function getMakes(): Promise<Make[]> {
   const makesData = await fetchFromApi('makes', { sort: 'name', direction: 'asc' });
-  // The API returns an object with a "data" property which is the array of makes
   const parsed = z.array(MakeSchema).safeParse(makesData.data);
   if (!parsed.success) {
       console.error('Failed to parse makes:', parsed.error);
@@ -69,7 +68,6 @@ export async function getMakes(): Promise<Make[]> {
 
 export async function getModels(makeId: number): Promise<Model[]> {
    if (!makeId) return [];
-   // The API returns an object with a "data" property which is the array of models
    const modelsData = await fetchFromApi('models', { year: '2024', make_id: String(makeId), sort: 'name', direction: 'asc' });
    const parsed = z.array(ModelSchema).safeParse(modelsData.data);
    if (!parsed.success) {
