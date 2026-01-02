@@ -1,13 +1,61 @@
+'use client';
+import { useEffect, useState } from 'react';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFirebase } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export const metadata = {
-  title: 'Mentions Légales - Tacoto.ch',
-  description: 'Consultez les mentions légales de Tacoto.ch.',
-};
+async function getLegalContent(firestore: any) {
+  if (!firestore) return null;
+  try {
+    const docRef = doc(firestore, 'legal', 'legal-mentions');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data().content;
+    }
+    return 'Contenu non trouvé.';
+  } catch (error) {
+    console.error("Error fetching legal content:", error);
+    return 'Erreur lors du chargement du contenu.';
+  }
+}
 
 export default function MentionsLegalesPage() {
+  const { firestore } = useFirebase();
+  const [content, setContent] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (firestore) {
+      getLegalContent(firestore).then(data => {
+        setContent(data);
+        setLoading(false);
+      });
+    }
+  }, [firestore]);
+
+  const renderContent = () => {
+    if (!content) return null;
+
+    // Split by numbers like "1.", "2." to create sections
+    const sections = content.split(/\d+\./).filter(Boolean);
+
+    return sections.map((section, index) => {
+      const lines = section.trim().split('\n');
+      const title = lines.shift() || `Section ${index + 1}`;
+      const body = lines.join('\n');
+
+      return (
+        <section key={index}>
+          <h2 className="text-xl font-semibold">{title.trim()}</h2>
+          <div className="prose prose-stone dark:prose-invert max-w-none text-card-foreground space-y-2 mt-2" dangerouslySetInnerHTML={{ __html: body.replace(/\n/g, '<br />') }} />
+        </section>
+      );
+    });
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -16,55 +64,25 @@ export default function MentionsLegalesPage() {
           <CardHeader>
             <CardTitle className="text-3xl">Mentions Légales</CardTitle>
           </CardHeader>
-          <CardContent className="prose prose-stone dark:prose-invert max-w-none text-card-foreground space-y-6 pt-6">
-            
-            <section>
-              <h2 className="text-xl font-semibold">Éditeur du site</h2>
-              <p>
-                Le site Tacoto.ch est édité par :<br />
-                <strong>Tacoto.ch</strong><br />
-                Genève, Suisse
-              </p>
-              <p>
-                <strong>Représentant légal :</strong> Tacoto.ch
-              </p>
-            </section>
-            
-            <section>
-              <h2 className="text-xl font-semibold">Contact</h2>
-              <p>
-                Pour toute question ou demande, vous pouvez nous contacter à l'adresse suivante :<br />
-                <strong>Email :</strong> info@tacoto.ch
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold">Hébergement</h2>
-              <p>
-                Le site est hébergé par :<br />
-                <strong>Google Cloud Platform / Firebase Hosting</strong><br />
-                Gordon House, Barrow Street, Dublin 4, Irlande
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold">Propriété intellectuelle</h2>
-              <p>
-                L'ensemble de ce site relève de la législation suisse et internationale sur le droit d'auteur et la propriété intellectuelle. Tous les droits de reproduction sont réservés, y compris pour les documents téléchargeables et les représentations iconographiques et photographiques. La reproduction de tout ou partie de ce site sur un support électronique quel qu'il soit est formellement interdite sauf autorisation expresse de l'éditeur.
-              </p>
-            </section>
-
-             <section>
-              <h2 className="text-xl font-semibold">Limitation de responsabilité</h2>
-              <p>
-                L'éditeur du site ne saurait être tenu pour responsable des erreurs, omissions, ou pour les résultats qui pourraient être obtenus par l'usage des informations présentes sur le site. Les annonces publiées sur le site sont sous l'entière responsabilité de leurs auteurs.
-              </p>
-            </section>
-
+          <CardContent className="space-y-6 pt-6">
+            {loading ? (
+              <div className="space-y-6">
+                <Skeleton className="h-6 w-1/3" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-4/5" />
+                <Skeleton className="h-6 w-1/3 mt-4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ) : (
+                <div 
+                    className="prose prose-stone dark:prose-invert max-w-none text-card-foreground space-y-4"
+                    dangerouslySetInnerHTML={{ __html: content?.replace(/\n/g, '<br />') || '' }} 
+                />
+            )}
             <p className="text-sm text-muted-foreground pt-4">
               Dernière mise à jour : {new Date().toLocaleDateString('fr-CH')}
             </p>
-
           </CardContent>
         </Card>
       </main>
