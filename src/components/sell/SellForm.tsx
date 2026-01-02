@@ -96,6 +96,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   const [isCompressing, setIsCompressing] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [isMakePopoverOpen, setIsMakePopoverOpen] = useState(false);
+  const [isModelPopoverOpen, setIsModelPopoverOpen] = useState(false);
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -120,8 +121,8 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   useEffect(() => {
     async function loadMakes() {
       if (step !== 2) return;
+      setIsLoadingMakes(true);
       try {
-        setIsLoadingMakes(true);
         const makesData = await getMakes();
         setMakes(makesData);
       } catch (error) {
@@ -144,18 +145,16 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             return;
         }
         
-        // Find make object from the name to get the ID for the API call if it exists
         const selectedMake = makes.find(m => m.name.toLowerCase() === selectedMakeName.toLowerCase());
         
-        // If the make is not in our list from the API (custom make), we just allow free text for model
         if (!selectedMake) {
              setModels([]);
              return;
         }
 
+        setIsLoadingModels(true);
         try {
-            setIsLoadingModels(true);
-            const modelsData = await getModels(selectedMake.name); // API uses name
+            const modelsData = await getModels(selectedMake.name);
             setModels(modelsData);
         } catch (error) {
              toast({
@@ -517,15 +516,57 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                     control={form.control}
                     name="model"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel>Modèle</FormLabel>
-                        <FormControl>
-                            <Input 
-                                placeholder={isLoadingModels ? "Chargement des modèles..." : "Entrez le modèle"} 
-                                {...field} 
-                                disabled={!selectedMakeName || isLoadingModels}
-                            />
-                        </FormControl>
+                        <Popover open={isModelPopoverOpen} onOpenChange={setIsModelPopoverOpen}>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                               <div className="relative">
+                                <Input
+                                    placeholder={isLoadingModels ? "Chargement..." : "Rechercher ou taper le modèle"}
+                                    className="w-full"
+                                    {...field}
+                                    onChange={(e) => {
+                                        field.onChange(e);
+                                        if(!isModelPopoverOpen) setIsModelPopoverOpen(true);
+                                    }}
+                                    disabled={!selectedMakeName || isLoadingModels}
+                                />
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 absolute right-3 top-1/2 -translate-y-1/2" />
+                               </div>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                              <CommandInput placeholder="Rechercher un modèle..." />
+                              <CommandList>
+                                <CommandEmpty>Aucun modèle trouvé. Vous pouvez l'entrer manuellement.</CommandEmpty>
+                                <CommandGroup>
+                                  {models.map((model) => (
+                                    <CommandItem
+                                      value={model.name}
+                                      key={model.id}
+                                      onSelect={(currentValue) => {
+                                        form.setValue("model", currentValue === field.value ? "" : currentValue)
+                                        setIsModelPopoverOpen(false)
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          model.name.toLowerCase() === field.value?.toLowerCase()
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                      />
+                                      {model.name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
