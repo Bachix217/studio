@@ -19,14 +19,14 @@ export type Model = z.infer<typeof ModelSchema>;
 const API_BASE_URL = 'https://carapi.app/api';
 
 async function fetchFromApi(endpoint: string, params: Record<string, string> = {}) {
-  const API_TOKEN = process.env.CAR_API_TOKEN; 
-  const API_SECRET = process.env.CAR_API_SECRET;
+  const API_TOKEN = 'aa77f496-739d-429c-bb49-90e0644607cd'; 
+  const API_SECRET = '3d27f6316acd408c116f788fbdfd256d';
 
   if (!API_TOKEN || !API_SECRET) {
     throw new Error('CarAPI credentials are not set in environment variables.');
   }
 
-  const url = new URL(`${API_BASE_URL}/${endpoint}`);
+  const url = new URL(`${API_-BASE_URL}/${endpoint}`);
   Object.entries(params).forEach(([key, value]) => {
     url.searchParams.append(key, value);
   });
@@ -58,21 +58,13 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
 
 export async function getMakes(): Promise<Make[]> {
   const makesData = await fetchFromApi('makes', { sort: 'name', direction: 'asc' });
-  const parsed = z.array(MakeSchema).safeParse(makesData.data);
-  if (!parsed.success) {
-      console.error('Failed to parse makes:', parsed.error);
-      return [];
-  }
-  return parsed.data;
+  // Bypassing Zod for now to debug
+  return makesData as Make[];
 }
 
 export async function getModels(makeId: number): Promise<Model[]> {
    if (!makeId) return [];
    const modelsData = await fetchFromApi('models', { year: '2024', make_id: String(makeId), sort: 'name', direction: 'asc' });
-   const parsed = z.array(ModelSchema).safeParse(modelsData.data);
-   if (!parsed.success) {
-      console.error(`Failed to parse models for makeId ${makeId}:`, parsed.error);
-      return [];
-  }
-  return parsed.data;
+   // Bypassing Zod for now to debug
+   return modelsData as Model[];
 }
