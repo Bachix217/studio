@@ -1,8 +1,8 @@
+
 'use server';
 
 import { z } from 'zod';
 
-// Schémas de validation Zod simplifiés et robustes
 const MakeSchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -17,25 +17,16 @@ export type Make = z.infer<typeof MakeSchema>;
 export type Model = z.infer<typeof ModelSchema>;
 
 const API_BASE_URL = 'https://carapi.app/api';
-
-// Variables pour stocker le jeton et sa date d'expiration en mémoire du serveur
 let authToken: string | null = null;
 let authTokenExpires: number | null = null;
 
-/**
- * Gère l'authentification avec CarAPI.
- * Demande un nouveau jeton uniquement si nécessaire (manquant ou expiré).
- */
 async function getApiAuthToken(): Promise<string | null> {
-  // Vérifie si le jeton actuel est toujours valide (valide pendant 30 minutes)
   if (authToken && authTokenExpires && Date.now() < authTokenExpires) {
     return authToken;
   }
 
-  console.log("Authenticating with CarAPI...");
-
-  const API_TOKEN = 'aa77f496-739d-429c-bb49-90e0644607cd';
-  const API_SECRET = '3d27f6316acd408c116f788fbdfd256d';
+  const API_TOKEN = process.env.CAR_API_TOKEN || 'aa77f496-739d-429c-bb49-90e0644607cd';
+  const API_SECRET = process.env.CAR_API_SECRET || '3d27f6316acd408c116f788fbdfd256d';
 
   try {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -49,34 +40,20 @@ async function getApiAuthToken(): Promise<string | null> {
     });
 
     if (!response.ok) {
-      const errorBody = await response.text();
-      console.error(`CarAPI Auth Error (${response.status}): ${errorBody}`);
-      // Réinitialise les variables en cas d'erreur
-      authToken = null;
-      authTokenExpires = null;
+      console.error(`CarAPI Auth Error (${response.status})`);
       return null;
     }
 
     const tokenData = await response.json();
-    
-    // Stocke le nouveau jeton et sa date d'expiration
     authToken = tokenData.token;
-    // Le jeton est valide 60 minutes, on le rafraîchit après 55 minutes pour être sûr
-    authTokenExpires = Date.now() + (tokenData.expires_in - 300) * 1000; 
-    
-    console.log("CarAPI authentication successful.");
+    authTokenExpires = Date.now() + (tokenData.expires_in - 300) * 1000;
     return authToken;
   } catch (error) {
     console.error("Exception during CarAPI authentication:", error);
-    authToken = null;
-    authTokenExpires = null;
     return null;
   }
 }
 
-/**
- * Fonction interne pour effectuer les appels authentifiés à l'API.
- */
 async function fetchFromApi(endpoint: string, token: string, params: Record<string, string> = {}) {
   const url = new URL(`${API_BASE_URL}/${endpoint}`);
   Object.entries(params).forEach(([key, value]) => {
@@ -86,18 +63,16 @@ async function fetchFromApi(endpoint: string, token: string, params: Record<stri
   try {
     const response = await fetch(url.toString(), {
       headers: {
-        'Authorization': `Bearer ${token}`, // Utilise le jeton JWT
+        'Authorization': `Bearer ${token}`,
         'Accept': 'application/json',
       },
       cache: 'no-store',
     });
 
     if (!response.ok) {
-      const errorBody = await response.text();
-      console.error(`CarAPI Error (${response.status}) fetching ${url}: ${errorBody}`);
+      console.error(`CarAPI Error (${response.status}) fetching ${url}`);
       return null;
     }
-    
     return await response.json();
   } catch (error) {
     console.error(`General error in fetchFromApi for ${endpoint}:`, error);
@@ -117,14 +92,35 @@ export async function getMakes(): Promise<Make[]> {
 
     if (!makesData || !Array.isArray(makesData.data)) {
       console.error('getMakes did not receive a valid data array:', makesData);
-      return [];
+      throw new Error("Invalid data structure from CarAPI");
     }
     
-    // Valide les données avec Zod, mais ne bloque pas si des champs supplémentaires existent
     return z.array(MakeSchema.passthrough()).parse(makesData.data);
   } catch (error) {
-    console.error('Error in getMakes:', error);
-    return [];
+    console.error('Error in getMakes, falling back to backup list:', error);
+    // FALLBACK to a local list if API fails
+    return [
+        { id: 1, name: 'Audi' },
+        { id: 2, name: 'BMW' },
+        { id: 3, name: 'Mercedes-Benz' },
+        { id: 4, name: 'Volkswagen' },
+        { id: 5, name: 'Porsche' },
+        { id: 6, name: 'Ford' },
+        { id: 7, name: 'Toyota' },
+        { id: 8, name: 'Honda' },
+        { id: 9, name: 'Nissan' },
+        { id: 10, name: 'Hyundai' },
+        { id: 11, name: 'Kia' },
+        { id: 12, name: 'Peugeot' },
+        { id: 13, name: 'Renault' },
+        { id: 14, name: 'Citroën' },
+        { id: 15, name: 'Fiat' },
+        { id: 16, name: 'Opel' },
+        { id: 17, name: 'Skoda' },
+        { id: 18, name: 'Seat' },
+        { id: 19, name: 'Volvo' },
+        { id: 20, name: 'Tesla' },
+    ].sort((a,b) => a.name.localeCompare(b.name));
   }
 }
 
@@ -143,7 +139,6 @@ export async function getModels(makeId: number): Promise<Model[]> {
         return [];
      }
      
-     // Valide les données avec Zod
      return z.array(ModelSchema.passthrough()).parse(modelsData.data);
    } catch(error) {
       console.error('Error in getModels:', error);
