@@ -16,11 +16,11 @@ const ModelSchema = z.object({
 export type Make = z.infer<typeof MakeSchema>;
 export type Model = z.infer<typeof ModelSchema>;
 
-const API_KEY = process.env.CAR_API_KEY;
+// Note: CAR_API_KEY is not used, but kept for potential future API changes.
 const API_SECRET = process.env.CAR_API_SECRET;
 const API_BASE_URL = 'https://carapi.app/api';
 
-if (!API_KEY || !API_SECRET) {
+if (!API_SECRET) {
   throw new Error('CarAPI credentials are not set in environment variables.');
 }
 
@@ -34,7 +34,6 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
     const response = await fetch(url.toString(), {
       headers: {
         'Authorization': `Bearer ${API_SECRET}`,
-        'X-API-Key': API_KEY,
         'Accept': 'application/json',
       },
        next: { revalidate: 3600 * 24 } // Revalidate once per day
@@ -46,6 +45,7 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
       throw new Error(`Failed to fetch from CarAPI endpoint: ${endpoint}. Status: ${response.status}`);
     }
     
+    // The API wraps the data in a "data" property
     const data = await response.json();
     return data.data;
 
