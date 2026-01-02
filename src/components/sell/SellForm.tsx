@@ -79,10 +79,10 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   
   const [makes, setMakes] = useState<Make[]>([]);
   const [models, setModels] = useState<Model[]>([]);
-  const [isLoadingMakes, setIsLoadingMakes] = useState(true);
+  const [isLoadingMakes, setIsLoadingMakes] = useState(false);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
 
-  const [step, setStep] = useState(isEditMode ? 2 : 1);
+  const [step, setStep] = useState(1);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>(isEditMode ? vehicleToEdit.images : []);
   const [imageUrls, setImageUrls] = useState<string[]>(isEditMode ? vehicleToEdit.images : []);
@@ -110,6 +110,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
 
   useEffect(() => {
     async function loadMakes() {
+      if (step !== 2 || makes.length > 0) return;
       try {
         setIsLoadingMakes(true);
         const makesData = await getMakes();
@@ -125,7 +126,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
       }
     }
     loadMakes();
-  }, [toast]);
+  }, [step, toast, makes.length]);
   
   useEffect(() => {
     async function loadModels() {
@@ -161,6 +162,8 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
         ...vehicleToEdit,
         features: vehicleToEdit.features?.join(', '),
       });
+      // If we are in edit mode, we can directly go to step 2
+      setStep(2);
     }
   }, [isEditMode, vehicleToEdit, form]);
 
@@ -408,7 +411,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                           <h3 className="text-lg font-medium">{isEditMode ? 'Modifier les détails' : 'Étape 2 sur 2 : Détails de l\'annonce'}</h3>
                           <p className="text-sm text-muted-foreground">Renseignez les informations sur votre véhicule.</p>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => setStep(1)}>Modifier les photos</Button>
+                      {!isEditMode && <Button variant="outline" size="sm" onClick={() => setStep(1)}>Modifier les photos</Button>}
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mt-4">
