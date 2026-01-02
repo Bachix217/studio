@@ -26,6 +26,7 @@ async function getApiAuthToken(): Promise<string> {
         return authToken;
     }
     
+    // NOTE: These are placeholders and should be replaced by environment variables in a real app
     const API_TOKEN = 'aa77f496-739d-429c-bb49-90e0644607cd';
     const API_SECRET = '3d27f6316acd408c116f788fbdfd256d';
 
