@@ -29,7 +29,7 @@ const API_BASE_URL = 'http://www.carqueryapi.com/api/0.3/?cmd=';
  */
 export async function getMakes(): Promise<Make[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}getMakes`, {
+    const response = await fetch(`${API_BASE_URL}getMakes&sold_in_us=1`, {
         // La revalidation toutes les 24 heures est une bonne pratique pour les données qui changent peu.
         next: { revalidate: 60 * 60 * 24 } 
     });

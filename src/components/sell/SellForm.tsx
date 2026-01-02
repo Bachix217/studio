@@ -139,14 +139,15 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   
   useEffect(() => {
     async function loadModels() {
-        if (!selectedMakeName || makes.length === 0) {
+        if (!selectedMakeName) {
             setModels([]);
             return;
         }
         
+        // Find make object from the name to get the ID for the API call if it exists
         const selectedMake = makes.find(m => m.name.toLowerCase() === selectedMakeName.toLowerCase());
         
-        // Don't try to load models for a custom make
+        // If the make is not in our list from the API (custom make), we just allow free text for model
         if (!selectedMake) {
              setModels([]);
              return;
@@ -154,7 +155,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
 
         try {
             setIsLoadingModels(true);
-            const modelsData = await getModels(selectedMake.name); // Use name for CarAPI
+            const modelsData = await getModels(selectedMake.name); // API uses name
             setModels(modelsData);
         } catch (error) {
              toast({
@@ -372,16 +373,16 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             <div className="space-y-8">
               <div>
                 <h3 className="text-lg font-medium">Étape 1 sur 2 : Photos du véhicule</h3>
-                <p className="text-sm text-muted-foreground">Téléversez jusqu'à {MAX_IMAGES} photos de votre voiture.</p>
+                <p className="text-sm text-muted-foreground">Téléversez jusqu'à ${MAX_IMAGES} photos de votre voiture.</p>
               </div>
               <div className="space-y-2">
-                  <Label htmlFor="dropzone-file">Photos ({imagePreviews.length}/{MAX_IMAGES})</Label>
+                  <Label htmlFor="dropzone-file">Photos (${imagePreviews.length}/${MAX_IMAGES})</Label>
                   <div className="flex items-center justify-center w-full">
                     <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-background hover:bg-muted transition">
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
                         <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
-                        <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images, elles seront compressées</p>
+                        <p className="text-xs text-muted-foreground">Jusqu'à ${MAX_IMAGES} images, elles seront compressées</p>
                       </div>
                       <Input 
                         id="dropzone-file" 
@@ -463,6 +464,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                                     {...field}
                                     onChange={(e) => {
                                         field.onChange(e);
+                                        form.setValue("model", ''); // Reset model when make changes
                                         if(!isMakePopoverOpen) setIsMakePopoverOpen(true);
                                     }}
                                     disabled={isLoadingMakes}
@@ -490,7 +492,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                                       <Check
                                         className={cn(
                                           "mr-2 h-4 w-4",
-                                          make.name === field.value
+                                          make.name.toLowerCase() === field.value?.toLowerCase()
                                             ? "opacity-100"
                                             : "opacity-0"
                                         )}
@@ -519,9 +521,9 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                         <FormLabel>Modèle</FormLabel>
                         <FormControl>
                             <Input 
-                                placeholder={isLoadingModels ? "Chargement..." : "Entrez le modèle"} 
+                                placeholder={isLoadingModels ? "Chargement des modèles..." : "Entrez le modèle"} 
                                 {...field} 
-                                disabled={!selectedMakeName}
+                                disabled={!selectedMakeName || isLoadingModels}
                             />
                         </FormControl>
                         <FormMessage />
