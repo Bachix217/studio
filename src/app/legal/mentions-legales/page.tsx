@@ -22,13 +22,11 @@ export default function MentionsLegalesPage() {
               <h2 className="text-xl font-semibold">Éditeur du site</h2>
               <p>
                 Le site Tacoto.ch est édité par :<br />
-                <strong>[Raison sociale de votre entreprise]</strong><br />
-                [Votre adresse postale]<br />
-                [Code Postal], [Ville], Suisse
+                <strong>Tacoto.ch</strong><br />
+                Genève, Suisse
               </p>
               <p>
-                <strong>Numéro d'identification des entreprises (IDE) :</strong> CHE-XXX.XXX.XXX<br />
-                <strong>Représentant légal :</strong> [Votre nom complet]
+                <strong>Représentant légal :</strong> Tacoto.ch
               </p>
             </section>
             
@@ -36,7 +34,7 @@ export default function MentionsLegalesPage() {
               <h2 className="text-xl font-semibold">Contact</h2>
               <p>
                 Pour toute question ou demande, vous pouvez nous contacter à l'adresse suivante :<br />
-                <strong>Email :</strong> [Votre adresse email de contact]
+                <strong>Email :</strong> info@tacoto.ch
               </p>
             </section>
 

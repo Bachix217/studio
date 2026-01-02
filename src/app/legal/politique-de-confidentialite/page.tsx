@@ -26,10 +26,9 @@ export default function PolitiqueConfidentialitePage() {
               <h2 className="text-xl font-semibold">1. Responsable du traitement</h2>
               <p>
                 Le responsable du traitement de vos données est :<br />
-                <strong>[Raison sociale de votre entreprise]</strong><br />
-                [Votre adresse postale]<br />
-                [Code Postal], [Ville], Suisse<br />
-                Email : [Votre adresse email de contact]
+                <strong>Tacoto.ch</strong><br />
+                Genève, Suisse<br />
+                Email : info@tacoto.ch
               </p>
             </section>
             

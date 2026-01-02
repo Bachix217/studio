@@ -53,14 +53,14 @@ export default function CGUPage() {
             <section>
               <h2 className="text-xl font-semibold">5. Propriété Intellectuelle</h2>
               <p>
-                Tous les éléments du site Tacoto.ch (logo, textes, design) sont la propriété exclusive de [Raison sociale de votre entreprise]. Toute reproduction sans autorisation est interdite.
+                Tous les éléments du site Tacoto.ch (logo, textes, design) sont la propriété exclusive de Tacoto.ch. Toute reproduction sans autorisation est interdite.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold">6. Droit applicable et for</h2>
               <p>
-                Les présentes CGU sont soumises au droit suisse. En cas de litige, le for juridique est établi à [Ville de votre siège social], Suisse.
+                Les présentes CGU sont soumises au droit suisse. En cas de litige, le for juridique est établi à Genève, Suisse.
               </p>
             </section>
 
