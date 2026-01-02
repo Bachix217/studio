@@ -16,11 +16,12 @@ const ModelSchema = z.object({
 export type Make = z.infer<typeof MakeSchema>;
 export type Model = z.infer<typeof ModelSchema>;
 
-const API_KEY = process.env.CAR_API_KEY; // This is the API Token
+// Correctly named variables for clarity
+const API_TOKEN = process.env.CAR_API_KEY; 
 const API_SECRET = process.env.CAR_API_SECRET;
 const API_BASE_URL = 'https://carapi.app/api';
 
-if (!API_KEY || !API_SECRET) {
+if (!API_TOKEN || !API_SECRET) {
   throw new Error('CarAPI credentials are not set in environment variables.');
 }
 
@@ -33,8 +34,10 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
   try {
     const response = await fetch(url.toString(), {
       headers: {
+        // Corrected Authentication: API Secret is passed as a Bearer token
         'Authorization': `Bearer ${API_SECRET}`,
-        'X-API-KEY': API_KEY, // The API Token is sent as a header
+        // Correct Header: The API Token is sent in X-API-KEY
+        'X-API-KEY': API_TOKEN, 
         'Accept': 'application/json',
       },
        next: { revalidate: 3600 * 24 } // Revalidate once per day
@@ -68,7 +71,7 @@ export async function getMakes(): Promise<Make[]> {
 
 export async function getModels(makeId: number): Promise<Model[]> {
    if (!makeId) return [];
-   const modelsData = await fetchFromApi('models', { make_id: String(makeId), sort: 'name', direction: 'asc' });
+   const modelsData = await fetchFromApi('models', { year: '2024', make_id: String(makeId), sort: 'name', direction: 'asc' });
    const parsed = z.array(ModelSchema).safeParse(modelsData);
    if (!parsed.success) {
       console.error(`Failed to parse models for makeId ${makeId}:`, parsed.error);
