@@ -73,8 +73,9 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
     if (!response.ok) {
       // If token is expired, try to re-authenticate
       if (response.status === 401) {
+        console.log('API token expired, re-authenticating...');
         apiToken = await getApiAuthToken();
-        return fetchFromApi(endpoint, params);
+        return fetchFromApi(endpoint, params); // Retry the request with the new token
       }
       const errorBody = await response.text();
       console.error(`API Error (${response.status}) fetching ${url.toString()}: ${errorBody}`);
@@ -91,13 +92,32 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
 }
 
 export async function getMakes(): Promise<Make[]> {
-  const makesData = await fetchFromApi('makes', { sort: 'name', direction: 'asc' });
-  return makesData as Make[];
+  try {
+    const makesData = await fetchFromApi('makes', { sort: 'name', direction: 'asc' });
+    // Ensure the response is an array before returning
+    if (Array.isArray(makesData)) {
+      return MakeSchema.array().parse(makesData);
+    }
+    console.error('getMakes did not receive an array:', makesData);
+    return []; // Return empty array on unexpected format
+  } catch (error) {
+    console.error('Error in getMakes:', error);
+    return []; // Return empty array on error
+  }
 }
 
 export async function getModels(makeId: number): Promise<Model[]> {
    if (!makeId) return [];
-   // CarAPI uses 'make_id' for models, not 'makeId'
-   const modelsData = await fetchFromApi('models', { year: '2024', make_id: String(makeId), sort: 'name', direction: 'asc' });
-   return modelsData as Model[];
+   try {
+     const modelsData = await fetchFromApi('models', { year: '2024', make_id: String(makeId), sort: 'name', direction: 'asc' });
+     // Ensure the response is an array before returning
+     if (Array.isArray(modelsData)) {
+        return ModelSchema.array().parse(modelsData);
+     }
+     console.error('getModels did not receive an array:', modelsData);
+     return [];
+   } catch(error) {
+      console.error('Error in getModels:', error);
+      return [];
+   }
 }
