@@ -17,7 +17,7 @@ export type Make = z.infer<typeof MakeSchema>;
 export type Model = z.infer<typeof ModelSchema>;
 
 // Correctly named variables for clarity
-const API_TOKEN = process.env.CAR_API_KEY; 
+const API_TOKEN = process.env.CAR_API_TOKEN; 
 const API_SECRET = process.env.CAR_API_SECRET;
 const API_BASE_URL = 'https://carapi.app/api';
 
@@ -34,22 +34,19 @@ async function fetchFromApi(endpoint: string, params: Record<string, string> = {
   try {
     const response = await fetch(url.toString(), {
       headers: {
-        // Corrected Authentication: API Secret is passed as a Bearer token
         'Authorization': `Bearer ${API_SECRET}`,
-        // Correct Header: The API Token is sent in X-API-KEY
         'X-API-KEY': API_TOKEN, 
         'Accept': 'application/json',
       },
-       next: { revalidate: 3600 * 24 } // Revalidate once per day
+       cache: 'no-store' // Force a fresh fetch every time
     });
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error(`API Error (${response.status}): ${errorBody}`);
+      console.error(`API Error (${response.status}) fetching ${url.toString()}: ${errorBody}`);
       throw new Error(`Failed to fetch from CarAPI endpoint: ${endpoint}. Status: ${response.status}`);
     }
     
-    // The API returns the data array directly
     const data = await response.json();
     return data;
 
