@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -16,132 +18,233 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase/provider';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, type ConfirmationResult } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { UserProfile } from '@/lib/types';
 
-const formSchema = z.object({
+const signupSchema = z.object({
     email: z.string().email("L'adresse e-mail est invalide."),
     password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères.'),
-    confirmPassword: z.string()
-}).refine(data => data.password === data.confirmPassword, {
-    message: "Les mots de passe ne correspondent pas.",
-    path: ["confirmPassword"],
+    phone: z.string().regex(/^\+41\d{9}$/, 'Veuillez entrer un numéro suisse valide (ex: +41791234567).'),
 });
+
+const verifySchema = z.object({
+    code: z.string().min(6, 'Le code doit contenir 6 chiffres.'),
+});
+
 
 export default function SignupForm() {
   const { toast } = useToast();
   const { auth, firestore } = useFirebase();
   const router = useRouter();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const [step, setStep] = useState<'signup' | 'verify'>('signup');
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const signupForm = useForm<z.infer<typeof signupSchema>>({
+    resolver: zodResolver(signupSchema),
     defaultValues: {
       email: '',
       password: '',
-      confirmPassword: '',
+      phone: '+41',
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!auth || !firestore) return;
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
-
-      // Create a user profile document in Firestore
-      const newUserProfile: Omit<UserProfile, 'createdAt'> = {
-        uid: user.uid,
-        email: user.email || '',
-        displayName: user.email?.split('@')[0] || 'Utilisateur',
-        phone: '',
-        sharePhoneNumber: false,
-        userType: 'particulier',
-        companyName: '',
-        address: '',
-        website: '',
-      }
-
-      await setDoc(doc(firestore, "users", user.uid), {
-        ...newUserProfile,
-        createdAt: serverTimestamp(),
-      });
-      
-      toast({
-        title: 'Inscription réussie !',
-        description: 'Vous êtes maintenant connecté et pouvez créer des annonces.',
-      });
-      router.push('/');
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: "Erreur d'inscription",
-        description: error.message || "Une erreur s'est produite.",
+  const verifyForm = useForm<z.infer<typeof verifySchema>>({
+    resolver: zodResolver(verifySchema),
+    defaultValues: { code: '' },
+  });
+  
+  const setupRecaptcha = () => {
+    if (!auth) return;
+    if (!(window as any).recaptchaVerifier) {
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': () => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        }
       });
     }
+    return (window as any).recaptchaVerifier;
+  }
+
+  async function onSignupSubmit(values: z.infer<typeof signupSchema>) {
+    if (!auth) return;
+    setIsSubmitting(true);
+    
+    try {
+      const appVerifier = setupRecaptcha();
+      const confirmation = await signInWithPhoneNumber(auth, values.phone, appVerifier);
+      setConfirmationResult(confirmation);
+      setStep('verify');
+      toast({
+        title: 'Code envoyé !',
+        description: `Un code a été envoyé au ${values.phone}.`,
+      });
+    } catch (error: any) {
+      console.error("SMS sending error:", error);
+      toast({
+        variant: 'destructive',
+        title: "Erreur d'envoi du SMS",
+        description: "Impossible d'envoyer le code de vérification. Assurez-vous que le numéro est correct et réessayez.",
+      });
+    } finally {
+        setIsSubmitting(false);
+    }
+  }
+
+  async function onVerifySubmit(values: z.infer<typeof verifySchema>) {
+     if (!auth || !firestore || !confirmationResult) return;
+     setIsSubmitting(true);
+     
+     const { email, password, phone } = signupForm.getValues();
+
+     try {
+        // First, confirm the phone number
+        await confirmationResult.confirm(values.code);
+        
+        // Then, create the user with email and password
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Finally, create the user profile with the verified phone number
+        const newUserProfile: Omit<UserProfile, 'createdAt'> = {
+            uid: user.uid,
+            email: user.email || '',
+            displayName: user.email?.split('@')[0] || 'Utilisateur',
+            phone: phone, // The verified phone number
+            sharePhoneNumber: false,
+            userType: 'particulier',
+        };
+
+        await setDoc(doc(firestore, "users", user.uid), {
+            ...newUserProfile,
+            createdAt: serverTimestamp(),
+        });
+        
+        toast({
+            title: 'Inscription réussie !',
+            description: 'Votre compte a été créé et vérifié avec succès.',
+        });
+        router.push('/');
+
+     } catch (error: any) {
+        console.error("Verification or user creation error:", error);
+        toast({
+            variant: 'destructive',
+            title: "Erreur de vérification",
+            description: error.code === 'auth/invalid-verification-code'
+                ? 'Le code est incorrect. Veuillez réessayer.'
+                : "Une erreur est survenue lors de la finalisation de l'inscription.",
+        });
+     } finally {
+        setIsSubmitting(false);
+     }
   }
 
   return (
     <Card>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="p-6 space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>E-mail</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="votre@email.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mot de passe</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirmer le mot de passe</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4 p-6 pt-0">
-            <Button type="submit" size="lg" className="w-full">
-              Créer un compte
-            </Button>
-            <p className="text-sm text-center text-muted-foreground">
-              Déjà un compte ?{' '}
-              <Button variant="link" asChild className="p-0 h-auto">
-                <Link href="/login">Connectez-vous</Link>
+       <div id="recaptcha-container"></div>
+      {step === 'signup' && (
+        <Form {...signupForm}>
+          <form onSubmit={signupForm.handleSubmit(onSignupSubmit)}>
+            <CardContent className="p-6 space-y-4">
+              <FormField
+                control={signupForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-mail</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="votre@email.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={signupForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Mot de passe</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={signupForm.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Numéro de téléphone</FormLabel>
+                    <FormControl>
+                      <Input type="tel" placeholder="+41791234567" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Un code SMS sera envoyé pour vérifier votre numéro. Cette étape est essentielle pour lutter contre la fraude et les faux profils (brouteurs).
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4 p-6 pt-0">
+              <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? 'Envoi...' : 'Envoyer le code de vérification'}
               </Button>
-            </p>
-          </CardFooter>
-        </form>
-      </Form>
+              <p className="text-sm text-center text-muted-foreground">
+                Déjà un compte ?{' '}
+                <Button variant="link" asChild className="p-0 h-auto">
+                  <Link href="/login">Connectez-vous</Link>
+                </Button>
+              </p>
+            </CardFooter>
+          </form>
+        </Form>
+      )}
+
+      {step === 'verify' && (
+        <Form {...verifyForm}>
+            <form onSubmit={verifyForm.handleSubmit(onVerifySubmit)}>
+                 <CardContent className="p-6 space-y-4">
+                    <p className="text-center text-muted-foreground">Un code a été envoyé au <span className="font-semibold text-foreground">{signupForm.getValues().phone}</span>.</p>
+                     <FormField
+                        control={verifyForm.control}
+                        name="code"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Code de vérification</FormLabel>
+                            <FormControl>
+                            <Input placeholder="123456" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                 </CardContent>
+                 <CardFooter className="flex flex-col gap-4 p-6 pt-0">
+                    <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? 'Vérification...' : "Vérifier et créer le compte"}
+                    </Button>
+                     <Button 
+                        variant="link" 
+                        onClick={() => setStep('signup')}
+                        disabled={isSubmitting}
+                        className="p-0 h-auto"
+                    >
+                      Changer de numéro de téléphone
+                    </Button>
+                 </CardFooter>
+            </form>
+        </Form>
+      )}
     </Card>
   );
 }

@@ -39,7 +39,7 @@ export type UserProfile = {
   displayName: string;
   phone: string;
   sharePhoneNumber?: boolean;
-  createdAt: Timestamp | Date;
+  createdAt?: Timestamp | Date;
   userType?: 'particulier' | 'professionnel';
   companyName?: string;
   address?: string;

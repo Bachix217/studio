@@ -17,7 +17,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useFirebase } from '@/firebase/provider';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 const formSchema = z.object({
@@ -29,6 +29,8 @@ export default function LoginForm() {
   const { toast } = useToast();
   const { auth } = useFirebase();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect') || '/';
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -45,13 +47,19 @@ export default function LoginForm() {
         title: 'Connexion réussie !',
         description: 'Vous êtes maintenant connecté.',
       });
-      router.push('/');
+      router.push(redirectUrl);
     } catch (error: any) {
       console.error(error);
+      
+      let description = "Une erreur s'est produite. Veuillez réessayer.";
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+          description = "L'adresse e-mail ou le mot de passe est incorrect.";
+      }
+
       toast({
         variant: 'destructive',
         title: 'Erreur de connexion',
-        description: error.message || "Une erreur s'est produite.",
+        description: description,
       });
     }
   }
