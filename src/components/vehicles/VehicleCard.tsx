@@ -57,15 +57,15 @@ export default function VehicleCard({ vehicle, showControls = false, onDeletionS
   const imageUrl = vehicle.images && vehicle.images.length > 0 ? vehicle.images[0] : null;
 
   return (
-    <Card className="h-full flex flex-col overflow-hidden transition-all duration-300 group">
+    <Card className="group h-full flex flex-col overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border-none">
        <div className="relative">
          {!showControls && ( // Show favorite on public pages only
-          <div className="absolute top-2 left-2 z-10">
+          <div className="absolute top-3 right-3 z-10">
             <FavoriteButton vehicleId={vehicle.id} />
           </div>
         )}
         {showControls && (
-             <div className="absolute top-2 left-2 z-10">
+             <div className="absolute top-3 left-3 z-10">
                 <StatusBadge status={vehicle.status} published={vehicle.published} />
              </div>
         )}
@@ -87,28 +87,24 @@ export default function VehicleCard({ vehicle, showControls = false, onDeletionS
                   </div>
                 )}
               </div>
-              <Badge className="absolute top-3 right-3" variant="secondary">{vehicle.canton}</Badge>
+              <Badge className="absolute bottom-3 left-3" variant="secondary">{vehicle.canton}</Badge>
             </CardHeader>
             <CardContent className="flex-grow p-4 space-y-2">
+              <p className="text-xl font-semibold text-primary">{formatCurrency(vehicle.price)}</p>
               <CardTitle className="text-lg font-bold leading-tight truncate">
                 {vehicle.make} {vehicle.model}
               </CardTitle>
-              <p className="text-xl font-semibold text-primary">{formatCurrency(vehicle.price)}</p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted-foreground pt-2">
-                <div className="flex items-center gap-2">
-                  <Calendar size={16} />
+              <div className="flex items-center gap-4 text-sm text-muted-foreground pt-2">
+                <div className="flex items-center gap-1.5">
+                  <Calendar size={14} />
                   <span>{vehicle.year}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Gauge size={16} />
+                <div className="flex items-center gap-1.5">
+                  <Gauge size={14} />
                   <span>{vehicle.mileage.toLocaleString('fr-CH')} km</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Fuel size={16} />
-                  <span>{vehicle.fuelType}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Cog size={16} />
+                <div className="flex items-center gap-1.5">
+                  <Cog size={14} />
                   <span>{vehicle.gearbox}</span>
                 </div>
               </div>
@@ -129,11 +125,11 @@ export default function VehicleCard({ vehicle, showControls = false, onDeletionS
       )}
 
       {!showControls && (
-        <Link href={`/vehicles/${vehicle.id}`} className="block mt-auto">
-            <CardFooter className="p-4 pt-0">
-                <Badge variant="outline" className="w-full justify-center">Voir les détails</Badge>
-            </CardFooter>
-        </Link>
+        <div className="mt-auto p-4 pt-0">
+             <Button asChild variant="outline" className="w-full">
+                <Link href={`/vehicles/${vehicle.id}`}>Voir les détails</Link>
+            </Button>
+        </div>
       )}
     </Card>
   );
