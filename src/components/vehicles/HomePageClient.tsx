@@ -123,7 +123,7 @@ export default function HomePageClient() {
   }, [filters, vehicles]);
   
   const searchSection = (
-     <div className="relative z-10 -mb-24">
+     <div className="relative z-10 -mb-40">
         <VehicleSearchForm filters={filters} onFilterChange={setFilters} allVehicles={vehicles} />
       </div>
   );
@@ -135,7 +135,7 @@ export default function HomePageClient() {
         <Skeleton className="h-16 w-3/4 mx-auto" />
         <Skeleton className="h-6 w-1/2 mx-auto mt-4" />
       </div>
-      <div className="relative z-10 -mb-24">
+      <div className="relative z-10 -mb-40">
           <Card className="shadow-2xl">
               <CardContent className="p-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -147,7 +147,7 @@ export default function HomePageClient() {
               </CardContent>
           </Card>
       </div>
-      <div className="bg-muted/40 pt-32 pb-16 rounded-lg">
+      <div className="bg-muted/40 pt-48 pb-16 rounded-lg">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-96 w-full" />
@@ -165,7 +165,7 @@ export default function HomePageClient() {
             aria-hidden="true" 
             className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-indigo-50/50 to-muted/40 dark:from-zinc-900/80 dark:via-zinc-900/50 dark:to-background"
         />
-        <div className="text-center pt-16 md:pt-24 pb-32">
+        <div className="text-center pt-16 md:pt-24 pb-48">
           <h1 className="font-headline text-5xl md:text-7xl font-extrabold tracking-tighter bg-gradient-to-r from-primary via-indigo-400 to-purple-400 bg-clip-text text-transparent">
             La bonne occasion.
           </h1>
@@ -177,7 +177,7 @@ export default function HomePageClient() {
 
       {searchSection}
       
-      <div className="bg-muted/40 pt-32 pb-16 px-4 md:px-8 rounded-lg">
+      <div className="bg-muted/40 pt-48 pb-16 px-4 md:px-8 rounded-lg">
         <VehicleList vehicles={filteredVehicles} />
       </div>
     </>
