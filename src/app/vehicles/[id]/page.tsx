@@ -56,14 +56,17 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function VehiclePage({ params }: { params: { id: string } }) {
-  const id = params.id;
+  const vehicle = await getVehicleById(db, params.id);
+
+  if (!vehicle) {
+    notFound();
+  }
   
-  // The client component will fetch the data itself, this page is mainly for layout and metadata.
   return (
     <>
       <Header />
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <VehiclePageClient vehicleId={id} />
+        <VehiclePageClient vehicleId={params.id} vehicle={vehicle} />
       </main>
       <Footer />
     </>

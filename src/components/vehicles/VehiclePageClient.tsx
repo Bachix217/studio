@@ -17,70 +17,71 @@ import FavoriteButton from '@/components/vehicles/FavoriteButton';
 
 interface VehiclePageClientProps {
     vehicleId: string;
+    vehicle: Vehicle;
 }
 
-export default function VehiclePageClient({ vehicleId }: VehiclePageClientProps) {
+export default function VehiclePageClient({ vehicleId, vehicle: initialVehicle }: VehiclePageClientProps) {
   const { firestore } = useFirebase();
-  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [vehicle, setVehicle] = useState<Vehicle>(initialVehicle);
   const [seller, setSeller] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialVehicle);
   const { user: currentUser } = useUser();
 
   useEffect(() => {
-    if (!vehicleId || !firestore) {
-        setLoading(false);
-        return;
-    }
+    if (!firestore) return;
     
-    setLoading(true);
-
-    const vehicleDocRef = doc(firestore, 'vehicles', vehicleId);
-    const unsubscribeVehicle = onSnapshot(vehicleDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const vehicleData = { id: docSnap.id, ...docSnap.data() } as Vehicle;
-        
-        if (!vehicleData.published || vehicleData.status !== 'approved') {
-            setVehicle(null);
-            setLoading(false);
-            notFound();
-            return;
-        }
-
-        setVehicle(vehicleData);
-
-        if (vehicleData.userId) {
-            const sellerDocRef = doc(firestore, 'users', vehicleData.userId);
-            const unsubscribeSeller = onSnapshot(sellerDocRef, (sellerDocSnap) => {
-                if (sellerDocSnap.exists()) {
-                  setSeller(sellerDocSnap.data() as UserProfile);
-                } else {
-                  setSeller(null);
-                }
-                setLoading(false);
-              }, (error) => {
-                console.error("Error fetching seller profile:", error);
-                setSeller(null);
-                setLoading(false);
-              });
-            return () => unsubscribeSeller();
-        } else {
-            setLoading(false);
-        }
-
-      } else {
-        setVehicle(null);
-        setLoading(false);
-        notFound();
+    // If we have the initial vehicle, we just need to fetch the seller
+    if (vehicle) {
+      if (vehicle.userId) {
+        const sellerDocRef = doc(firestore, 'users', vehicle.userId);
+        const unsubscribeSeller = onSnapshot(sellerDocRef, (sellerDocSnap) => {
+            if (sellerDocSnap.exists()) {
+              setSeller(sellerDocSnap.data() as UserProfile);
+            } else {
+              setSeller(null);
+            }
+          }, (error) => {
+            console.error("Error fetching seller profile:", error);
+            setSeller(null);
+          });
+        return () => unsubscribeSeller();
       }
-    }, (error) => {
-      console.error("Error fetching vehicle:", error);
-      setVehicle(null);
-      setLoading(false);
-      notFound();
-    });
+    } else {
+      // Fallback if no initial vehicle is provided (e.g. client-side navigation)
+      setLoading(true);
+      const vehicleDocRef = doc(firestore, 'vehicles', vehicleId);
+      const unsubscribeVehicle = onSnapshot(vehicleDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const vehicleData = { id: docSnap.id, ...docSnap.data() } as Vehicle;
+          if (!vehicleData.published || vehicleData.status !== 'approved') {
+              notFound();
+              return;
+          }
+          setVehicle(vehicleData);
 
-    return () => unsubscribeVehicle();
-  }, [vehicleId, firestore]);
+          if (vehicleData.userId) {
+              const sellerDocRef = doc(firestore, 'users', vehicleData.userId);
+              const unsubscribeSeller = onSnapshot(sellerDocRef, (sellerDocSnap) => {
+                  if (sellerDocSnap.exists()) {
+                    setSeller(sellerDocSnap.data() as UserProfile);
+                  }
+                  setLoading(false);
+                });
+              return () => unsubscribeSeller();
+          } else {
+              setLoading(false);
+          }
+        } else {
+          notFound();
+        }
+      }, (error) => {
+        console.error("Error fetching vehicle:", error);
+        notFound();
+      });
+
+      return () => unsubscribeVehicle();
+    }
+  }, [vehicleId, firestore, vehicle]);
 
 
   if (loading) {
@@ -119,8 +120,7 @@ export default function VehiclePageClient({ vehicleId }: VehiclePageClientProps)
   }
 
   if (!vehicle) {
-    // notFound() has been called in useEffect, so this should not be reached
-    // but as a fallback, we prevent rendering a broken page.
+    notFound();
     return null;
   }
 
