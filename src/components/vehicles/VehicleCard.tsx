@@ -20,7 +20,7 @@ interface VehicleCardProps {
 const StatusBadge = ({ status, published }: { status: Vehicle['status'], published: Vehicle['published'] }) => {
   if (status === 'approved' && published) {
     return (
-      <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800">
+      <Badge variant="secondary" className="border-green-600/30 bg-green-500/10 text-green-700 dark:text-green-400 backdrop-blur-sm">
         <CheckCircle className="mr-1 h-3 w-3" />
         Publiée
       </Badge>
@@ -28,7 +28,7 @@ const StatusBadge = ({ status, published }: { status: Vehicle['status'], publish
   }
   if (status === 'pending') {
     return (
-      <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-800">
+      <Badge variant="secondary" className="border-amber-600/30 bg-amber-500/10 text-amber-700 dark:text-amber-400 backdrop-blur-sm">
         <Clock className="mr-1 h-3 w-3" />
         En attente
       </Badge>
@@ -36,7 +36,7 @@ const StatusBadge = ({ status, published }: { status: Vehicle['status'], publish
   }
   if (status === 'rejected') {
     return (
-      <Badge variant="destructive">
+      <Badge variant="destructive" className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-600/30 backdrop-blur-sm">
         <XCircle className="mr-1 h-3 w-3" />
         Rejetée
       </Badge>
@@ -57,7 +57,7 @@ export default function VehicleCard({ vehicle, showControls = false, onDeletionS
   const imageUrl = vehicle.images && vehicle.images.length > 0 ? vehicle.images[0] : null;
 
   return (
-    <Card className="group h-full flex flex-col overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border-none">
+    <Card className="group h-full flex flex-col overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 border-none rounded-lg">
        <div className="relative">
          {!showControls && ( // Show favorite on public pages only
           <div className="absolute top-3 right-3 z-10">
@@ -71,7 +71,7 @@ export default function VehicleCard({ vehicle, showControls = false, onDeletionS
         )}
         <Link href={`/vehicles/${vehicle.id}`} className="block">
             <CardHeader className="p-0 relative">
-              <div className="aspect-[4/3] relative w-full overflow-hidden bg-muted">
+              <div className="aspect-[4/3] relative w-full overflow-hidden bg-muted rounded-t-lg">
                 {imageUrl ? (
                   <Image
                     src={imageUrl}
@@ -86,8 +86,10 @@ export default function VehicleCard({ vehicle, showControls = false, onDeletionS
                     <ImageIcon className="w-16 h-16 text-muted-foreground" />
                   </div>
                 )}
+                 <div className="absolute bottom-3 left-3 z-10">
+                    <Badge className="border-white/20 bg-black/20 text-white backdrop-blur-sm">{vehicle.canton}</Badge>
+                 </div>
               </div>
-              <Badge className="absolute bottom-3 left-3" variant="secondary">{vehicle.canton}</Badge>
             </CardHeader>
             <CardContent className="flex-grow p-4 space-y-2">
               <p className="text-xl font-semibold text-primary">{formatCurrency(vehicle.price)}</p>
@@ -113,7 +115,7 @@ export default function VehicleCard({ vehicle, showControls = false, onDeletionS
       </div>
 
        {showControls && (
-          <CardFooter className="p-4 pt-2 mt-auto border-t flex items-center justify-between">
+          <CardFooter className="p-4 pt-2 mt-auto border-t flex items-center justify-between bg-muted/30">
               <Button asChild variant="outline" size="sm">
                 <Link href={`/edit-listing/${vehicle.id}`}>
                   <Edit className="mr-2 h-4 w-4" />
