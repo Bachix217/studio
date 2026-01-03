@@ -44,8 +44,8 @@ export default function SignupForm() {
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Use a ref to hold the RecaptchaVerifier instance
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
+  const recaptchaWrapperRef = useRef<HTMLDivElement>(null);
 
   const signupForm = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
@@ -62,13 +62,15 @@ export default function SignupForm() {
   });
   
   useEffect(() => {
-    if (auth && !recaptchaVerifierRef.current) {
-        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+    // Only run on the client
+    if (typeof window !== 'undefined' && auth && recaptchaWrapperRef.current && !recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, recaptchaWrapperRef.current, {
             'size': 'invisible',
             'callback': () => {
               // reCAPTCHA solved, allow signInWithPhoneNumber.
             }
         });
+        recaptchaVerifierRef.current.render();
     }
   }, [auth]);
 
@@ -94,10 +96,9 @@ export default function SignupForm() {
         description: "Impossible d'envoyer le code de vérification. Assurez-vous que le numéro est correct et réessayez.",
       });
        // Reset reCAPTCHA on error
-       if (recaptchaVerifierRef.current) {
+       if (window.grecaptcha && recaptchaVerifierRef.current) {
          recaptchaVerifierRef.current.render().then((widgetId) => {
-             // @ts-ignore
-            window.grecaptcha.reset(widgetId);
+             window.grecaptcha.reset(widgetId);
          });
        }
     } finally {
@@ -156,7 +157,7 @@ export default function SignupForm() {
 
   return (
     <Card>
-       <div id="recaptcha-container"></div>
+       <div ref={recaptchaWrapperRef}></div>
       {step === 'signup' && (
         <Form {...signupForm}>
           <form onSubmit={signupForm.handleSubmit(onSignupSubmit)}>
