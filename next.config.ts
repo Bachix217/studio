@@ -38,6 +38,7 @@ const nextConfig: NextConfig = {
   },
   allowedDevOrigins: [
     'https://6000-firebase-studio-1766835228917.cluster-fbfjltn375c6wqxlhoehbz44sk.cloudworkstations.dev',
+    'https://tacoto.ch',
   ],
 };
 
