@@ -122,12 +122,6 @@ export default function HomePageClient() {
     });
   }, [filters, vehicles]);
   
-  const searchSection = (
-     <div className="relative z-10 -mb-20 px-4 md:px-8">
-        <VehicleSearchForm filters={filters} onFilterChange={setFilters} allVehicles={vehicles} />
-      </div>
-  );
-
   if (loading) {
     return (
      <>
@@ -135,8 +129,8 @@ export default function HomePageClient() {
         <Skeleton className="h-16 w-3/4 mx-auto" />
         <Skeleton className="h-6 w-1/2 mx-auto mt-4" />
       </div>
-      <div className="relative z-10 -mb-40">
-          <Card className="shadow-2xl">
+      <div className="relative z-10 -mt-24 px-4 md:px-8">
+          <Card className="shadow-2xl rounded-xl">
               <CardContent className="p-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <Skeleton className="h-10 w-full" />
@@ -147,7 +141,7 @@ export default function HomePageClient() {
               </CardContent>
           </Card>
       </div>
-      <div className="bg-muted/40 pt-48 pb-16 rounded-lg">
+      <div className="bg-muted/40 pt-8 pb-16 px-4 md:px-8 rounded-lg">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-96 w-full" />
@@ -175,9 +169,11 @@ export default function HomePageClient() {
         </div>
       </div>
 
-      {searchSection}
+      <div className="relative z-10 -mt-24 px-4 md:px-8">
+        <VehicleSearchForm filters={filters} onFilterChange={setFilters} allVehicles={vehicles} />
+      </div>
       
-      <div className="bg-muted/40 pt-28 pb-16 px-4 md:px-8 rounded-lg">
+      <div className="bg-muted/40 pt-8 pb-16 px-4 md:px-8 rounded-lg">
         <VehicleList vehicles={filteredVehicles} />
       </div>
     </>
