@@ -1,3 +1,4 @@
+
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,67 +20,81 @@ export default function PolitiqueConfidentialitePage() {
           <CardContent className="prose prose-stone dark:prose-invert max-w-none text-card-foreground space-y-6 pt-6">
 
             <p>
-              La protection de vos données personnelles est une priorité pour Tacoto.ch. Cette politique de confidentialité vous informe sur la manière dont nous collectons, utilisons et protégeons vos données dans le respect de la Loi fédérale sur la protection des données (LPD).
+              La protection de votre vie privée est une priorité absolue pour Tacoto.ch. Cette politique détaille comment nous traitons vos données conformément à la Loi fédérale sur la protection des données (LPD) suisse.
             </p>
 
             <section>
               <h2 className="text-xl font-semibold">1. Responsable du traitement</h2>
               <p>
-                Le responsable du traitement de vos données est :<br />
-                <strong>Tacoto.ch</strong><br />
-                Genève, Suisse<br />
-                Email : info@tacoto.ch
+                Le site Tacoto.ch est un projet personnel géré à titre privé par :<br />
+                <strong>Éditeur :</strong> Jérémy Bächtold<br />
+                <strong>Siège :</strong> Genève, Suisse<br />
+                <strong>Contact :</strong> info@tacoto.ch
               </p>
             </section>
             
             <section>
               <h2 className="text-xl font-semibold">2. Données collectées</h2>
-              <p>Nous collectons les données que vous nous fournissez directement :</p>
-              <ul>
-                <li><strong>Création de compte :</strong> Adresse e-mail, mot de passe.</li>
-                <li><strong>Profil utilisateur :</strong> Nom d'affichage, numéro de téléphone (si fourni), type de compte (particulier/professionnel), et informations professionnelles le cas échéant.</li>
-                <li><strong>Publication d'annonces :</strong> Toutes les informations relatives au véhicule que vous publiez.</li>
-                <li><strong>Communication :</strong> Le contenu des messages que vous pourriez nous envoyer.</li>
-              </ul>
-              <p>Nous utilisons les services de Firebase (Google) pour l'authentification des utilisateurs et le stockage des données. L'utilisation de ces services peut impliquer la collecte de données techniques (adresse IP, type de navigateur) par Google.</p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold">3. Finalités du traitement</h2>
-              <p>Vos données sont utilisées pour les finalités suivantes :</p>
-              <ul>
-                <li>Fournir, gérer et améliorer nos services (création de compte, publication d'annonces).</li>
-                <li>Permettre la mise en relation entre vendeurs et acheteurs.</li>
-                <li>Répondre à vos demandes de contact.</li>
-                <li>Assurer la sécurité de notre plateforme.</li>
+              <p>Nous collectons les informations strictement nécessaires à la sécurisation des échanges :</p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li><strong>Compte :</strong> Adresse e-mail et mot de passe (via Firebase Auth).</li>
+                <li><strong>Sécurité et Vérification :</strong> Numéro de téléphone portable pour la vérification par SMS.</li>
+                <li><strong>Annonces :</strong> Détails du véhicule, photos, canton et prix.</li>
+                <li><strong>Données techniques :</strong> Adresse IP et logs de connexion (pour la prévention des cyberattaques).</li>
               </ul>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold">4. Partage des données</h2>
-              <p>
-                Les informations de votre profil public (nom, canton, et numéro de téléphone si vous autorisez son partage) sont visibles sur vos annonces pour permettre aux acheteurs de vous contacter.
-              </p>
-              <p>
-                Nous ne vendons, n'échangeons et ne transférons pas vos données personnelles identifiables à des tiers, sauf dans le cadre de l'utilisation de services tiers nécessaires au fonctionnement du site (comme Firebase) ou si la loi nous y oblige.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold">5. Vos droits</h2>
-              <p>Conformément à la LPD, vous disposez des droits suivants :</p>
-              <ul>
-                <li><strong>Droit d'accès :</strong> Vous pouvez demander à consulter les données que nous détenons sur vous.</li>
-                <li><strong>Droit de rectification :</strong> Vous pouvez à tout moment modifier les informations de votre profil directement depuis votre compte.</li>
-                <li><strong>Droit à l'effacement :</strong> Vous pouvez demander la suppression de votre compte et des données associées.</li>
+              <h2 className="text-xl font-semibold">3. Stockage des données à Zurich</h2>
+              <p>Pour garantir la souveraineté et la sécurité de vos données :</p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li><strong>Localisation :</strong> Toutes vos données (comptes, annonces, photos) sont stockées exclusivement à Zurich, Suisse (Région Google Cloud europe-west6).</li>
+                <li><strong>Conformité :</strong> Ce stockage local garantit que vos données restent sous la protection juridique du droit suisse.</li>
               </ul>
-              <p>Pour exercer ces droits, veuillez nous contacter à l'adresse e-mail mentionnée ci-dessus.</p>
             </section>
             
             <section>
-              <h2 className="text-xl font-semibold">6. Modifications</h2>
+              <h2 className="text-xl font-semibold">4. Protection contre la fraude (Vérification SMS)</h2>
+              <p>Pour protéger nos utilisateurs contre les brouteurs et les tentatives d'arnaques internationales, nous appliquons une politique de sécurité stricte :</p>
+               <ul className="list-disc pl-6 space-y-2">
+                  <li><strong>Accès restreint :</strong> Les coordonnées des vendeurs (nom, numéro de téléphone, formulaire de contact) ne sont jamais publiques.</li>
+                  <li><strong>Validation Suisse :</strong> Ces données ne sont accessibles qu'aux utilisateurs connectés ayant fait l'objet d'une vérification par SMS avec un numéro de téléphone suisse (+41).</li>
+                  <li><strong>Filtrage :</strong> Toute tentative de connexion via des numéros virtuels ou étrangers pourra être bloquée pour assurer la sécurité de la communauté.</li>
+               </ul>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold">5. Finalités du traitement</h2>
+              <p>Vos données sont traitées pour :</p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li>La création et la gestion technique de votre espace utilisateur.</li>
+                <li>La mise en relation sécurisée entre acheteurs vérifiés et vendeurs.</li>
+                <li>La modération manuelle des annonces pour garantir l'absence de fraude.</li>
+              </ul>
+            </section>
+            
+            <section>
+              <h2 className="text-xl font-semibold">6. Partage et Confidentialité</h2>
+               <ul className="list-disc pl-6 space-y-2">
+                  <li><strong>Zéro Revente :</strong> Nous ne vendons, ne louons et ne partageons aucune donnée personnelle à des fins marketing ou à des tiers.</li>
+                  <li><strong>Visibilité :</strong> Vos données de contact ne sont révélées qu'aux acheteurs ayant prouvé leur identité via un numéro suisse.</li>
+               </ul>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold">7. Vos Droits</h2>
+              <p>Conformément à la LPD, vous disposez d'un droit d'accès, de rectification et de suppression totale de vos données. Pour exercer ces droits ou fermer votre compte, contactez-nous à : info@tacoto.ch.</p>
+            </section>
+            
+             <section>
+              <h2 className="text-xl font-semibold">8. Absence de responsabilité commerciale</h2>
+              <p>Tacoto.ch est une plateforme gratuite de mise en relation gérée à titre privé. L'éditeur ne participe pas aux transactions et décline toute responsabilité en cas de litige, de fraude ou d'erreur dans les descriptions de véhicules.</p>
+            </section>
+            
+            <section>
+              <h2 className="text-xl font-semibold">9. Modifications</h2>
               <p>
-                Nous nous réservons le droit de modifier cette politique de confidentialité à tout moment. La version la plus récente est celle publiée sur cette page.
+                Cette politique peut être mise à jour. La date de dernière modification sera toujours affichée en haut de page.
               </p>
             </section>
 
