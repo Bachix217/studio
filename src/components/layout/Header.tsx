@@ -24,6 +24,7 @@ import { signOut } from 'firebase/auth';
 import { useFirebase } from '@/firebase/provider';
 import { useRouter } from 'next/navigation';
 import { Separator } from '../ui/separator';
+import { cn } from '@/lib/utils';
 
 const legalLinks = [
     { href: "/legal/mentions-legales", label: "Mentions légales", icon: FileText },
@@ -55,8 +56,8 @@ export default function Header() {
   const UserMenuDesktop = () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-8 w-8">
+        <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+          <Avatar className="h-9 w-9">
             <AvatarImage src={user?.photoURL || ''} alt={user?.displayName || 'Utilisateur'} />
             <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || <UserIcon />}</AvatarFallback>
           </Avatar>
@@ -114,16 +115,16 @@ export default function Header() {
         </SheetTrigger>
         <SheetContent side="right" className="w-[85vw] max-w-sm p-0">
           <SheetHeader className="p-4 border-b">
-              <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-primary" onClick={() => setIsMenuOpen(false)}>
-                <Car size={28} />
+              <Link href="/" className="flex items-center gap-2 text-xl font-black text-primary" onClick={() => setIsMenuOpen(false)}>
+                <Car size={24} />
                 <span>Tacoto</span>
               </Link>
           </SheetHeader>
           <div className="flex flex-col h-full p-4">
-              <div className="flex-grow">
+              <div className="flex-grow space-y-6">
                 {isFullUser ? (
                   <div className="flex flex-col h-full">
-                    <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center gap-3 mb-6">
                       <Avatar className="h-12 w-12">
                         <AvatarImage src={user?.photoURL || ''} alt={user?.displayName || 'Utilisateur'} />
                         <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || <UserIcon />}</AvatarFallback>
@@ -136,25 +137,27 @@ export default function Header() {
                       </div>
                     </div>
                     <Separator />
-                    <nav className="flex flex-col space-y-2 mt-4 text-lg">
-                      <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/sell')}>Vendre ma voiture</Button>
-                       <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/catch-car')}>CatchCar</Button>
-                      <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/my-listings')}>Mes annonces</Button>
-                      <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/my-favorites')}>Mes favoris</Button>
-                      <Button variant="ghost" className="justify-start text-base" onClick={() => navigateTo('/profile')}>Profil</Button>
-                      <Button variant="ghost" className="justify-start text-base" onClick={handleLogout}>
+                    <nav className="flex flex-col space-y-2 mt-6 text-lg">
+                      <Button variant="ghost" className="justify-start text-base py-6" onClick={() => navigateTo('/sell')}>Vendre ma voiture</Button>
+                      <Button variant="ghost" className="justify-start text-base py-6" onClick={() => navigateTo('/catch-car')}>CatchCar</Button>
+                      <Button variant="ghost" className="justify-start text-base py-6" onClick={() => navigateTo('/my-listings')}>Mes annonces</Button>
+                      <Button variant="ghost" className="justify-start text-base py-6" onClick={() => navigateTo('/my-favorites')}>Mes favoris</Button>
+                      <Button variant="ghost" className="justify-start text-base py-6" onClick={() => navigateTo('/profile')}>Profil</Button>
+                    </nav>
+                    <div className="mt-auto">
+                        <Button variant="ghost" className="justify-start w-full text-base py-6 text-destructive hover:text-destructive" onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         Déconnexion
                       </Button>
-                    </nav>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">
-                    <Button variant="outline" className="w-full" asChild>
-                      <Link href="/login" onClick={() => setIsMenuOpen(false)}>Connexion</Link>
-                    </Button>
-                    <Button asChild className="w-full">
+                    <Button size="lg" asChild className="w-full">
                       <Link href="/signup" onClick={() => setIsMenuOpen(false)}>Inscription</Link>
+                    </Button>
+                    <Button size="lg" variant="outline" className="w-full" asChild>
+                      <Link href="/login" onClick={() => setIsMenuOpen(false)}>Connexion</Link>
                     </Button>
                   </div>
                 )}
@@ -177,37 +180,29 @@ export default function Header() {
   )
 
   return (
-    <header className="bg-card border-b shadow-sm sticky top-0 z-40">
+    <header className="bg-background/80 border-b shadow-sm sticky top-0 z-40 backdrop-blur-md">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 text-2xl font-bold text-primary">
-              <Car size={28} />
+            <Link href="/" className="flex items-center gap-2 text-xl font-black text-primary">
+              <Car size={24} />
               <span>Tacoto</span>
             </Link>
              {isFullUser && (
-              <nav className="hidden md:flex items-center gap-2">
-                 <Button variant="ghost" asChild>
-                  <Link href="/sell" className="font-semibold">Vendre ma voiture</Link>
-                </Button>
-                <Button variant="ghost" asChild>
-                  <Link href="/catch-car" className="font-semibold flex items-center gap-2">
-                    <Sparkles size={16} className="text-amber-500" />
+              <nav className="hidden md:flex items-center gap-6">
+                 <Link href="/sell" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Vendre</Link>
+                 <Link href="/catch-car" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5">
+                    <Sparkles size={16} />
                     CatchCar
-                  </Link>
-                </Button>
-                 <Button variant="ghost" asChild>
-                  <Link href="/my-listings" className="font-semibold">Mes annonces</Link>
-                </Button>
-                  <Button variant="ghost" asChild>
-                  <Link href="/my-favorites" className="font-semibold">Mes favoris</Link>
-                </Button>
+                </Link>
+                 <Link href="/my-listings" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Mes annonces</Link>
+                 <Link href="/my-favorites" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Mes favoris</Link>
               </nav>
             )}
           </div>
           
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-2">
             {isFullUser ? <UserMenuDesktop /> : <GuestLinks />}
           </div>
 
