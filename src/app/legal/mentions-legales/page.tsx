@@ -7,39 +7,34 @@ import { useFirebase } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
 
-async function getLegalContent(firestore: any) {
-  if (!firestore) return 'Erreur lors du chargement du contenu.';
-  try {
-    const docRef = doc(firestore, 'legal', 'legal-mentions');
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data().content;
-    }
-    return 'Contenu non trouvé.';
-  } catch (error) {
-    console.error("Error fetching legal content:", error);
-    return 'Erreur lors du chargement du contenu.';
-  }
-}
-
 export default function MentionsLegalesPage() {
   const { firestore } = useFirebase();
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!firestore) {
+      // Attendre que firestore soit initialisé.
+      // Le hook useFirebase garantit sa disponibilité.
+      return;
+    }
+
     const fetchContent = async () => {
-      // On s'assure que firestore est bien initialisé avant de faire l'appel.
-      if (firestore) {
-        setLoading(true);
-        try {
-          const data = await getLegalContent(firestore);
-          setContent(data);
-        } catch (err) {
-            setContent('Erreur lors du chargement du contenu.');
-        } finally {
-            setLoading(false);
+      try {
+        const docRef = doc(firestore, 'legal', 'legal-mentions');
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          setContent(docSnap.data().content);
+        } else {
+          setError('Le document des mentions légales est introuvable.');
         }
+      } catch (e) {
+        console.error("Error fetching legal content:", e);
+        setError('Une erreur est survenue lors du chargement du contenu.');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -65,10 +60,12 @@ export default function MentionsLegalesPage() {
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-full" />
               </div>
+            ) : error ? (
+                 <p className="text-destructive">{error}</p>
             ) : (
                 <div 
                     className="prose prose-stone dark:prose-invert max-w-none text-card-foreground space-y-4"
-                    dangerouslySetInnerHTML={{ __html: content?.replace(/\n/g, '<br />') || '' }} 
+                    dangerouslySetInnerHTML={{ __html: content || '' }} 
                 />
             )}
             <p className="text-sm text-muted-foreground pt-4">
