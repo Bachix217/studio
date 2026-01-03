@@ -22,12 +22,15 @@ export function FirebaseProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   
   const firebaseServices = useMemo(() => {
-    const services = initializeFirebase(() => setLoading(false)); // Pass a callback to update loading state
+    // Pass a callback to update loading state once Firebase/AppCheck is ready.
+    const services = initializeFirebase(() => setLoading(false)); 
     return services;
   }, []);
 
+  const value = { ...firebaseServices, loading };
+
   return (
-    <FirebaseContext.Provider value={{...firebaseServices, loading}}>
+    <FirebaseContext.Provider value={value}>
       {children}
     </FirebaseContext.Provider>
   );

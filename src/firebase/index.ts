@@ -12,7 +12,7 @@ let firestore: Firestore;
 let storage: FirebaseStorage;
 
 function initializeFirebase(onReady: () => void) {
-  if (!getApps().length) {
+  if (getApps().length === 0) {
     firebaseApp = initializeApp(firebaseConfig);
     // Initialize App Check on the client
     if (typeof window !== 'undefined') {
@@ -29,6 +29,7 @@ function initializeFirebase(onReady: () => void) {
       });
     } else {
       // If not in a browser, we are ready immediately (for SSR etc.)
+      // This path should ideally not be hit for client-side operations.
       onReady();
     }
   } else {

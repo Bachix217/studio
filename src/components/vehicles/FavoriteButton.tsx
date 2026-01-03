@@ -18,26 +18,33 @@ export default function FavoriteButton({ vehicleId }: FavoriteButtonProps) {
   const { user, loading: userLoading } = useUser();
   const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  // Overall loading state: Firebase isn't ready OR user isn't loaded OR we haven't checked the favorite status yet.
+  const isLoading = firebaseLoading || userLoading || !isSubscribed;
 
   useEffect(() => {
-    if (userLoading || !user || !firestore || firebaseLoading) {
-      setLoading(false);
+    if (firebaseLoading || userLoading || !user || !firestore) {
+      if (!user) {
+        setIsSubscribed(true); // No user, so no subscription needed. We're "ready" to show nothing.
+      }
       return;
     }
 
-    setLoading(true);
     const favDocRef = doc(firestore, 'users', user.uid, 'favorites', vehicleId);
     const unsubscribe = onSnapshot(favDocRef, (doc) => {
       setIsFavorite(doc.exists());
-      setLoading(false);
-    }, () => setLoading(false));
+      setIsSubscribed(true); // Mark that we have received the first snapshot
+    }, (error) => {
+        console.error("Error subscribing to favorite status:", error);
+        setIsSubscribed(true); // Mark as subscribed even on error to unblock UI
+    });
 
     return () => unsubscribe();
   }, [user, userLoading, firestore, vehicleId, firebaseLoading]);
 
   const toggleFavorite = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation if the button is inside a Link
+    e.preventDefault(); 
     e.stopPropagation();
     
     if (!user || !firestore) {
@@ -71,23 +78,10 @@ export default function FavoriteButton({ vehicleId }: FavoriteButtonProps) {
       });
     }
   };
-
-  if (userLoading || firebaseLoading) {
-    // Show a disabled button while user state is loading
-    return (
-      <Button
-        variant="ghost"
-        size="icon"
-        className="rounded-full h-10 w-10 bg-white/80 hover:bg-white backdrop-blur-sm"
-        disabled={true}
-        aria-label="Chargement des favoris"
-      >
-        <Heart className="text-gray-300" />
-      </Button>
-    );
+  
+  if (!user && !userLoading && !firebaseLoading) {
+    return null; // Don't show the button if the user is not logged in
   }
-
-  if (!user) return null;
 
   return (
     <Button
@@ -95,7 +89,7 @@ export default function FavoriteButton({ vehicleId }: FavoriteButtonProps) {
       size="icon"
       className="rounded-full h-10 w-10 bg-white/80 hover:bg-white backdrop-blur-sm"
       onClick={toggleFavorite}
-      disabled={loading}
+      disabled={isLoading}
       aria-label="Ajouter aux favoris"
     >
       <Heart
