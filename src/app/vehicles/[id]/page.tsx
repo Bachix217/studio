@@ -11,6 +11,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 
+// Initialize Firebase for Server-Side usage
 let app;
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
@@ -24,10 +25,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   const vehicle = await getVehicleById(db, params.id);
 
   if (!vehicle) {
-    return {
-      title: 'Annonce non trouvée - Tacoto.ch',
-      description: 'Cette annonce de voiture n\'est plus disponible ou n\'a jamais existé.',
-    }
+    notFound();
   }
 
   return {
@@ -59,6 +57,7 @@ export default async function VehiclePage({ params }: { params: { id: string } }
   const vehicle = await getVehicleById(db, params.id);
 
   if (!vehicle) {
+    // This will be caught by generateMetadata in most cases, but it's a good safeguard.
     notFound();
   }
   
