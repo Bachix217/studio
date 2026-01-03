@@ -4,53 +4,70 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Fonction pour vérifier si l'utilisateur est l'admin via son email
+    // --- FONCTIONS DE SÉCURITÉ ---
+
+    // Vérifie si la requête vient de VOTRE application (App Check)
+    function isValidApp() {
+      return request.appCheck != null;
+    }
+
+    // Vérifie si l'utilisateur est l'admin via son email
     function isAdmin() {
       return request.auth != null && request.auth.token.email == "info@tacoto.ch";
     }
 
+    // Vérifie si l'utilisateur est le propriétaire du document
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // --- RÈGLES DE COLLECTIONS ---
+
     // Règles pour les véhicules
     match /vehicles/{vehicleId} {
-      // Tout le monde peut voir les annonces
-      allow read: if true;
+      allow read: if true; // Les annonces sont publiques
 
-      // Création : Connecté + (Admin OU UID correspond au userId)
-      allow create: if request.auth != null && (isAdmin() || request.auth.uid == request.resource.data.userId);
+      // On exige App Check pour toute écriture afin d'éviter le spam
+      allow create: if isValidApp() && request.auth != null && 
+                    (isAdmin() || request.auth.uid == request.resource.data.userId);
 
-      // Modification/Suppression : Connecté + (Admin OU Propriétaire)
-      allow update, delete: if request.auth != null && (isAdmin() || request.auth.uid == resource.data.userId);
+      allow update, delete: if isValidApp() && request.auth != null && 
+                            (isAdmin() || request.auth.uid == resource.data.userId);
     }
     
-    // Règles pour les annonces archivées
+    // Annonces archivées
     match /deleted-vehicles/{vehicleId} {
-        // Seul le propriétaire ou l'admin peut archiver
-        allow create: if request.auth != null && (isAdmin() || request.auth.uid == request.resource.data.userId);
-        
-        // Seul l'admin peut éventuellement lire les archives, sinon personne
+        allow create: if isValidApp() && request.auth != null && 
+                      (isAdmin() || request.auth.uid == request.resource.data.userId);
         allow read: if isAdmin();
         allow update, delete: if false;
     }
 
     // Profils utilisateurs
     match /users/{userId} {
-      // Tout le monde peut lire les profils (get)
       allow get: if true;
-      // L'admin peut lister tous les utilisateurs
       allow list: if isAdmin();
-      // Seul le propriétaire du profil ou l'admin peut le modifier
-      allow write: if request.auth != null && (isAdmin() || request.auth.uid == userId);
       
-      // Favoris de l'utilisateur
+      // Protection des données sensibles du profil
+      allow write: if isValidApp() && request.auth != null && (isAdmin() || isOwner(userId));
+      
+      // Favoris
       match /favorites/{vehicleId} {
-        // Seul le propriétaire du profil peut lire et écrire ses favoris
-        allow read, write, delete: if request.auth != null && request.auth.uid == userId;
+        // Le propriétaire du profil peut lire, créer, modifier et supprimer ses propres favoris.
+        // App Check est requis pour toute modification.
+        allow read: if isOwner(userId);
+        allow write: if isValidApp() && isOwner(userId);
       }
     }
     
-    // Règle spécifique pour la requête de groupe de collections "images"
+    // Groupe de collections "images"
     match /{path=**}/images/{imageId} {
-      // Seul un admin peut lire toutes les images pour la surveillance
       allow get, list: if isAdmin();
+    }
+
+    // Accès global Admin (à laisser en dernier)
+    match /{document=**} {
+      allow read, write: if isAdmin();
     }
   }
 }
