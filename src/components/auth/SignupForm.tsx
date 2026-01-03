@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -44,6 +44,9 @@ export default function SignupForm() {
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Use a ref to hold the RecaptchaVerifier instance
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
+
   const signupForm = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -58,25 +61,24 @@ export default function SignupForm() {
     defaultValues: { code: '' },
   });
   
-  const setupRecaptcha = () => {
-    if (!auth) return;
-    if (!(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': () => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-        }
-      });
+  useEffect(() => {
+    if (auth && !recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            'size': 'invisible',
+            'callback': () => {
+              // reCAPTCHA solved, allow signInWithPhoneNumber.
+            }
+        });
     }
-    return (window as any).recaptchaVerifier;
-  }
+  }, [auth]);
+
 
   async function onSignupSubmit(values: z.infer<typeof signupSchema>) {
-    if (!auth) return;
+    if (!auth || !recaptchaVerifierRef.current) return;
     setIsSubmitting(true);
     
     try {
-      const appVerifier = setupRecaptcha();
+      const appVerifier = recaptchaVerifierRef.current;
       const confirmation = await signInWithPhoneNumber(auth, values.phone, appVerifier);
       setConfirmationResult(confirmation);
       setStep('verify');
@@ -91,6 +93,13 @@ export default function SignupForm() {
         title: "Erreur d'envoi du SMS",
         description: "Impossible d'envoyer le code de vérification. Assurez-vous que le numéro est correct et réessayez.",
       });
+       // Reset reCAPTCHA on error
+       if (recaptchaVerifierRef.current) {
+         recaptchaVerifierRef.current.render().then((widgetId) => {
+             // @ts-ignore
+            window.grecaptcha.reset(widgetId);
+         });
+       }
     } finally {
         setIsSubmitting(false);
     }
