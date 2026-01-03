@@ -123,7 +123,7 @@ export default function HomePageClient() {
   }, [filters, vehicles]);
   
   const searchSection = (
-     <div className="relative z-10 -mb-40">
+     <div className="relative z-10 -mb-64 px-4 md:px-8">
         <VehicleSearchForm filters={filters} onFilterChange={setFilters} allVehicles={vehicles} />
       </div>
   );
@@ -177,7 +177,7 @@ export default function HomePageClient() {
 
       {searchSection}
       
-      <div className="bg-muted/40 pt-48 pb-16 px-4 md:px-8 rounded-lg">
+      <div className="bg-muted/40 pt-72 pb-16 px-4 md:px-8 rounded-lg">
         <VehicleList vehicles={filteredVehicles} />
       </div>
     </>
