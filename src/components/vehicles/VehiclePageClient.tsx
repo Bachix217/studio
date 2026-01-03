@@ -1,5 +1,5 @@
 'use client';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { Calendar, Cog, Fuel, Gauge, CheckCircle, User, Building, MapPin, Globe, Car, Users, Settings, Palette, CigaretteOff, Check } from 'lucide-react';
@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import ProtectedContactButtons from '@/components/vehicles/ProtectedContactButtons';
 import { useUser } from '@/firebase/auth/use-user';
 import FavoriteButton from '@/components/vehicles/FavoriteButton';
+import ShareButton from './ShareButton';
 
 interface VehiclePageClientProps {
     vehicleId: string;
@@ -22,68 +23,61 @@ interface VehiclePageClientProps {
 
 export default function VehiclePageClient({ vehicleId, vehicle: initialVehicle }: VehiclePageClientProps) {
   const { firestore } = useFirebase();
-  const [vehicle, setVehicle] = useState<Vehicle>(initialVehicle);
+  const { user: currentUser } = useUser();
+  const [vehicle, setVehicle] = useState<Vehicle | null>(initialVehicle);
   const [seller, setSeller] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(!initialVehicle);
-  const { user: currentUser } = useUser();
 
   useEffect(() => {
     if (!firestore) return;
-    
-    // If we have the initial vehicle, we just need to fetch the seller
-    if (vehicle) {
-      if (vehicle.userId) {
-        const sellerDocRef = doc(firestore, 'users', vehicle.userId);
-        const unsubscribeSeller = onSnapshot(sellerDocRef, (sellerDocSnap) => {
-            if (sellerDocSnap.exists()) {
-              setSeller(sellerDocSnap.data() as UserProfile);
-            } else {
-              setSeller(null);
-            }
-          }, (error) => {
-            console.error("Error fetching seller profile:", error);
-            setSeller(null);
-          });
-        return () => unsubscribeSeller();
-      }
-    } else {
-      // Fallback if no initial vehicle is provided (e.g. client-side navigation)
-      setLoading(true);
-      const vehicleDocRef = doc(firestore, 'vehicles', vehicleId);
-      const unsubscribeVehicle = onSnapshot(vehicleDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const vehicleData = { id: docSnap.id, ...docSnap.data() } as Vehicle;
-          if (!vehicleData.published || vehicleData.status !== 'approved') {
-              notFound();
-              return;
-          }
-          setVehicle(vehicleData);
 
-          if (vehicleData.userId) {
-              const sellerDocRef = doc(firestore, 'users', vehicleData.userId);
-              const unsubscribeSeller = onSnapshot(sellerDocRef, (sellerDocSnap) => {
-                  if (sellerDocSnap.exists()) {
-                    setSeller(sellerDocSnap.data() as UserProfile);
-                  }
-                  setLoading(false);
-                });
-              return () => unsubscribeSeller();
-          } else {
-              setLoading(false);
-          }
-        } else {
-          notFound();
-        }
-      }, (error) => {
-        console.error("Error fetching vehicle:", error);
-        notFound();
-      });
-
-      return () => unsubscribeVehicle();
+    // We have initial data, let's just fetch the seller and then listen for real-time updates.
+    if (initialVehicle?.userId) {
+       const sellerDocRef = doc(firestore, 'users', initialVehicle.userId);
+       onSnapshot(sellerDocRef, (doc) => {
+         if (doc.exists()) {
+           setSeller(doc.data() as UserProfile);
+         }
+       });
     }
-  }, [vehicleId, firestore, vehicle]);
 
+    const vehicleDocRef = doc(firestore, 'vehicles', vehicleId);
+    const unsubscribe = onSnapshot(vehicleDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const vehicleData = { id: docSnap.id, ...docSnap.data() } as Vehicle;
+        
+        // If the vehicle is unpublished, only its owner can see it.
+        if (!vehicleData.published && vehicleData.userId !== currentUser?.uid) {
+           notFound();
+           return;
+        }
 
+        setVehicle(vehicleData);
+
+        // If the seller hasn't been fetched yet or the userId changed, fetch them.
+        if (vehicleData.userId && (!seller || seller.uid !== vehicleData.userId)) {
+           const sellerDocRef = doc(firestore, 'users', vehicleData.userId);
+           onSnapshot(sellerDocRef, (sellerDocSnap) => {
+             if (sellerDocSnap.exists()) {
+               setSeller(sellerDocSnap.data() as UserProfile);
+             } else {
+               setSeller(null);
+             }
+           });
+        }
+      } else {
+        notFound();
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching vehicle:", error);
+      setLoading(false);
+      notFound();
+    });
+
+    return () => unsubscribe();
+  }, [vehicleId, firestore, currentUser?.uid, initialVehicle, seller]);
+  
   if (loading) {
      return (
         <div className="bg-card rounded-lg shadow-lg overflow-hidden">
@@ -120,7 +114,7 @@ export default function VehiclePageClient({ vehicleId, vehicle: initialVehicle }
   }
 
   if (!vehicle) {
-    notFound();
+    // This will be caught by notFound() in useEffect, but it's a good safeguard.
     return null;
   }
 
@@ -151,9 +145,12 @@ export default function VehiclePageClient({ vehicleId, vehicle: initialVehicle }
         <div className="lg:col-span-2 p-6 flex flex-col">
             <div className="flex items-center justify-between">
             <Badge className="w-fit mb-2" variant="secondary">{vehicle.canton}</Badge>
-                {currentUser && (
-                <FavoriteButton vehicleId={vehicle.id} />
-            )}
+                {currentUser && vehicle.userId !== currentUser.uid && (
+                  <div className="flex items-center gap-2">
+                    <ShareButton vehicle={vehicle} />
+                    <FavoriteButton vehicleId={vehicle.id} />
+                  </div>
+                )}
             </div>
             <h1 className="text-3xl font-bold">{vehicle.make} {vehicle.model}</h1>
             <p className="text-2xl font-semibold text-primary mt-2">{formatCurrency(vehicle.price)}</p>
@@ -215,7 +212,7 @@ export default function VehiclePageClient({ vehicleId, vehicle: initialVehicle }
                 </Card>
             ) : (
                 <div className="text-center text-muted-foreground p-4">
-                 <p>Chargement des informations du vendeur...</p>
+                 <Skeleton className="h-5 w-3/4 mx-auto" />
                 </div>
             )}
             </div>
