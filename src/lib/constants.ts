@@ -38,3 +38,23 @@ export const POWER_UNITS = ['cv', 'kw'] as const;
 
 export const EXTERIOR_COLORS = ['Noir', 'Blanc', 'Gris', 'Argenté', 'Bleu', 'Rouge', 'Vert', 'Jaune', 'Orange', 'Brun', 'Beige', 'Violet', 'Autre'] as const;
 export const INTERIOR_COLORS = ['Noir', 'Gris', 'Beige', 'Brun', 'Blanc', 'Rouge', 'Bleu', 'Autre'] as const;
+
+export const COMMON_VEHICLE_FEATURES = [
+  'Climatisation',
+  'Bluetooth',
+  'Régulateur de vitesse',
+  'Sièges chauffants',
+  'Caméra de recul',
+  'Toit ouvrant',
+  'Apple CarPlay',
+  'Android Auto',
+  'GPS',
+  'Phares LED',
+  'Système d\'aide au stationnement',
+  'Affichage tête haute',
+  'Sièges en cuir',
+  'Jantes en alliage',
+  'Avertisseur d\'angle mort',
+  'Accès sans clé',
+  'Hayon électrique',
+] as const;
