@@ -51,26 +51,6 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 export default async function VehiclePage({ params }: { params: { id: string } }) {
   const id = params.id;
   
-  // Basic validation server-side to quickly check if the document might exist.
-  // The client will do the full fetching and validation.
-  try {
-    const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const vehicleDocRef = doc(db, 'vehicles', id);
-    const docSnap = await getDoc(vehicleDocRef);
-    if (!docSnap.exists()) {
-        notFound();
-    }
-    const data = docSnap.data();
-    if (!data.published || data.status !== 'approved') {
-        notFound();
-    }
-  } catch (e) {
-    // If server check fails, let client handle it, but it might lead to notFound on client.
-    console.error("Server-side pre-check failed:", e);
-  }
-
-
   return (
     <>
       <Header />

@@ -1,5 +1,5 @@
 'use client';
-import { useParams, notFound } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { Calendar, Cog, Fuel, Gauge, CheckCircle, User, Building, MapPin, Globe, Car, Users, Settings, Palette, CigaretteOff, Check } from 'lucide-react';
@@ -119,7 +119,8 @@ export default function VehiclePageClient({ vehicleId }: VehiclePageClientProps)
   }
 
   if (!vehicle) {
-    // notFound() should have been called, but this is a fallback.
+    // notFound() has been called in useEffect, so this should not be reached
+    // but as a fallback, we prevent rendering a broken page.
     return null;
   }
 
