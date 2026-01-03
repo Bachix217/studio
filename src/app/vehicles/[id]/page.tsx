@@ -10,13 +10,12 @@ import { useEffect, useState } from 'react';
 import { useFirebase } from '@/firebase';
 import type { Vehicle, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { doc, onSnapshot, getDoc, getFirestore } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc, getFirestore, initializeApp, getApps, getApp } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import ProtectedContactButtons from '@/components/vehicles/ProtectedContactButtons';
 import { useUser } from '@/firebase/auth/use-user';
 import FavoriteButton from '@/components/vehicles/FavoriteButton';
-import { initializeApp, getApps, getApp } from 'firebase/app';
 import { firebaseConfig } from '@/firebase/config';
 import type { Metadata } from 'next';
 
