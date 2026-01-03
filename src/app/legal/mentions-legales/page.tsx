@@ -14,19 +14,22 @@ export default function MentionsLegalesPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!firestore) {
-      // Attendre que firestore soit initialisé.
-      // Le hook useFirebase garantit sa disponibilité.
-      return;
-    }
-
+    // La fonction fetch sera appelée uniquement quand firestore est disponible.
     const fetchContent = async () => {
+      if (!firestore) {
+        // Si firestore n'est pas encore prêt, on attend.
+        // Le useEffect sera ré-exécuté quand `firestore` changera.
+        return;
+      }
+      
+      setLoading(true);
       try {
         const docRef = doc(firestore, 'legal', 'legal-mentions');
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
           setContent(docSnap.data().content);
+          setError(null);
         } else {
           setError('Le document des mentions légales est introuvable.');
         }
