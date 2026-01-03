@@ -41,10 +41,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     console.error("Error generating metadata:", error);
   }
   
-  return {
-    title: "Annonce non trouvée",
-    description: "Cette annonce n'est plus disponible.",
-  };
+  // If we reach here, the vehicle was not found or not published.
+  // This will ensure the server renders the 404 page directly.
+  notFound();
 }
 
 
