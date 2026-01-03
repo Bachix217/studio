@@ -6,5 +6,6 @@ export const firebaseConfig = {
   projectId: "tacotoch",
   storageBucket: "tacotoch.firebasestorage.app",
   messagingSenderId: "906277073490",
-  appId: "1:906277073490:web:3050f2d6134c224d27a58b"
+  appId: "1:906277073490:web:3050f2d6134c224d27a58b",
+  reCaptchaKey: "6Lck2j4sAAAAAL9Ybd7lQYqDVscYVWPslwVdzjaw"
 };
