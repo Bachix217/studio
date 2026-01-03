@@ -106,7 +106,11 @@ export const initialVehicles: Omit<Vehicle, 'id' | 'userId' | 'createdAt'>[] = [
 export const getVehicles = async (firestore: any): Promise<Vehicle[]> => {
   try {
     const vehiclesCollection = collection(firestore, 'vehicles');
-    const q = query(vehiclesCollection, orderBy('createdAt', 'desc'));
+    const q = query(
+      vehiclesCollection, 
+      where('published', '==', true),
+      orderBy('createdAt', 'desc')
+    );
     const snapshot = await getDocs(q);
     if (snapshot.empty) {
       console.log('No matching documents.');
@@ -125,10 +129,10 @@ export const getVehicleById = async (firestore: any, id: string): Promise<Vehicl
     const docRef = doc(firestore, 'vehicles', id);
     const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
+    if (docSnap.exists() && docSnap.data().published === true) {
       return { id: docSnap.id, ...docSnap.data() } as Vehicle;
     } else {
-      console.log("No such document!");
+      console.log("No such published document!");
       return undefined;
     }
   } catch (error) {
@@ -138,7 +142,7 @@ export const getVehicleById = async (firestore: any, id: string): Promise<Vehicl
 };
 
 export const getMakes = async (firestore: any): Promise<string[]> => {
-  const vehicles = await getVehicles(firestore);
+  const vehicles = await getVehicles(firestore); // Already filters by published
   const allMakes = vehicles.map(v => v.make);
   return [...new Set(allMakes)].sort();
 }
@@ -146,7 +150,7 @@ export const getMakes = async (firestore: any): Promise<string[]> => {
 export const getModelsByMake = async (firestore: any, make: string): Promise<string[]> => {
   if (!make) return [];
   const vehiclesCollection = collection(firestore, 'vehicles');
-  const q = query(vehiclesCollection, where('make', '==', make));
+  const q = query(vehiclesCollection, where('make', '==', make), where('published', '==', true));
   const snapshot = await getDocs(q);
    if (snapshot.empty) {
       return [];
