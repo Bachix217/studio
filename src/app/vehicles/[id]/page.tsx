@@ -10,12 +10,52 @@ import { useEffect, useState } from 'react';
 import { useFirebase } from '@/firebase';
 import type { Vehicle, UserProfile } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc, getFirestore } from 'firebase/firestore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import ProtectedContactButtons from '@/components/vehicles/ProtectedContactButtons';
 import { useUser } from '@/firebase/auth/use-user';
 import FavoriteButton from '@/components/vehicles/FavoriteButton';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { firebaseConfig } from '@/firebase/config';
+import type { Metadata } from 'next';
+
+// This function runs on the server to generate metadata
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const id = params.id;
+  try {
+    // Initialize a temporary server-side instance of Firebase to fetch data
+    const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const vehicleDocRef = doc(db, 'vehicles', id);
+    const docSnap = await getDoc(vehicleDocRef);
+
+    if (docSnap.exists()) {
+      const vehicle = docSnap.data() as Vehicle;
+      const title = `${vehicle.make} ${vehicle.model} de ${vehicle.year} - ${formatCurrency(vehicle.price)}`;
+      const description = `Découvrez cette ${vehicle.make} ${vehicle.model} à ${vehicle.canton}. ${vehicle.mileage.toLocaleString('fr-CH')} km, ${vehicle.gearbox}. ${vehicle.description.substring(0, 120)}...`;
+      const imageUrl = vehicle.images && vehicle.images.length > 0 ? vehicle.images[0] : undefined;
+
+      return {
+        title: title,
+        description: description,
+        openGraph: {
+          title: title,
+          description: description,
+          images: imageUrl ? [imageUrl] : [],
+        },
+      };
+    }
+  } catch (error) {
+    console.error("Error generating metadata:", error);
+  }
+  
+  // Return default metadata if vehicle not found or on error
+  return {
+    title: "Annonce non trouvée",
+    description: "Cette annonce n'est plus disponible.",
+  };
+}
 
 
 export default function VehiclePage() {
