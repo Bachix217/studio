@@ -1,15 +1,12 @@
 import { FieldValue, Timestamp } from "firebase/firestore";
 import { CONDITION_TYPES, DRIVE_TYPES, DOORS_TYPES, FUEL_TYPES, GEARBOX_TYPES, SEATS_TYPES, POWER_UNITS, EXTERIOR_COLORS, INTERIOR_COLORS } from "./constants";
 
-
-export type Serializable<T> = T extends Timestamp | FieldValue ? string : T;
-
+// This is a utility type that will recursively make all Timestamp fields a union of Timestamp and string.
 type WithSerializableTimestamps<T> = {
   [K in keyof T]: T[K] extends Timestamp | FieldValue | undefined
     ? T[K] | string
     : T[K];
 };
-
 
 export type Vehicle = WithSerializableTimestamps<{
   id: string;
