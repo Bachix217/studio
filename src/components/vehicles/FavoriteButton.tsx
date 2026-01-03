@@ -15,25 +15,26 @@ interface FavoriteButtonProps {
 
 export default function FavoriteButton({ vehicleId }: FavoriteButtonProps) {
   const { firestore } = useFirebase();
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !firestore) {
+    if (userLoading || !user || !firestore) {
       setLoading(false);
       return;
     }
 
+    setLoading(true);
     const favDocRef = doc(firestore, 'users', user.uid, 'favorites', vehicleId);
     const unsubscribe = onSnapshot(favDocRef, (doc) => {
       setIsFavorite(doc.exists());
       setLoading(false);
-    });
+    }, () => setLoading(false));
 
     return () => unsubscribe();
-  }, [user, firestore, vehicleId]);
+  }, [user, userLoading, firestore, vehicleId]);
 
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation if the button is inside a Link
@@ -70,6 +71,21 @@ export default function FavoriteButton({ vehicleId }: FavoriteButtonProps) {
       });
     }
   };
+
+  if (userLoading) {
+    // Show a disabled button while user state is loading
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        className="rounded-full h-10 w-10 bg-white/80 hover:bg-white backdrop-blur-sm"
+        disabled={true}
+        aria-label="Chargement des favoris"
+      >
+        <Heart className="text-gray-300" />
+      </Button>
+    );
+  }
 
   if (!user) return null;
 
