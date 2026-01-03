@@ -115,7 +115,7 @@ export default function VehicleSearchForm({
   const currentPriceRange = watch('priceRange') || defaultFilters.priceRange;
 
   return (
-    <Card className="shadow-lg overflow-hidden">
+    <Card className="shadow-2xl overflow-hidden">
         <form>
           <CardContent className="p-4 md:p-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
