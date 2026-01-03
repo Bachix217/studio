@@ -14,14 +14,14 @@ interface FavoriteButtonProps {
 }
 
 export default function FavoriteButton({ vehicleId }: FavoriteButtonProps) {
-  const { firestore } = useFirebase();
+  const { firestore, loading: firebaseLoading } = useFirebase();
   const { user, loading: userLoading } = useUser();
   const { toast } = useToast();
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (userLoading || !user || !firestore) {
+    if (userLoading || !user || !firestore || firebaseLoading) {
       setLoading(false);
       return;
     }
@@ -34,7 +34,7 @@ export default function FavoriteButton({ vehicleId }: FavoriteButtonProps) {
     }, () => setLoading(false));
 
     return () => unsubscribe();
-  }, [user, userLoading, firestore, vehicleId]);
+  }, [user, userLoading, firestore, vehicleId, firebaseLoading]);
 
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation if the button is inside a Link
@@ -72,7 +72,7 @@ export default function FavoriteButton({ vehicleId }: FavoriteButtonProps) {
     }
   };
 
-  if (userLoading) {
+  if (userLoading || firebaseLoading) {
     // Show a disabled button while user state is loading
     return (
       <Button
