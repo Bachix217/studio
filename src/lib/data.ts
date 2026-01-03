@@ -1,7 +1,10 @@
 import type { Vehicle } from './types';
 import { collection, getDocs, doc, getDoc, query, orderBy, where, serverTimestamp } from 'firebase/firestore';
+import { serializeTimestamps } from './serialization';
+
 
 export const initialVehicles: Omit<Vehicle, 'id' | 'userId' | 'createdAt'>[] = [
+  // @ts-nocheck
   {
     make: 'Volkswagen',
     model: 'Golf',
@@ -117,27 +120,28 @@ export const getVehicles = async (firestore: any): Promise<Vehicle[]> => {
       return [];
     }
     const vehicles: Vehicle[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle));
-    return vehicles;
+    return serializeTimestamps(vehicles);
   } catch (error) {
     console.error("Error fetching vehicles from Firestore:", error);
     return []; // Return empty array on error
   }
 };
 
-export const getVehicleById = async (firestore: any, id: string): Promise<Vehicle | undefined> => {
+export const getVehicleById = async (firestore: any, id: string): Promise<Vehicle | null> => {
   try {
     const docRef = doc(firestore, 'vehicles', id);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists() && docSnap.data().published === true) {
-      return { id: docSnap.id, ...docSnap.data() } as Vehicle;
+      const vehicleData = { id: docSnap.id, ...docSnap.data() } as Vehicle;
+      return serializeTimestamps(vehicleData);
     } else {
       console.log("No such published document!");
-      return undefined;
+      return null;
     }
   } catch (error) {
     console.error("Error fetching vehicle by ID from Firestore:", error);
-    return undefined;
+    return null;
   }
 };
 

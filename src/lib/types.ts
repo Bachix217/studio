@@ -2,7 +2,16 @@ import { FieldValue, Timestamp } from "firebase/firestore";
 import { CONDITION_TYPES, DRIVE_TYPES, DOORS_TYPES, FUEL_TYPES, GEARBOX_TYPES, SEATS_TYPES, POWER_UNITS, EXTERIOR_COLORS, INTERIOR_COLORS } from "./constants";
 
 
-export type Vehicle = {
+export type Serializable<T> = T extends Timestamp | FieldValue ? string : T;
+
+type WithSerializableTimestamps<T> = {
+  [K in keyof T]: T[K] extends Timestamp | FieldValue | undefined
+    ? T[K] | string
+    : T[K];
+};
+
+
+export type Vehicle = WithSerializableTimestamps<{
   id: string;
   make: string;
   model: string;
@@ -31,22 +40,22 @@ export type Vehicle = {
   // Moderation fields
   status: 'pending' | 'approved' | 'rejected';
   published: boolean;
-};
+}>;
 
-export type UserProfile = {
+export type UserProfile = WithSerializableTimestamps<{
   uid: string;
   email: string;
   displayName: string;
   phone: string;
   sharePhoneNumber?: boolean;
-  createdAt?: Timestamp | FieldValue | Date;
+  createdAt?: Timestamp | FieldValue;
   userType?: 'particulier' | 'professionnel';
   companyName?: string;
   address?: string;
   website?: string;
-};
+}>;
 
-export type Favorite = {
+export type Favorite = WithSerializableTimestamps<{
   vehicleId: string;
   createdAt: Timestamp | FieldValue;
-}
+}>;
