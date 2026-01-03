@@ -159,7 +159,7 @@ export default function HomePageClient() {
             aria-hidden="true" 
             className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-indigo-50/50 to-muted/40 dark:from-zinc-900/80 dark:via-zinc-900/50 dark:to-background"
         />
-        <div className="text-center pt-16 md:pt-24 pb-32">
+        <div className="text-center pt-16 md:pt-24 pb-16">
           <h1 className="font-headline text-5xl md:text-7xl font-extrabold tracking-tighter bg-gradient-to-r from-primary via-indigo-400 to-purple-400 bg-clip-text text-transparent">
             La bonne occasion.
           </h1>
@@ -173,7 +173,7 @@ export default function HomePageClient() {
         <VehicleSearchForm filters={filters} onFilterChange={setFilters} allVehicles={vehicles} />
       </div>
       
-      <div className="bg-muted/40 pt-8 pb-16 px-4 md:px-8 rounded-lg">
+      <div className="bg-muted/40 pt-12 pb-16 px-4 md:px-8 rounded-lg">
         <VehicleList vehicles={filteredVehicles} />
       </div>
     </>
