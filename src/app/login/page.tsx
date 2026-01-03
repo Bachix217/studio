@@ -1,11 +1,11 @@
+'use client';
+
 import LoginForm from '@/components/auth/LoginForm';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
-export const metadata = {
-  title: 'Connexion - Tacoto.ch',
-  description: 'Connectez-vous à votre compte Tacoto.ch.',
-};
+// Metadata needs to be handled differently for client components
+// but for now, we remove it to fix the build, and can re-add it if needed.
 
 export default function LoginPage() {
   return (
