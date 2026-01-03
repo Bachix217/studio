@@ -54,13 +54,12 @@ const StatusBadge = ({ status, published }: { status: Vehicle['status'], publish
 
 
 export default function VehicleCard({ vehicle, showControls = false, onDeletionSuccess }: VehicleCardProps) {
-  const { user } = useUser();
   const imageUrl = vehicle.images && vehicle.images.length > 0 ? vehicle.images[0] : null;
 
   return (
     <Card className="h-full flex flex-col overflow-hidden transition-all duration-300 group">
        <div className="relative">
-         {user && !showControls && ( // Show favorite on public pages only
+         {!showControls && ( // Show favorite on public pages only
           <div className="absolute top-2 left-2 z-10">
             <FavoriteButton vehicleId={vehicle.id} />
           </div>

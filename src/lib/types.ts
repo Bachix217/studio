@@ -1,4 +1,4 @@
-import { Timestamp } from "firebase/firestore";
+import { FieldValue, Timestamp } from "firebase/firestore";
 import { CONDITION_TYPES, DRIVE_TYPES, DOORS_TYPES, FUEL_TYPES, GEARBOX_TYPES, SEATS_TYPES, POWER_UNITS, EXTERIOR_COLORS, INTERIOR_COLORS } from "./constants";
 
 
@@ -16,8 +16,8 @@ export type Vehicle = {
   features: string[];
   images: string[];
   userId: string;
-  createdAt: Timestamp;
-  updatedAt?: Timestamp;
+  createdAt: Timestamp | FieldValue;
+  updatedAt?: Timestamp | FieldValue;
   // New fields
   doors: typeof DOORS_TYPES[number];
   seats: typeof SEATS_TYPES[number];
@@ -39,7 +39,7 @@ export type UserProfile = {
   displayName: string;
   phone: string;
   sharePhoneNumber?: boolean;
-  createdAt?: Timestamp | Date;
+  createdAt?: Timestamp | FieldValue | Date;
   userType?: 'particulier' | 'professionnel';
   companyName?: string;
   address?: string;
@@ -48,5 +48,5 @@ export type UserProfile = {
 
 export type Favorite = {
   vehicleId: string;
-  createdAt: Timestamp;
+  createdAt: Timestamp | FieldValue;
 }

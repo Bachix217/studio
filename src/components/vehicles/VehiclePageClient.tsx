@@ -1,7 +1,5 @@
 'use client';
 import { useParams, notFound } from 'next/navigation';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
 import { Badge } from '@/components/ui/badge';
 import { formatCurrency } from '@/lib/utils';
 import { Calendar, Cog, Fuel, Gauge, CheckCircle, User, Building, MapPin, Globe, Car, Users, Settings, Palette, CigaretteOff, Check } from 'lucide-react';
@@ -19,12 +17,11 @@ import FavoriteButton from '@/components/vehicles/FavoriteButton';
 
 interface VehiclePageClientProps {
     vehicleId: string;
-    initialVehicle: Vehicle;
 }
 
-export default function VehiclePageClient({ vehicleId, initialVehicle }: VehiclePageClientProps) {
+export default function VehiclePageClient({ vehicleId }: VehiclePageClientProps) {
   const { firestore } = useFirebase();
-  const [vehicle, setVehicle] = useState<Vehicle | null>(initialVehicle);
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [seller, setSeller] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const { user: currentUser } = useUser();
@@ -34,81 +31,96 @@ export default function VehiclePageClient({ vehicleId, initialVehicle }: Vehicle
         setLoading(false);
         return;
     }
-
-    // Since we have initialVehicle, we can show something right away
-    setLoading(false); 
     
-    if (initialVehicle.userId) {
-        const sellerDocRef = doc(firestore, 'users', initialVehicle.userId);
-        const unsubscribeSeller = onSnapshot(sellerDocRef, (sellerDocSnap) => {
-            if (sellerDocSnap.exists()) {
-              setSeller(sellerDocSnap.data() as UserProfile);
-            } else {
-              setSeller(null);
-            }
-          }, (error) => {
-            console.error("Error fetching seller profile:", error);
-            setSeller(null);
-          });
+    setLoading(true);
 
-        const vehicleDocRef = doc(firestore, 'vehicles', vehicleId);
-        const unsubscribeVehicle = onSnapshot(vehicleDocRef, (docSnap) => {
-          if (docSnap.exists()) {
-            const vehicleData = { id: docSnap.id, ...docSnap.data() } as Vehicle;
-            if (!vehicleData.published || vehicleData.status !== 'approved') {
-                return notFound();
-            }
-            setVehicle(vehicleData);
-          } else {
+    const vehicleDocRef = doc(firestore, 'vehicles', vehicleId);
+    const unsubscribeVehicle = onSnapshot(vehicleDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const vehicleData = { id: docSnap.id, ...docSnap.data() } as Vehicle;
+        
+        if (!vehicleData.published || vehicleData.status !== 'approved') {
+            setVehicle(null);
+            setLoading(false);
             notFound();
-          }
-        }, (error) => {
-          console.error("Error fetching vehicle:", error);
-          notFound();
-        });
+            return;
+        }
 
-        return () => {
-          unsubscribeSeller();
-          unsubscribeVehicle();
-        };
+        setVehicle(vehicleData);
 
-    }
-  }, [vehicleId, firestore, initialVehicle]);
+        if (vehicleData.userId) {
+            const sellerDocRef = doc(firestore, 'users', vehicleData.userId);
+            const unsubscribeSeller = onSnapshot(sellerDocRef, (sellerDocSnap) => {
+                if (sellerDocSnap.exists()) {
+                  setSeller(sellerDocSnap.data() as UserProfile);
+                } else {
+                  setSeller(null);
+                }
+                setLoading(false);
+              }, (error) => {
+                console.error("Error fetching seller profile:", error);
+                setSeller(null);
+                setLoading(false);
+              });
+            return () => unsubscribeSeller();
+        } else {
+            setLoading(false);
+        }
+
+      } else {
+        setVehicle(null);
+        setLoading(false);
+        notFound();
+      }
+    }, (error) => {
+      console.error("Error fetching vehicle:", error);
+      setVehicle(null);
+      setLoading(false);
+      notFound();
+    });
+
+    return () => unsubscribeVehicle();
+  }, [vehicleId, firestore]);
 
 
-  if (loading || !vehicle) {
+  if (loading) {
      return (
-      <div className="bg-card rounded-lg shadow-lg overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
-          <div className="lg:col-span-3">
-              <Skeleton className="aspect-[4/3] w-full h-full" />
-          </div>
-          <div className="lg:col-span-2 p-6 flex flex-col gap-4">
-            <Skeleton className="h-6 w-24" />
-            <Skeleton className="h-9 w-3/4" />
-            <Skeleton className="h-8 w-1/2" />
-            <div className="grid grid-cols-2 gap-4 mt-6 text-sm">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex items-center gap-2">
-                    <Skeleton className="h-8 w-8 rounded-full" />
-                    <div className="flex flex-col gap-2">
-                      <Skeleton className="h-5 w-20" />
-                      <Skeleton className="h-4 w-12" />
+        <div className="bg-card rounded-lg shadow-lg overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
+            <div className="lg:col-span-3">
+                <Skeleton className="aspect-[4/3] w-full h-full" />
+            </div>
+            <div className="lg:col-span-2 p-6 flex flex-col gap-4">
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-9 w-3/4" />
+                <Skeleton className="h-8 w-1/2" />
+                <div className="grid grid-cols-2 gap-4 mt-6 text-sm">
+                {[...Array(4)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <div className="flex flex-col gap-2">
+                        <Skeleton className="h-5 w-20" />
+                        <Skeleton className="h-4 w-12" />
+                        </div>
                     </div>
+                ))}
                 </div>
-              ))}
+                <div className="mt-auto pt-8 flex flex-col sm:flex-row gap-3">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                </div>
             </div>
-            <div className="mt-auto pt-8 flex flex-col sm:flex-row gap-3">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
             </div>
-          </div>
-        </div>
-        <div className="p-6 border-t">
-            <Skeleton className="h-96 w-full" />
-        </div>
+            <div className="p-6 border-t">
+                <Skeleton className="h-96 w-full" />
+            </div>
       </div>
     );
+  }
+
+  if (!vehicle) {
+    // notFound() should have been called, but this is a fallback.
+    return null;
   }
 
   const mainSpecs = [
@@ -201,8 +213,8 @@ export default function VehiclePageClient({ vehicleId, initialVehicle }: Vehicle
                 </CardContent>
                 </Card>
             ) : (
-                <div className="text-center text-muted-foreground">
-                <p>Chargement des informations du vendeur...</p>
+                <div className="text-center text-muted-foreground p-4">
+                 <p>Chargement des informations du vendeur...</p>
                 </div>
             )}
             </div>
@@ -241,7 +253,7 @@ export default function VehiclePageClient({ vehicleId, initialVehicle }: Vehicle
             </div>
         </div>
 
-        {vehicle.features && vehicle.features.length > 0 && (
+        {vehicle.features && vehicle.features.length > 0 && vehicle.features[0] !== '' && (
             <>
             <Separator />
             <div>

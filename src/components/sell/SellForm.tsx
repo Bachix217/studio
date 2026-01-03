@@ -702,7 +702,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                         render={({ field }) => (
                             <FormItem className="flex-grow">
                                 <FormLabel>Puissance</FormLabel>
-                                <FormControl><Input type="number" placeholder="ex: 150" {...field} /></FormControl>
+                                <FormControl><Input type="number" placeholder="ex: 150" {...field} value={field.value ?? ''} /></FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
