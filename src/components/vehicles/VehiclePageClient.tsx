@@ -35,51 +35,48 @@ export default function VehiclePageClient({ vehicleId, initialVehicle }: Vehicle
         return;
     }
 
-    setLoading(true);
-    const vehicleDocRef = doc(firestore, 'vehicles', vehicleId);
-    const unsubscribeVehicle = onSnapshot(vehicleDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const vehicleData = { id: docSnap.id, ...docSnap.data() } as Vehicle;
-        
-        if (!vehicleData.published || vehicleData.status !== 'approved') {
-            // Si l'annonce n'est plus publiée ou approuvée, on déclenche une 404 côté client
-            return notFound();
-        }
-
-        setVehicle(vehicleData);
-
-        if (vehicleData.userId) {
-          const sellerDocRef = doc(firestore, 'users', vehicleData.userId);
-          const unsubscribeSeller = onSnapshot(sellerDocRef, (sellerDocSnap) => {
+    // Since we have initialVehicle, we can show something right away
+    setLoading(false); 
+    
+    if (initialVehicle.userId) {
+        const sellerDocRef = doc(firestore, 'users', initialVehicle.userId);
+        const unsubscribeSeller = onSnapshot(sellerDocRef, (sellerDocSnap) => {
             if (sellerDocSnap.exists()) {
               setSeller(sellerDocSnap.data() as UserProfile);
             } else {
               setSeller(null);
             }
-            setLoading(false);
           }, (error) => {
             console.error("Error fetching seller profile:", error);
             setSeller(null);
-            setLoading(false);
           });
-          
-          return () => unsubscribeSeller();
-        } else {
-          setLoading(false);
-        }
-      } else {
-        notFound();
-      }
-    }, (error) => {
-      console.error("Error fetching vehicle:", error);
-      notFound();
-    });
 
-    return () => unsubscribeVehicle();
-  }, [vehicleId, firestore]);
+        const vehicleDocRef = doc(firestore, 'vehicles', vehicleId);
+        const unsubscribeVehicle = onSnapshot(vehicleDocRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const vehicleData = { id: docSnap.id, ...docSnap.data() } as Vehicle;
+            if (!vehicleData.published || vehicleData.status !== 'approved') {
+                return notFound();
+            }
+            setVehicle(vehicleData);
+          } else {
+            notFound();
+          }
+        }, (error) => {
+          console.error("Error fetching vehicle:", error);
+          notFound();
+        });
+
+        return () => {
+          unsubscribeSeller();
+          unsubscribeVehicle();
+        };
+
+    }
+  }, [vehicleId, firestore, initialVehicle]);
 
 
-  if (loading && !vehicle) {
+  if (loading || !vehicle) {
      return (
       <div className="bg-card rounded-lg shadow-lg overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
@@ -113,11 +110,6 @@ export default function VehiclePageClient({ vehicleId, initialVehicle }: Vehicle
       </div>
     );
   }
-
-  if (!vehicle) {
-      return null; // Not found will be handled
-  }
-
 
   const mainSpecs = [
     { icon: Calendar, label: 'Année', value: vehicle.year },
