@@ -1,11 +1,21 @@
 'use client';
 
+import { Suspense } from 'react';
 import LoginForm from '@/components/auth/LoginForm';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Metadata needs to be handled differently for client components
-// but for now, we remove it to fix the build, and can re-add it if needed.
+function LoginFormSkeleton() {
+    return (
+        <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-12 w-full mt-4" />
+        </div>
+    )
+}
+
 
 export default function LoginPage() {
   return (
@@ -17,7 +27,9 @@ export default function LoginPage() {
             <h1 className="text-4xl font-bold tracking-tight">Connexion</h1>
             <p className="mt-2 text-lg text-muted-foreground">Accédez à votre compte pour gérer vos annonces.</p>
           </div>
-          <LoginForm />
+          <Suspense fallback={<LoginFormSkeleton />}>
+            <LoginForm />
+          </Suspense>
         </div>
       </main>
       <Footer />
