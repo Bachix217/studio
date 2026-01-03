@@ -23,9 +23,9 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
-import { CANTONS, FUEL_TYPES, GEARBOX_TYPES, DOORS_TYPES, SEATS_TYPES, DRIVE_TYPES, CONDITION_TYPES, POWER_UNITS, EXTERIOR_COLORS, INTERIOR_COLORS } from '@/lib/constants';
+import { CANTONS, FUEL_TYPES, GEARBOX_TYPES, DOORS_TYPES, SEATS_TYPES, DRIVE_TYPES, CONDITION_TYPES, POWER_UNITS, EXTERIOR_COLORS, INTERIOR_COLORS, COMMON_VEHICLE_FEATURES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Check, ChevronsUpDown, Info } from 'lucide-react';
+import { UploadCloud, Check, ChevronsUpDown, Info, X, PlusCircle } from 'lucide-react';
 import { useFirebase } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
 import { addDoc, collection, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
@@ -44,6 +44,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '../ui/badge';
 
 
 const MAX_IMAGES = 10;
@@ -108,6 +109,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
       mileage: vehicleToEdit?.mileage,
       powerUnit: vehicleToEdit?.powerUnit || 'cv',
       nonSmoker: vehicleToEdit?.nonSmoker || false,
+      features: vehicleToEdit?.features || [],
     } : {
       year: new Date().getFullYear(),
       powerUnit: 'cv',
@@ -174,7 +176,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
     if (isEditMode && vehicleToEdit) {
       form.reset({
         ...vehicleToEdit,
-        features: vehicleToEdit.features,
+        features: vehicleToEdit.features || [],
       });
       if (vehicleToEdit.images && vehicleToEdit.images.length > 0) {
         setImagePreviews(vehicleToEdit.images);
@@ -838,13 +840,35 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                     <FormItem>
                       <FormLabel>Équipements</FormLabel>
                       <FormControl>
-                        <Input placeholder="Climatisation, Sièges chauffants, Toit ouvrant..." {...field} value={field.value?.join(', ') || ''} onChange={(e) => field.onChange(e.target.value.split(',').map(s => s.trim()))}/>
+                         <div className="flex flex-col gap-4">
+                            <FeaturesCombobox
+                              selectedFeatures={field.value || []}
+                              onFeaturesChange={field.onChange}
+                            />
+                             <div className="flex flex-wrap gap-2">
+                                {(field.value || []).map((feature) => (
+                                <Badge key={feature} variant="secondary" className="pl-3 pr-2 py-1 text-sm">
+                                    {feature}
+                                    <button
+                                    type="button"
+                                    className="ml-2 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                    onClick={() => field.onChange(field.value?.filter(f => f !== feature))}
+                                    >
+                                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                                    </button>
+                                </Badge>
+                                ))}
+                            </div>
+                         </div>
                       </FormControl>
-                      <p className="text-sm text-muted-foreground">Séparez les équipements par une virgule.</p>
+                      <FormDescription>
+                        Sélectionnez ou ajoutez des équipements pour votre véhicule.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
 
                 <Button type="submit" size="lg" className="w-full md:w-auto" disabled={form.formState.isSubmitting}>
                     {form.formState.isSubmitting ? 'Sauvegarde...' : (isEditMode ? 'Enregistrer les modifications' : 'Soumettre l\'annonce')}
@@ -855,4 +879,79 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
       </CardContent>
     </Card>
   );
+}
+
+// Sub-component for the features combobox
+interface FeaturesComboboxProps {
+    selectedFeatures: string[];
+    onFeaturesChange: (features: string[]) => void;
+}
+  
+function FeaturesCombobox({ selectedFeatures, onFeaturesChange }: FeaturesComboboxProps) {
+    const [open, setOpen] = useState(false);
+    const [inputValue, setInputValue] = useState("");
+
+    const toggleFeature = (feature: string) => {
+        const newFeatures = selectedFeatures.includes(feature)
+        ? selectedFeatures.filter(f => f !== feature)
+        : [...selectedFeatures, feature];
+        onFeaturesChange(newFeatures);
+    };
+    
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === "Enter" && inputValue) {
+            event.preventDefault();
+            if (inputValue.trim() && !selectedFeatures.includes(inputValue)) {
+                onFeaturesChange([...selectedFeatures, inputValue.trim()]);
+            }
+            setInputValue("");
+        }
+    };
+
+    const unselectedFeatures = COMMON_VEHICLE_FEATURES.filter(f => !selectedFeatures.includes(f));
+
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-start font-normal text-muted-foreground"
+          >
+             <PlusCircle className="mr-2 h-4 w-4" />
+            Ajouter des équipements
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+          <Command>
+            <CommandInput 
+                placeholder="Rechercher ou ajouter..." 
+                value={inputValue}
+                onValueChange={setInputValue}
+                onKeyDown={handleKeyDown}
+            />
+            <CommandList>
+                <CommandEmpty>
+                    {inputValue ? `Appuyez sur "Entrée" pour ajouter "${inputValue}"` : "Aucun équipement trouvé."}
+                </CommandEmpty>
+                <CommandGroup>
+                {unselectedFeatures.map((feature) => (
+                    <CommandItem
+                        key={feature}
+                        value={feature}
+                        onSelect={() => {
+                            toggleFeature(feature);
+                            setOpen(false);
+                        }}
+                    >
+                    {feature}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    );
 }
