@@ -140,19 +140,19 @@ export async function getMakes(): Promise<Make[]> {
 }
 
 /**
- * Récupère les modèles pour un ID de marque donné.
+ * Récupère les modèles pour un NOM de marque donné.
  */
-export async function getModels(makeId: string): Promise<Model[]> {
-   console.log(`[Debug Modèles] Début de getModels avec makeId: ${makeId}`);
-   if (!makeId) return [];
+export async function getModels(makeName: string): Promise<Model[]> {
+   console.log(`[Debug Modèles] Début de getModels avec makeName: ${makeName}`);
+   if (!makeName) return [];
 
    try {
-     const filter = JSON.stringify([{ "field": "make_id", "op": "=", "val": makeId }]);
+     const filter = JSON.stringify([{ "field": "make", "op": "=", "val": makeName }]);
      const data = await fetchCarApi(`models?sort=name&json=${encodeURIComponent(filter)}`);
-     console.log(`[Debug Modèles] Réponse brute de l'API pour makeId ${makeId}:`, data);
+     console.log(`[Debug Modèles] Réponse brute de l'API pour makeName ${makeName}:`, data);
 
      if (!data.data || !Array.isArray(data.data)) {
-        console.error(`Format de réponse inattendu pour les modèles de la marque ID ${makeId}:`, data);
+        console.error(`Format de réponse inattendu pour les modèles de la marque ${makeName}:`, data);
         return [];
      }
      
@@ -165,7 +165,7 @@ export async function getModels(makeId: string): Promise<Model[]> {
      return models;
 
    } catch(error) {
-      console.error(`Error fetching models for make ID ${makeId}:`, error);
+      console.error(`Error fetching models for make name ${makeName}:`, error);
       throw error; // Propage l'erreur
    }
 }

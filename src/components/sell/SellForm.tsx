@@ -150,17 +150,10 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             return;
         }
         
-        const selectedMake = makes.find(m => m.name.toLowerCase() === selectedMakeName?.toLowerCase());
-
-        if (!selectedMake) {
-            setModels([]);
-            return;
-        }
-        
-        console.log(`[Debug Modèles] Appel de getModels pour la marque ID: ${selectedMake.id}`);
+        console.log(`[Debug Modèles] Appel de getModels pour le nom de marque: ${selectedMakeName}`);
         setIsLoadingModels(true);
         try {
-            const modelsData = await getModels(selectedMake.id);
+            const modelsData = await getModels(selectedMakeName);
             setModels(modelsData);
             console.log(`[Debug Modèles] ${modelsData.length} modèles reçus pour ${selectedMakeName}.`);
         } catch (error) {
@@ -174,10 +167,10 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             setIsLoadingModels(false);
         }
     }
-    if(selectedMakeName && makes.length > 0) {
+    if(selectedMakeName) {
       loadModels();
     }
-  }, [selectedMakeName, makes, toast, form]);
+  }, [selectedMakeName, toast, form]);
 
 
   useEffect(() => {
