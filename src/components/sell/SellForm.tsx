@@ -370,8 +370,6 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
     }
   }
 
-  console.log('NB MARQUES DANS LE COMPOSANT:', makes.length)
-  
   return (
     <Card>
       <CardContent className="p-6">
@@ -479,39 +477,36 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                             </FormControl>
                           </PopoverTrigger>
                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <div className="max-h-[300px] overflow-y-auto p-2 flex flex-col gap-1">
-                                    {isLoadingMakes ? (
-                                        <div className="py-6 text-center text-sm">Chargement des marques...</div>
-                                    ) : makes.length === 0 ? (
-                                        <div className="py-6 text-center text-sm text-red-600">Aucune marque chargée</div>
-                                    ) : (
-                                        makes.map((make) => (
-                                            <Button
-                                                key={make.id}
-                                                variant="ghost"
-                                                className="justify-start"
-                                                onClick={() => {
-                                                    form.setValue("make", make.name);
-                                                    form.setValue("model", "");
-                                                    setIsMakePopoverOpen(false);
-                                                }}
-                                            >
-                                                {make.name}
-                                                 <Check
-                                                    className={cn(
-                                                    "ml-auto h-4 w-4",
-                                                    make.name === field.value ? "opacity-100" : "opacity-0"
-                                                    )}
-                                                />
-                                            </Button>
-                                        ))
-                                    )}
-                                </div>
+                                <Command>
+                                    <CommandInput placeholder="Rechercher une marque..." />
+                                    <CommandList>
+                                        {isLoadingMakes && <div className="py-6 text-center text-sm">Chargement des marques...</div>}
+                                        <CommandEmpty>Aucune marque trouvée.</CommandEmpty>
+                                        <CommandGroup>
+                                            {makes.map((make) => (
+                                                <CommandItem
+                                                    value={make.name}
+                                                    key={make.id}
+                                                    onSelect={(currentValue) => {
+                                                        form.setValue("make", currentValue === field.value ? "" : make.name);
+                                                        form.setValue("model", "");
+                                                        setIsMakePopoverOpen(false);
+                                                    }}
+                                                >
+                                                    <Check
+                                                        className={cn(
+                                                            "mr-2 h-4 w-4",
+                                                            field.value === make.name ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                    />
+                                                    {make.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
                             </PopoverContent>
                         </Popover>
-                         <FormDescription>
-                          Si votre marque n'est pas dans la liste, tapez-la simplement.
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -954,3 +949,5 @@ function FeaturesCombobox({ selectedFeatures, onFeaturesChange }: FeaturesCombob
     );
 }
 
+
+    
