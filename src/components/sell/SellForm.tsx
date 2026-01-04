@@ -63,7 +63,7 @@ const formSchema = z.object({
   features: z.array(z.string()).optional(),
   doors: z.coerce.number({invalid_type_error: "Requis"}).min(2).max(7),
   seats: z.coerce.number({invalid_type_error: "Requis"}).min(2).max(9),
-  drive: z-enum(DRIVE_TYPES, { required_error: "Le type de traction est requis."}),
+  drive: z.enum(DRIVE_TYPES, { required_error: "Le type de traction est requis."}),
   power: z.coerce.number().min(10, "La puissance est requise."),
   powerUnit: z.enum(POWER_UNITS),
   exteriorColor: z.enum(EXTERIOR_COLORS, { required_error: "La couleur est requise."}),
@@ -143,7 +143,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   
   useEffect(() => {
     async function loadModels() {
-        const selectedMake = makes.find(m => m.name === selectedMakeName);
+        const selectedMake = makes.find(m => m.name.toLowerCase() === selectedMakeName?.toLowerCase());
         if (!selectedMake) {
             setModels([]);
             return;
@@ -484,7 +484,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                                       value={make.name}
                                       key={make.id}
                                       onSelect={(currentValue) => {
-                                        form.setValue("make", currentValue === field.value ? "" : make.name);
+                                        form.setValue("make", make.name);
                                         form.setValue("model", ""); // Reset model on make change
                                         setIsMakePopoverOpen(false);
                                       }}
