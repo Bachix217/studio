@@ -126,7 +126,6 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
       setIsLoadingMakes(true);
       try {
         const makesData = await getMakes();
-        console.log("Données reçues de l'API:", makesData);
         setMakes(makesData);
       } catch (error) {
         toast({
@@ -163,7 +162,9 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             setIsLoadingModels(false);
         }
     }
-    loadModels();
+    if(selectedMakeName) {
+      loadModels();
+    }
   }, [selectedMakeName, toast]);
 
 
@@ -481,8 +482,8 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                                     <CommandItem
                                       value={make.name}
                                       key={make.id}
-                                      onSelect={(currentValue) => {
-                                        form.setValue("make", make.name === field.value ? "" : make.name);
+                                      onSelect={() => {
+                                        form.setValue("make", make.name);
                                         form.setValue("model", ""); // Reset model on make change
                                         setIsMakePopoverOpen(false);
                                       }}
