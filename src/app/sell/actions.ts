@@ -25,7 +25,7 @@ let tokenExpiry: number | null = null;
  */
 async function getCarApiToken(): Promise<string> {
   const now = Date.now();
-  // Renouveler le jeton s'il expire dans la prochaine minute
+  // Renouveler le jeton s'il expire dans la prochaine minute (60000 ms)
   if (jwtToken && tokenExpiry && now < tokenExpiry - 60000) {
     return jwtToken;
   }
@@ -35,6 +35,7 @@ async function getCarApiToken(): Promise<string> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({
         api_token: process.env.CARAPI_TOKEN,
@@ -43,12 +44,14 @@ async function getCarApiToken(): Promise<string> {
     });
 
     if (!response.ok) {
-      throw new Error(`CarAPI Authentication failed: ${response.statusText}`);
+        const errorBody = await response.text();
+        console.error(`CarAPI Authentication failed. Status: ${response.status}. Body: ${errorBody}`);
+        throw new Error(`CarAPI Authentication failed: ${response.statusText}`);
     }
 
     const data = await response.json();
     jwtToken = data.token;
-    // Le jeton expire en 24h, on le stocke en millisecondes
+    // Le jeton expire en 24h (86400 secondes), on le stocke en millisecondes
     tokenExpiry = now + (24 * 60 * 60 * 1000); 
 
     if (!jwtToken) {
@@ -85,7 +88,7 @@ async function fetchCarApi(endpoint: string, options: RequestInit = {}, forceRet
 
     if (response.status === 401 && forceRetry) {
         // Le token a probablement expiré, on le force à se renouveler et on réessaie une fois.
-        console.log('CarAPI token expired, renewing...');
+        console.log('CarAPI token may have expired, renewing...');
         jwtToken = null; 
         tokenExpiry = null;
         return fetchCarApi(endpoint, options, false); // forceRetry = false pour éviter une boucle infinie
@@ -135,7 +138,7 @@ export async function getModels(makeId: string): Promise<Model[]> {
    if (!makeId) return [];
 
    try {
-     const filter = JSON.stringify([{ field: "make_id", op: "=", val: makeId }]);
+     const filter = JSON.stringify([{ "field": "make_id", "op": "=", "val": makeId }]);
      const data = await fetchCarApi(`models?sort=name&json=${encodeURIComponent(filter)}`);
 
      if (!data.data || !Array.isArray(data.data)) {
