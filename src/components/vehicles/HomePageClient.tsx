@@ -150,7 +150,7 @@ export default function HomePageClient() {
 
   return (
     <>
-      <div className="relative z-10 px-4 md:px-8">
+      <div className="relative z-10">
         <VehicleSearchForm filters={filters} onFilterChange={setFilters} allVehicles={vehicles} />
       </div>
       
