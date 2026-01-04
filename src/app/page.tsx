@@ -21,11 +21,11 @@ export default function Home() {
             <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
               La plateforme de vente automobile 100% gratuite, pensée pour les Suisses. Simple, rapide et sécurisée.
             </p>
-            <div className="mt-10 flex justify-center items-center gap-4">
-              <Button asChild size="lg" className="shadow-xl shadow-blue-900/20 hover:-translate-y-1 transition-all duration-300">
+            <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
+              <Button asChild size="lg" className="shadow-xl shadow-blue-900/20 hover:-translate-y-1 transition-all duration-300 w-full sm:w-auto">
                 <Link href="/sell">Vendre ma voiture</Link>
               </Button>
-              <Button asChild size="lg" variant="outline">
+              <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
                 <Link href="#listings">
                   Parcourir les annonces
                   <ArrowRight className="ml-2 h-4 w-4" />
