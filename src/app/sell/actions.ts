@@ -92,6 +92,8 @@ async function fetchCarApi(endpoint: string, options: RequestInit = {}, forceRet
     }
 
     if (!response.ok) {
+        const errorBody = await response.text();
+        console.error(`CarAPI request failed for ${endpoint}. Status: ${response.status}. Body: ${errorBody}`);
         throw new Error(`CarAPI request failed for ${endpoint}: ${response.statusText}`);
     }
 
@@ -104,7 +106,7 @@ async function fetchCarApi(endpoint: string, options: RequestInit = {}, forceRet
  */
 export async function getMakes(): Promise<Make[]> {
   try {
-    const data = await fetchCarApi('makes');
+    const data = await fetchCarApi('makes?sort=name');
     
     if (!data.data || !Array.isArray(data.data)) {
         console.error("Format de réponse inattendu de CarAPI pour les marques:", data);
@@ -117,8 +119,8 @@ export async function getMakes(): Promise<Make[]> {
       name: make.name,
     }));
     
-    // Tri alphabétique pour l'affichage
-    return makes.sort((a, b) => a.name.localeCompare(b.name));
+    // L'API trie déjà, mais on peut s'en assurer
+    return makes;
 
   } catch (error) {
     console.error('Error fetching makes from CarAPI:', error);
@@ -127,17 +129,17 @@ export async function getMakes(): Promise<Make[]> {
 }
 
 /**
- * Récupère les modèles pour une marque donnée en utilisant le nom de la marque.
+ * Récupère les modèles pour un ID de marque donné.
  */
-export async function getModels(makeName: string): Promise<Model[]> {
-   if (!makeName) return [];
+export async function getModels(makeId: string): Promise<Model[]> {
+   if (!makeId) return [];
 
    try {
-     const filter = JSON.stringify([{ field: "make", op: "=", val: makeName }]);
+     const filter = JSON.stringify([{ field: "make_id", op: "=", val: makeId }]);
      const data = await fetchCarApi(`models?sort=name&json=${encodeURIComponent(filter)}`);
 
      if (!data.data || !Array.isArray(data.data)) {
-        console.error(`Format de réponse inattendu pour les modèles de la marque ${makeName}:`, data);
+        console.error(`Format de réponse inattendu pour les modèles de la marque ID ${makeId}:`, data);
         throw new Error("Format de réponse inattendu de CarAPI pour les modèles.");
      }
      
@@ -147,11 +149,10 @@ export async function getModels(makeName: string): Promise<Model[]> {
         name: model.name,
      }));
 
-     // L'API est déjà censée trier, mais on assure le coup
-     return models.sort((a,b) => a.name.localeCompare(b.name));
+     return models;
 
    } catch(error) {
-      console.error(`Error fetching models for make ${makeName}:`, error);
+      console.error(`Error fetching models for make ID ${makeId}:`, error);
       return [];
    }
 }

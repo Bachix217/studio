@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -62,7 +63,7 @@ const formSchema = z.object({
   features: z.array(z.string()).optional(),
   doors: z.coerce.number({invalid_type_error: "Requis"}).min(2).max(7),
   seats: z.coerce.number({invalid_type_error: "Requis"}).min(2).max(9),
-  drive: z.enum(DRIVE_TYPES, { required_error: "Le type de traction est requis."}),
+  drive: z-enum(DRIVE_TYPES, { required_error: "Le type de traction est requis."}),
   power: z.coerce.number().min(10, "La puissance est requise."),
   powerUnit: z.enum(POWER_UNITS),
   exteriorColor: z.enum(EXTERIOR_COLORS, { required_error: "La couleur est requise."}),
@@ -142,15 +143,15 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   
   useEffect(() => {
     async function loadModels() {
-        if (!selectedMakeName) {
+        const selectedMake = makes.find(m => m.name === selectedMakeName);
+        if (!selectedMake) {
             setModels([]);
             return;
         }
 
         setIsLoadingModels(true);
         try {
-            // CarAPI uses the make name for filtering models
-            const modelsData = await getModels(selectedMakeName);
+            const modelsData = await getModels(selectedMake.id);
             setModels(modelsData);
         } catch (error) {
              toast({
@@ -165,7 +166,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
     if(selectedMakeName) {
       loadModels();
     }
-  }, [selectedMakeName, toast]);
+  }, [selectedMakeName, makes, toast]);
 
 
   useEffect(() => {
@@ -383,7 +384,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                       </div>
                       <Input 
                         id="dropzone-file" 
-                        type="file" _
+                        type="file" 
                         className="hidden" 
                         multiple 
                         accept="image/png, image/jpeg, image/gif, image/webp"
@@ -482,8 +483,8 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                                     <CommandItem
                                       value={make.name}
                                       key={make.id}
-                                      onSelect={() => {
-                                        form.setValue("make", make.name);
+                                      onSelect={(currentValue) => {
+                                        form.setValue("make", currentValue === field.value ? "" : make.name);
                                         form.setValue("model", ""); // Reset model on make change
                                         setIsMakePopoverOpen(false);
                                       }}
