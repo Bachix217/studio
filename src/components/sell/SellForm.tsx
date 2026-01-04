@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { CANTONS, FUEL_TYPES, GEARBOX_TYPES, DOORS_TYPES, SEATS_TYPES, DRIVE_TYPES, CONDITION_TYPES, POWER_UNITS, EXTERIOR_COLORS, INTERIOR_COLORS, COMMON_VEHICLE_FEATURES } from '@/lib/constants';
 import { useToast } from '@/hooks/use-toast';
-import { UploadCloud, Check, ChevronsUpDown, Info, X, PlusCircle } from 'lucide-react';
+import { UploadCloud, Check, ChevronsUpDown, Info, X, PlusCircle, Loader2 } from 'lucide-react';
 import { useFirebase } from '@/firebase';
 import { useUser } from '@/firebase/auth/use-user';
 import { addDoc, collection, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
@@ -40,7 +40,7 @@ import imageCompression from 'browser-image-compression';
 import { Switch } from '../ui/switch';
 import { Separator } from '../ui/separator';
 import type { Vehicle } from '@/lib/types';
-import { getMakes, getModels, type Make, type Model } from '@/app/sell/actions';
+import { getMakes, getModels, getTrims, type Make, type Model, type Trim } from '@/app/sell/actions';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
@@ -53,6 +53,7 @@ const MAX_IMAGES = 10;
 const formSchema = z.object({
   make: z.string().min(1, "La marque est requise."),
   model: z.string().min(1, "Le modèle est requis."),
+  trim: z.string().optional(),
   year: z.coerce.number().min(1900, "Année invalide.").max(new Date().getFullYear() + 1, "Année invalide."),
   price: z.coerce.number().min(1, "Le prix doit être positif."),
   mileage: z.coerce.number().min(0, "Le kilométrage ne peut être négatif."),
@@ -86,8 +87,10 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   
   const [makes, setMakes] = useState<Make[]>([]);
   const [models, setModels] = useState<Model[]>([]);
+  const [trims, setTrims] = useState<Trim[]>([]);
   const [isLoadingMakes, setIsLoadingMakes] = useState(true);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [isLoadingTrims, setIsLoadingTrims] = useState(false);
 
   const [step, setStep] = useState(1);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -97,8 +100,6 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
-  const [isMakePopoverOpen, setIsMakePopoverOpen] = useState(false);
-
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -110,13 +111,19 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
       powerUnit: vehicleToEdit?.powerUnit || 'cv',
       nonSmoker: vehicleToEdit?.nonSmoker || false,
       features: vehicleToEdit?.features || [],
+      trim: vehicleToEdit?.trim || '',
     } : {
       year: new Date().getFullYear(),
       powerUnit: 'cv',
       nonSmoker: false,
       features: [],
+      trim: '',
     },
   });
+
+  const selectedMake = form.watch('make');
+  const selectedModel = form.watch('model');
+  const selectedMakeData = useMemo(() => makes.find(m => m.name === selectedMake), [makes, selectedMake]);
 
   useEffect(() => {
     async function loadMakes() {
@@ -125,40 +132,45 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
         const makesData = await getMakes();
         setMakes(makesData);
       } catch (error) {
-        console.error("Error loading makes in component:", error);
-        toast({
-          variant: "destructive",
-          title: "Erreur de chargement",
-          description: "Impossible de charger la liste des marques.",
-        });
+        toast({ variant: "destructive", title: "Erreur de chargement", description: "Impossible de charger la liste des marques." });
       } finally {
         setIsLoadingMakes(false);
       }
     }
     loadMakes();
   }, [toast]);
-  
-  const handleMakeSelect = async (make: Make) => {
-    form.setValue('make', make.name);
-    form.setValue('model', '');
-    setIsMakePopoverOpen(false);
-    setIsLoadingModels(true);
-    try {
-        const modelsData = await getModels(make.id);
-        console.log(`[Debug Modèles] ${modelsData.length} modèles reçus pour la marque ${make.name}`);
-        setModels(modelsData);
-    } catch(error) {
-        console.error("Error loading models in component:", error);
-        toast({
-            variant: "destructive",
-            title: "Erreur de chargement",
-            description: "Impossible de charger les modèles pour cette marque."
-        });
+
+  useEffect(() => {
+    if (selectedMakeData?.id) {
+        setIsLoadingModels(true);
         setModels([]);
-    } finally {
-        setIsLoadingModels(false);
+        setTrims([]);
+        form.setValue('model', '');
+        form.setValue('trim', '');
+        getModels(selectedMakeData.id).then(modelsData => {
+            setModels(modelsData);
+            setIsLoadingModels(false);
+        }).catch(() => {
+            toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger les modèles." });
+            setIsLoadingModels(false);
+        });
     }
-  };
+  }, [selectedMakeData, form, toast]);
+  
+  useEffect(() => {
+    if (selectedMakeData?.id && selectedModel) {
+        setIsLoadingTrims(true);
+        setTrims([]);
+        form.setValue('trim', '');
+        getTrims(selectedMakeData.id, selectedModel).then(trimsData => {
+            setTrims(trimsData);
+            setIsLoadingTrims(false);
+        }).catch(() => {
+            toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger les finitions." });
+            setIsLoadingTrims(false);
+        });
+    }
+  }, [selectedMakeData, selectedModel, form, toast]);
 
 
   useEffect(() => {
@@ -293,18 +305,11 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Vous n'êtes pas connecté",
-      });
+      toast({ variant: "destructive", title: "Vous n'êtes pas connecté" });
       return;
     }
      if (imageUrls.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "Aucune image téléversée",
-        description: "Veuillez retourner à l'étape précédente et téléverser des images.",
-      });
+      toast({ variant: "destructive", title: "Aucune image", description: "Veuillez retourner à l'étape précédente et ajouter des images." });
       return;
     }
 
@@ -312,6 +317,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
     try {
       const dataToSave: any = {
         ...values,
+        trim: values.trim || '',
         year: Number(values.year),
         price: Number(values.price),
         mileage: Number(values.mileage),
@@ -326,22 +332,16 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
         const docRef = doc(firestore, 'vehicles', vehicleToEdit.id);
         dataToSave.updatedAt = serverTimestamp();
         await updateDoc(docRef, dataToSave);
-        toast({
-          title: "Annonce modifiée !",
-          description: "Votre annonce a été soumise pour approbation.",
-        });
+        toast({ title: "Annonce modifiée !", description: "Votre annonce a été soumise pour approbation." });
         router.push(`/my-listings`);
 
       } else {
-        const docRef = await addDoc(collection(firestore, 'vehicles'), {
+        await addDoc(collection(firestore, 'vehicles'), {
           ...dataToSave,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
-        toast({
-          title: "Annonce envoyée pour approbation !",
-          description: "Votre annonce sera vérifiée avant d'être publiée.",
-        });
+        toast({ title: "Annonce envoyée !", description: "Votre annonce sera vérifiée avant publication." });
         router.push(`/my-listings`);
       }
       
@@ -349,13 +349,12 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
       console.error("Error saving document: ", error);
       toast({
         variant: "destructive",
-        title: isEditMode ? "Erreur de modification" : "Erreur lors de la publication",
-        description: error.message || "Une erreur est survenue. Veuillez réessayer.",
+        title: isEditMode ? "Erreur de modification" : "Erreur de publication",
+        description: error.message || "Une erreur est survenue.",
       });
     }
   }
   
-  console.log('NB MARQUES DANS LE COMPOSANT:', makes.length);
 
   return (
     <Card>
@@ -415,12 +414,6 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
 
           {step === 2 && (
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                 <Alert variant="default" className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/30 dark:border-blue-800 dark:text-blue-300">
-                    <Info className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
-                    <AlertDescription>
-                        Tacoto.ch est un projet entièrement gratuit. L'amélioration de l'automatisation (comme la liste des modèles) prend du temps. Nous vous remercions pour votre compréhension et votre contribution !
-                    </AlertDescription>
-                </Alert>
                 <div>
                   <div className="flex items-center justify-between">
                       <div>
@@ -439,67 +432,57 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                   <FormField
-                    control={form.control}
-                    name="make"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Marque</FormLabel>
-                        <Popover open={isMakePopoverOpen} onOpenChange={setIsMakePopoverOpen}>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant="outline"
-                                role="combobox"
-                                className={cn(
-                                  "w-full justify-between",
-                                  !field.value && "text-muted-foreground"
-                                )}
-                                disabled={isLoadingMakes}
-                              >
-                                {isLoadingMakes ? "Chargement..." : field.value || "Sélectionner une marque"}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                             <div className="max-h-[300px] overflow-y-auto p-2 flex flex-col gap-1">
-                                {isLoadingMakes ? (
-                                    <p className="text-sm text-center text-muted-foreground py-2">Chargement des marques...</p>
-                                ) : makes.length > 0 ? (
-                                    makes.map((make) => (
-                                        <Button
-                                            key={make.id}
-                                            variant="ghost"
-                                            className="justify-start"
-                                            onClick={() => handleMakeSelect(make)}
-                                        >
-                                            {make.name}
-                                        </Button>
-                                    ))
-                                ) : (
-                                    <p className="text-sm text-center text-red-500 py-2">Aucune marque chargée.</p>
-                                )}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                   <Controller name="make" control={form.control} render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Marque</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                    <SelectTrigger disabled={isLoadingMakes}>
+                                        <SelectValue placeholder={isLoadingMakes ? "Chargement..." : "Sélectionner une marque"} />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {makes.map(make => <SelectItem key={make.id} value={make.name}>{make.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
 
-                  <FormField
-                    control={form.control}
-                    name="model"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Modèle</FormLabel>
-                        <FormControl><Input placeholder="ex: Golf" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <Controller name="model" control={form.control} render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Modèle</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingModels || !selectedMake}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder={isLoadingModels ? "Chargement..." : "Sélectionner un modèle"} />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {models.map(model => <SelectItem key={model.name} value={model.name}>{model.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+
+                     <Controller name="trim" control={form.control} render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Finition</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingTrims || !selectedModel}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder={isLoadingTrims ? "Chargement..." : "Sélectionner une finition"} />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {trims.map(trim => <SelectItem key={trim.id} value={trim.name}>{trim.name}</SelectItem>)}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -882,5 +865,4 @@ function FeaturesCombobox({ selectedFeatures, onFeaturesChange }: FeaturesCombob
       </Popover>
     );
 }
-
 

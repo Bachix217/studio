@@ -12,6 +12,7 @@ export type Vehicle = WithSerializableTimestamps<{
   id: string;
   make: string;
   model: string;
+  trim?: string; // Add trim property
   year: number;
   price: number;
   mileage: number;
