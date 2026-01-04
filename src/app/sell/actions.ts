@@ -1,62 +1,127 @@
 
 'use server';
 
-import { z } from 'zod';
+import 'dotenv/config';
 
-const MakeSchema = z.object({
-  make_id: z.string(),
-  make_display: z.string(),
-});
-
-const ModelSchema = z.object({
-  model_name: z.string(),
-});
-
-
+// --- Types (inchangés pour la compatibilité avec le front-end) ---
 export type Make = {
   id: string;
   name: string;
 };
 export type Model = {
-    id: string; // Using name as id for simplicity
-    name: string;
+  id: string;
+  name: string;
 };
 
-const API_BASE_URL = 'http://www.carqueryapi.com/api/0.3/?cmd=';
+
+// --- Logique CarAPI ---
+
+const API_BASE_URL = 'https://carapi.app/api';
+let jwtToken: string | null = null;
+let tokenExpiry: number | null = null;
 
 /**
- * Récupère la liste de toutes les marques de véhicules depuis l'API CarQuery.
+ * Récupère un jeton JWT pour CarAPI, le met en cache et le renouvelle si nécessaire.
  */
-export async function getMakes(): Promise<Make[]> {
+async function getCarApiToken(): Promise<string> {
+  const now = Date.now();
+  // Renouveler le jeton s'il expire dans la prochaine minute
+  if (jwtToken && tokenExpiry && now < tokenExpiry - 60000) {
+    return jwtToken;
+  }
+
   try {
-    const response = await fetch(`${API_BASE_URL}getMakes`, {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        api_token: process.env.CARAPI_TOKEN,
+        api_secret: process.env.CARAPI_SECRET,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`CarAPI Authentication failed: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    jwtToken = data.token;
+    // Le jeton expire en 24h, on le stocke en millisecondes
+    tokenExpiry = now + (24 * 60 * 60 * 1000); 
+
+    if (!jwtToken) {
+        throw new Error("No token received from CarAPI");
+    }
+
+    return jwtToken;
+  } catch (error) {
+    console.error('Error getting CarAPI token:', error);
+    // Réinitialiser le token en cas d'erreur pour forcer une nouvelle tentative
+    jwtToken = null;
+    tokenExpiry = null;
+    throw error; // Propage l'erreur pour que l'appelant puisse la gérer
+  }
+}
+
+/**
+ * Fonction générique pour effectuer des requêtes à CarAPI avec gestion du token.
+ */
+async function fetchCarApi(endpoint: string, options: RequestInit = {}, forceRetry = true): Promise<any> {
+    const token = await getCarApiToken();
+
+    const response = await fetch(`${API_BASE_URL}/${endpoint}`, {
+        ...options,
+        headers: {
+            ...options.headers,
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
         // La revalidation toutes les 24 heures est une bonne pratique pour les données qui changent peu.
         next: { revalidate: 60 * 60 * 24 } 
     });
 
-    if (!response.ok) {
-      throw new Error(`CarQueryAPI Error: ${response.status}`);
+    if (response.status === 401 && forceRetry) {
+        // Le token a probablement expiré, on le force à se renouveler et on réessaie une fois.
+        console.log('CarAPI token expired, renewing...');
+        jwtToken = null; 
+        tokenExpiry = null;
+        return fetchCarApi(endpoint, options, false); // forceRetry = false pour éviter une boucle infinie
     }
 
-    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(`CarAPI request failed for ${endpoint}: ${response.statusText}`);
+    }
+
+    return response.json();
+}
+
+
+/**
+ * Récupère la liste de toutes les marques de véhicules depuis CarAPI.
+ */
+export async function getMakes(): Promise<Make[]> {
+  try {
+    const data = await fetchCarApi('makes');
     
-    if (!data.Makes || !Array.isArray(data.Makes)) {
-        console.error("Format de réponse inattendu de l'API pour les marques:", data);
-        throw new Error("Format de réponse inattendu de l'API pour les marques.");
+    if (!data.data || !Array.isArray(data.data)) {
+        console.error("Format de réponse inattendu de CarAPI pour les marques:", data);
+        throw new Error("Format de réponse inattendu de CarAPI pour les marques.");
     }
     
     // Transformation des données pour correspondre à notre type `Make`
-    const makes = data.Makes.map((make: { make_id: string; make_display: string }) => ({
-      id: make.make_id,
-      name: make.make_display,
+    const makes = data.data.map((make: { id: number; name: string }) => ({
+      id: String(make.id),
+      name: make.name,
     }));
     
     // Tri alphabétique pour l'affichage
     return makes.sort((a, b) => a.name.localeCompare(b.name));
 
   } catch (error) {
-    console.error('Error fetching makes from CarQueryAPI:', error);
-    // En cas d'erreur, retourner une liste vide pour ne pas faire planter l'application.
+    console.error('Error fetching makes from CarAPI:', error);
     return [];
   }
 }
@@ -68,27 +133,21 @@ export async function getModels(makeName: string): Promise<Model[]> {
    if (!makeName) return [];
 
    try {
-     const response = await fetch(`${API_BASE_URL}getModels&make=${encodeURIComponent(makeName)}`, {
-        next: { revalidate: 60 * 60 * 24 }
-     });
+     const filter = JSON.stringify([{ field: "make", op: "=", val: makeName }]);
+     const data = await fetchCarApi(`models?sort=name&json=${encodeURIComponent(filter)}`);
 
-     if (!response.ok) {
-        throw new Error(`CarQueryAPI Error for models: ${response.status}`);
-     }
-
-     const data = await response.json();
-
-     if (!data.Models || !Array.isArray(data.Models)) {
+     if (!data.data || !Array.isArray(data.data)) {
         console.error(`Format de réponse inattendu pour les modèles de la marque ${makeName}:`, data);
-        throw new Error("Format de réponse inattendu de l'API pour les modèles.");
+        throw new Error("Format de réponse inattendu de CarAPI pour les modèles.");
      }
      
      // Transformation des données
-     const models = data.Models.map((model: { model_name: string }) => ({
-        id: model.model_name, // CarQueryAPI ne fournit pas d'ID de modèle, nous utilisons le nom
-        name: model.model_name,
+     const models = data.data.map((model: { id: number; name: string }) => ({
+        id: String(model.id),
+        name: model.name,
      }));
 
+     // L'API est déjà censée trier, mais on assure le coup
      return models.sort((a,b) => a.name.localeCompare(b.name));
 
    } catch(error) {
