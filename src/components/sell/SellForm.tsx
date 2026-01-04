@@ -123,12 +123,12 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
 
   useEffect(() => {
     async function loadMakes() {
-      if (step !== 2) return;
       setIsLoadingMakes(true);
       try {
         const makesData = await getMakes();
         setMakes(makesData);
       } catch (error) {
+        console.error("Error loading makes in component:", error)
         toast({
           variant: "destructive",
           title: "Erreur de chargement",
@@ -138,12 +138,22 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
         setIsLoadingMakes(false);
       }
     }
-    loadMakes();
-  }, [step, toast]);
+    // Load makes when the form for step 2 is ready, or if it's edit mode
+    if (step === 2 || isEditMode) {
+      loadMakes();
+    }
+  }, [step, isEditMode, toast]);
   
   useEffect(() => {
     async function loadModels() {
-        const selectedMake = makes.find(m => m.name.toLowerCase() === selectedMakeName?.toLowerCase());
+        if (!selectedMakeName) {
+            setModels([]);
+            form.setValue("model", "");
+            return;
+        }
+
+        const selectedMake = makes.find(m => m.name.toLowerCase() === selectedMakeName.toLowerCase());
+
         if (!selectedMake) {
             setModels([]);
             return;
@@ -163,10 +173,10 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             setIsLoadingModels(false);
         }
     }
-    if(selectedMakeName) {
+    if(selectedMakeName && makes.length > 0) {
       loadModels();
     }
-  }, [selectedMakeName, makes, toast]);
+  }, [selectedMakeName, makes, toast, form]);
 
 
   useEffect(() => {
@@ -494,7 +504,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                                       <Check
                                         className={cn(
                                           "mr-2 h-4 w-4",
-                                          make.name === field.value ? "opacity-100" : "opacity-0"
+                                          make.name.toLowerCase() === field.value?.toLowerCase() ? "opacity-100" : "opacity-0"
                                         )}
                                       />
                                       {make.name}
@@ -951,3 +961,4 @@ function FeaturesCombobox({ selectedFeatures, onFeaturesChange }: FeaturesCombob
       </Popover>
     );
 }
+
