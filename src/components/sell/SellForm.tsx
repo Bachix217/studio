@@ -127,6 +127,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
       try {
         const makesData = await getMakes();
         setMakes(makesData);
+        console.log(`Marques chargées avec succès : ${makesData.length} reçues.`);
       } catch (error) {
         console.error("Error loading makes in component:", error)
         toast({
@@ -481,14 +482,14 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                                     <CommandInput placeholder="Rechercher une marque..." />
                                     <CommandList>
                                         {isLoadingMakes && <div className="py-6 text-center text-sm">Chargement des marques...</div>}
-                                        <CommandEmpty>Aucune marque trouvée.</CommandEmpty>
+                                        {!isLoadingMakes && makes.length === 0 && <CommandEmpty>Aucune marque chargée.</CommandEmpty>}
                                         <CommandGroup>
                                             {makes.map((make) => (
                                                 <CommandItem
                                                     value={make.name}
                                                     key={make.id}
-                                                    onSelect={(currentValue) => {
-                                                        form.setValue("make", currentValue === field.value ? "" : make.name);
+                                                    onSelect={() => {
+                                                        form.setValue("make", make.name);
                                                         form.setValue("model", "");
                                                         setIsMakePopoverOpen(false);
                                                     }}
