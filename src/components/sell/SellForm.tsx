@@ -148,7 +148,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             form.setValue("model", "");
             return;
         }
-
+        
         const selectedMake = makes.find(m => m.name.toLowerCase() === selectedMakeName.toLowerCase());
 
         if (!selectedMake) {
@@ -370,8 +370,6 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
     }
   }
   
-  console.log('Marques dans le composant:', makes);
-
   return (
     <Card>
       <CardContent className="p-6">
@@ -479,38 +477,34 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command shouldFilter={false}>
-                              <CommandInput placeholder="Rechercher une marque..." />
-                              <CommandList>
-                                {isLoadingMakes ? (
+                            <div className="max-h-[300px] overflow-y-auto">
+                               {console.log('Rendu de la liste avec', makes.length, 'marques')}
+                               {isLoadingMakes ? (
                                     <div className="py-6 text-center text-sm">Chargement des marques...</div>
-                                 ) : (
-                                <>
-                                <CommandEmpty>Aucune marque trouvée.</CommandEmpty>
-                                <CommandGroup>
-                                  {makes.map((make) => (
-                                    <CommandItem
+                               ) : makes.length === 0 ? (
+                                    <div className="py-6 text-center text-sm">Aucune marque trouvée.</div>
+                               ) : (
+                                 makes.map((make) => (
+                                    <div
                                       key={make.id}
-                                      onSelect={() => {
+                                      className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent"
+                                      onClick={() => {
                                         form.setValue("make", make.name);
                                         form.setValue("model", "");
                                         setIsMakePopoverOpen(false);
                                       }}
                                     >
-                                      <Check
+                                      {make.name}
+                                       <Check
                                         className={cn(
-                                          "mr-2 h-4 w-4",
-                                          make.name.toLowerCase() === field.value?.toLowerCase() ? "opacity-100" : "opacity-0"
+                                          "ml-auto h-4 w-4",
+                                          make.name === field.value ? "opacity-100" : "opacity-0"
                                         )}
                                       />
-                                      {make.name}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                                </>
-                                )}
-                              </CommandList>
-                            </Command>
+                                    </div>
+                                ))
+                               )}
+                            </div>
                           </PopoverContent>
                         </Popover>
                          <FormDescription>
