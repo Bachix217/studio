@@ -11,6 +11,7 @@ export type Make = {
 export type Model = {
   id: string;
   name: string;
+  make: string; // Ajout de la marque pour le filtrage côté client
 };
 
 
@@ -36,7 +37,7 @@ async function getCarApiToken(): Promise<string> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'text/plain', // Important, l'API renvoie du texte brut
+        'Accept': 'text/plain', 
       },
       body: JSON.stringify({
         api_token: process.env.CARAPI_TOKEN,
@@ -50,23 +51,20 @@ async function getCarApiToken(): Promise<string> {
         throw new Error(`CarAPI Authentication failed: ${response.statusText}`);
     }
 
-    // L'API renvoie le token en texte brut, pas en JSON.
     const token = await response.text();
     jwtToken = token;
     
-    // Décode le payload pour obtenir la date d'expiration
     try {
         const payloadBase64 = token.split('.')[1];
         const decodedPayload = Buffer.from(payloadBase64, 'base64').toString('utf-8');
         const payload = JSON.parse(decodedPayload);
-        // exp est en secondes, on le convertit en millisecondes
+
         if (payload.exp) {
           tokenExpiry = payload.exp * 1000;
           console.log(`New token expires at: ${new Date(tokenExpiry).toLocaleString()}`);
         }
     } catch(e) {
         console.error('Failed to decode JWT payload:', e);
-        // On met une expiration par défaut (ex: 24h) si le décodage échoue
         tokenExpiry = now + (24 * 60 * 60 * 1000);
     }
     
@@ -77,10 +75,9 @@ async function getCarApiToken(): Promise<string> {
     return jwtToken;
   } catch (error) {
     console.error('Error getting CarAPI token:', error);
-    // Réinitialiser le token en cas d'erreur pour forcer une nouvelle tentative
     jwtToken = null;
     tokenExpiry = null;
-    throw error; // Propage l'erreur pour que l'appelant puisse la gérer
+    throw error;
   }
 }
 
@@ -98,12 +95,10 @@ async function fetchCarApi(endpoint: string, options: RequestInit = {}, forceRet
             'Accept': 'application/json',
             'Content-Type': 'application/json',
         },
-        // La revalidation toutes les 24 heures est une bonne pratique pour les données qui changent peu.
         next: { revalidate: 60 * 60 * 24 } 
     });
 
     if (response.status === 401 && forceRetry) {
-        // Le token a probablement expiré, on le force à se renouveler et on réessaie une fois.
         console.log('CarAPI token may have expired, renewing...');
         jwtToken = null; 
         tokenExpiry = null;
@@ -124,24 +119,59 @@ async function fetchCarApi(endpoint: string, options: RequestInit = {}, forceRet
  * Récupère la liste de toutes les marques de véhicules depuis CarAPI.
  */
 export async function getMakes(): Promise<Make[]> {
-    const data = await fetchCarApi('makes?sort=name');
-    
-    if (!data.data || !Array.isArray(data.data)) {
-        console.error("Format de réponse inattendu de CarAPI pour les marques:", data);
-        throw new Error("Format de réponse inattendu de CarAPI pour les marques.");
+    console.log("Début de getMakes");
+    try {
+        const data = await fetchCarApi('makes?sort=name');
+        
+        if (!data.data || !Array.isArray(data.data)) {
+            console.error("Format de réponse inattendu de CarAPI pour les marques:", data);
+            throw new Error("Format de réponse inattendu de CarAPI pour les marques.");
+        }
+        
+        const makes = data.data.map((make: { id: number; name: string }) => ({
+          id: String(make.id),
+          name: make.name,
+        }));
+        console.log(`Marques chargées avec succès : ${makes.length} reçues.`);
+        return makes;
+    } catch(error) {
+        console.error("Erreur dans getMakes:", error);
+        throw error;
     }
-    
-    const makes = data.data.map((make: { id: number; name: string }) => ({
-      id: String(make.id),
-      name: make.name,
-    }));
-    
-    return makes;
 }
 
+
 /**
- * Récupère les modèles pour un NOM de marque donné.
+ * Récupère TOUS les modèles de véhicules depuis CarAPI.
  */
+export async function getAllModels(): Promise<Model[]> {
+   console.log(`[Debug Modèles] Début de getAllModels pour récupérer tous les modèles.`);
+   try {
+     // Nous allons chercher tous les modèles. L'API pagine les résultats,
+     // mais pour une liste de modèles, la première page (jusqu'à 1000) est souvent suffisante.
+     const data = await fetchCarApi(`models?sort=name&limit=1000`);
+     
+     if (!data.data || !Array.isArray(data.data)) {
+        console.error(`Format de réponse inattendu pour getAllModels:`, data);
+        return [];
+     }
+     
+     const models = data.data.map((model: { id: number; name: string; make: { name: string } }) => ({
+        id: String(model.id),
+        name: model.name,
+        make: model.make.name, // On stocke le nom de la marque parente
+     }));
+
+     console.log(`[Debug Modèles] ${models.length} modèles totaux récupérés.`);
+     return models;
+
+   } catch(error) {
+      console.error(`[Debug Modèles] Erreur lors du chargement de tous les modèles:`, error);
+      throw error;
+   }
+}
+
+// Cette fonction est conservée au cas où, mais n'est plus utilisée par le formulaire principal.
 export async function getModels(makeName: string): Promise<Model[]> {
    console.log(`[Debug Modèles] Début de getModels avec makeName: ${makeName}`);
    if (!makeName) return [];
@@ -156,18 +186,17 @@ export async function getModels(makeName: string): Promise<Model[]> {
         return [];
      }
      
-     // Transformation des données
      const models = data.data.map((model: { id: number; name: string }) => ({
         id: String(model.id),
         name: model.name,
+        make: makeName,
      }));
 
      return models;
 
    } catch(error) {
       console.error(`Error fetching models for make name ${makeName}:`, error);
-      throw error; // Propage l'erreur
+      throw error;
    }
 }
-
     

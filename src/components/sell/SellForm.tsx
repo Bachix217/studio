@@ -40,7 +40,7 @@ import imageCompression from 'browser-image-compression';
 import { Switch } from '../ui/switch';
 import { Separator } from '../ui/separator';
 import type { Vehicle } from '@/lib/types';
-import { getMakes, getModels, type Make, type Model } from '@/app/sell/actions';
+import { getMakes, getAllModels, type Make, type Model } from '@/app/sell/actions';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
@@ -85,9 +85,10 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   const isEditMode = !!vehicleToEdit;
   
   const [makes, setMakes] = useState<Make[]>([]);
-  const [models, setModels] = useState<Model[]>([]);
-  const [isLoadingMakes, setIsLoadingMakes] = useState(false);
-  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [allModels, setAllModels] = useState<Model[]>([]);
+  const [filteredModels, setFilteredModels] = useState<Model[]>([]);
+  const [isLoadingMakes, setIsLoadingMakes] = useState(true);
+  const [isLoadingModels, setIsLoadingModels] = useState(true);
 
   const [step, setStep] = useState(1);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -122,55 +123,51 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   const selectedMakeName = form.watch('make');
 
   useEffect(() => {
-    async function loadMakes() {
+    async function loadInitialData() {
       setIsLoadingMakes(true);
+      setIsLoadingModels(true);
       try {
-        const makesData = await getMakes();
+        const [makesData, modelsData] = await Promise.all([
+          getMakes(),
+          getAllModels(),
+        ]);
         setMakes(makesData);
-        console.log(`Marques chargées avec succès : ${makesData.length} reçues.`);
+        setAllModels(modelsData);
+        console.log(`[Debug] Données initiales chargées: ${makesData.length} marques, ${modelsData.length} modèles.`);
       } catch (error) {
-        console.error("Error loading makes in component:", error)
+        console.error("Error loading initial data in component:", error);
         toast({
           variant: "destructive",
           title: "Erreur de chargement",
-          description: "Impossible de charger la liste des marques.",
+          description: "Impossible de charger les données des véhicules depuis CarAPI.",
         });
       } finally {
         setIsLoadingMakes(false);
+        setIsLoadingModels(false);
       }
     }
-    loadMakes();
+    loadInitialData();
   }, [toast]);
   
   useEffect(() => {
-    async function loadModels() {
-        if (!selectedMakeName) {
-            setModels([]);
-            form.setValue("model", "");
-            return;
-        }
-        
-        console.log(`[Debug Modèles] Appel de getModels pour le nom de marque: ${selectedMakeName}`);
-        setIsLoadingModels(true);
-        try {
-            const modelsData = await getModels(selectedMakeName);
-            setModels(modelsData);
-            console.log(`[Debug Modèles] ${modelsData.length} modèles reçus pour ${selectedMakeName}.`);
-        } catch (error) {
-             console.error(`[Debug Modèles] Erreur lors du chargement des modèles:`, error);
-             toast({
-                variant: "destructive",
-                title: "Erreur de chargement",
-                description: `Impossible de charger les modèles pour ${selectedMakeName}.`,
-            });
-        } finally {
-            setIsLoadingModels(false);
-        }
+    if (!selectedMakeName) {
+        setFilteredModels([]);
+        form.setValue("model", "");
+        return;
     }
-    if(selectedMakeName) {
-      loadModels();
+    
+    console.log(`[Debug Modèles] Filtrage des modèles pour la marque: ${selectedMakeName}`);
+    const modelsForMake = allModels.filter(model => model.make === selectedMakeName);
+    setFilteredModels(modelsForMake);
+    console.log(`[Debug Modèles] ${modelsForMake.length} modèles trouvés pour ${selectedMakeName}.`);
+    
+    // Réinitialiser le modèle si la marque change et que le modèle actuel n'est plus valide
+    const currentModel = form.getValues('model');
+    if(currentModel && !modelsForMake.some(m => m.name === currentModel)) {
+        form.setValue('model', '');
     }
-  }, [selectedMakeName, toast, form]);
+
+  }, [selectedMakeName, allModels, form]);
 
 
   useEffect(() => {
@@ -477,8 +474,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                              <Command>
                                 <CommandInput placeholder="Rechercher une marque..." />
                                 <CommandList>
-                                    {isLoadingMakes && <CommandEmpty>Chargement des marques...</CommandEmpty>}
-                                    {!isLoadingMakes && makes.length === 0 && <CommandEmpty>Aucune marque trouvée.</CommandEmpty>}
+                                    <CommandEmpty>{isLoadingMakes ? "Chargement des marques..." : "Aucune marque trouvée."}</CommandEmpty>
                                     <CommandGroup>
                                         {makes.map((make) => (
                                             <CommandItem
@@ -536,12 +532,11 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                             <Command>
                               <CommandInput placeholder="Rechercher un modèle..."/>
                               <CommandList>
-                                {isLoadingModels && <CommandEmpty>Chargement des modèles...</CommandEmpty>}
-                                {!isLoadingModels && models.length === 0 && selectedMakeName && (
-                                     <CommandEmpty>Aucun modèle trouvé pour cette marque.</CommandEmpty>
-                                )}
+                                <CommandEmpty>
+                                    {isLoadingModels ? "Chargement des modèles..." : (filteredModels.length === 0 && selectedMakeName ? "Aucun modèle trouvé." : "Sélectionnez d'abord une marque.")}
+                                </CommandEmpty>
                                 <CommandGroup>
-                                  {models.map((model) => (
+                                  {filteredModels.map((model) => (
                                     <CommandItem
                                       value={model.name}
                                       key={model.id}
@@ -953,10 +948,3 @@ function FeaturesCombobox({ selectedFeatures, onFeaturesChange }: FeaturesCombob
     );
 }
 
-
-    
-
-
-
-
-    
