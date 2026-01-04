@@ -370,7 +370,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
     }
   }
   
-  console.log('Liste des marques à rendre:', makes);
+  console.log('Marques dans le composant:', makes);
 
   return (
     <Card>
@@ -493,7 +493,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                                       key={make.id}
                                       onSelect={() => {
                                         form.setValue("make", make.name);
-                                        form.setValue("model", ""); // Reset model on make change
+                                        form.setValue("model", "");
                                         setIsMakePopoverOpen(false);
                                       }}
                                     >
