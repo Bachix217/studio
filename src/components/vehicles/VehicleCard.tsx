@@ -94,7 +94,7 @@ export default function VehicleCard({ vehicle, showControls = false, onDeletionS
             <CardContent className="flex-grow p-4 space-y-2">
               <p className="text-xl font-semibold text-primary">{formatCurrency(vehicle.price)}</p>
               <CardTitle className="text-lg font-bold leading-tight truncate">
-                {vehicle.make} {vehicle.model}
+                {vehicle.make} {vehicle.model} {vehicle.trim}
               </CardTitle>
               <div className="flex items-center gap-4 text-sm text-muted-foreground pt-2">
                 <div className="flex items-center gap-1.5">

@@ -153,6 +153,7 @@ export default function VehiclePageClient({ vehicleId, vehicle: initialVehicle }
                 )}
             </div>
             <h1 className="text-3xl font-bold">{vehicle.make} {vehicle.model}</h1>
+            {vehicle.trim && <h2 className="text-xl font-semibold text-muted-foreground">{vehicle.trim}</h2>}
             <p className="text-2xl font-semibold text-primary mt-2">{formatCurrency(vehicle.price)}</p>
             
             <div className="grid grid-cols-2 gap-4 mt-6 text-sm">

@@ -76,6 +76,7 @@ export default function SwipeCard({ vehicle, onSwipe }: SwipeCardProps) {
       </CardHeader>
       <CardContent className="p-4 bg-background z-10">
         <h2 className="text-2xl font-bold truncate">{vehicle.make} {vehicle.model}</h2>
+        {vehicle.trim && <h3 className="text-lg text-muted-foreground truncate">{vehicle.trim}</h3>}
         <div className="flex items-center gap-4 text-muted-foreground mt-1">
             <span>{vehicle.year}</span>
             <span>{vehicle.mileage.toLocaleString('fr-CH')} km</span>
