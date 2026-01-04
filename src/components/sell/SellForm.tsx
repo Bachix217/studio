@@ -126,6 +126,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
       setIsLoadingMakes(true);
       try {
         const makesData = await getMakes();
+        console.log("Données reçues de l'API:", makesData);
         setMakes(makesData);
       } catch (error) {
         toast({
@@ -381,7 +382,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                       </div>
                       <Input 
                         id="dropzone-file" 
-                        type="file" 
+                        type="file" _
                         className="hidden" 
                         multiple 
                         accept="image/png, image/jpeg, image/gif, image/webp"
@@ -470,14 +471,18 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                             <Command>
                               <CommandInput placeholder="Rechercher une marque..." />
                               <CommandList>
+                                {isLoadingMakes ? (
+                                    <div className="py-6 text-center text-sm">Chargement des marques...</div>
+                                 ) : (
+                                <>
                                 <CommandEmpty>Aucune marque trouvée.</CommandEmpty>
                                 <CommandGroup>
                                   {makes.map((make) => (
                                     <CommandItem
                                       value={make.name}
                                       key={make.id}
-                                      onSelect={() => {
-                                        form.setValue("make", make.name);
+                                      onSelect={(currentValue) => {
+                                        form.setValue("make", currentValue === field.value ? "" : make.name);
                                         form.setValue("model", ""); // Reset model on make change
                                         setIsMakePopoverOpen(false);
                                       }}
@@ -492,6 +497,8 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                                     </CommandItem>
                                   ))}
                                 </CommandGroup>
+                                </>
+                                )}
                               </CommandList>
                             </Command>
                           </PopoverContent>
