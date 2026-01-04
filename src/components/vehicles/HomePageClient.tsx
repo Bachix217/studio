@@ -125,11 +125,7 @@ export default function HomePageClient() {
   if (loading) {
     return (
      <>
-      <div className="text-center pt-16 pb-32">
-        <Skeleton className="h-16 w-3/4 mx-auto" />
-        <Skeleton className="h-6 w-1/2 mx-auto mt-4" />
-      </div>
-      <div className="relative z-10 -mt-24 px-4 md:px-8">
+      <div className="relative z-10 px-4 md:px-8">
           <Card className="shadow-2xl rounded-xl">
               <CardContent className="p-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -154,26 +150,11 @@ export default function HomePageClient() {
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-lg">
-         <div 
-            aria-hidden="true" 
-            className="absolute inset-0 -z-10 bg-gradient-to-b from-background via-indigo-50/50 to-muted/40 dark:from-zinc-900/80 dark:via-zinc-900/50 dark:to-background"
-        />
-        <div className="text-center pt-16 md:pt-24 pb-16">
-          <h1 className="font-headline text-5xl md:text-7xl font-extrabold tracking-tighter bg-gradient-to-r from-primary via-indigo-400 to-purple-400 bg-clip-text text-transparent">
-            La bonne occasion.
-          </h1>
-          <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-             Trouvez le véhicule qui vous correspond parmi des centaines d'annonces vérifiées en Suisse.
-          </p>
-        </div>
-      </div>
-
-      <div className="relative z-10 -mt-24 px-4 md:px-8">
+      <div className="relative z-10 px-4 md:px-8">
         <VehicleSearchForm filters={filters} onFilterChange={setFilters} allVehicles={vehicles} />
       </div>
       
-      <div className="bg-muted/40 pt-12 pb-16 px-4 md:px-8 rounded-lg">
+      <div className="bg-muted/40 pt-12 pb-16 px-4 md:px-8 rounded-lg mt-8">
         <VehicleList vehicles={filteredVehicles} />
       </div>
     </>
