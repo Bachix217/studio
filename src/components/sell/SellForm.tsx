@@ -482,7 +482,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                                       value={make.name}
                                       key={make.id}
                                       onSelect={(currentValue) => {
-                                        form.setValue("make", currentValue === field.value ? "" : make.name);
+                                        form.setValue("make", make.name === field.value ? "" : make.name);
                                         form.setValue("model", ""); // Reset model on make change
                                         setIsMakePopoverOpen(false);
                                       }}
