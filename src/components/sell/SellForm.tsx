@@ -146,30 +146,24 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             setModels([]);
             return;
         }
-        
-        const selectedMake = makes.find(m => m.name.toLowerCase() === selectedMakeName.toLowerCase());
-        
-        if (!selectedMake) {
-             setModels([]);
-             return;
-        }
 
         setIsLoadingModels(true);
         try {
-            const modelsData = await getModels(selectedMake.name);
+            // CarAPI uses the make name for filtering models
+            const modelsData = await getModels(selectedMakeName);
             setModels(modelsData);
         } catch (error) {
              toast({
                 variant: "destructive",
                 title: "Erreur de chargement",
-                description: "Impossible de charger la liste des modèles.",
+                description: `Impossible de charger les modèles pour ${selectedMakeName}.`,
             });
         } finally {
             setIsLoadingModels(false);
         }
     }
     loadModels();
-  }, [selectedMakeName, makes, toast]);
+  }, [selectedMakeName, toast]);
 
 
   useEffect(() => {
@@ -374,7 +368,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             <div className="space-y-8">
               <div>
                 <h3 className="text-lg font-medium">Étape 1 sur 2 : Photos du véhicule</h3>
-                <p className="text-sm text-muted-foreground">Téléversez jusqu'à {MAX_IMAGES} photos de votre voiture.</p>
+                <p className="text-sm text-muted-foreground">Téléversez jusqu'à ${MAX_IMAGES} photos de votre voiture.</p>
               </div>
               <div className="space-y-2">
                   <Label htmlFor="dropzone-file">Photos ({imagePreviews.length}/{MAX_IMAGES})</Label>
@@ -383,7 +377,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
                         <UploadCloud className="w-10 h-10 mb-3 text-muted-foreground" />
                         <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Cliquez pour téléverser</span> ou glissez-déposez</p>
-                        <p className="text-xs text-muted-foreground">Jusqu'à {MAX_IMAGES} images, elles seront compressées</p>
+                        <p className="text-xs text-muted-foreground">Jusqu'à ${MAX_IMAGES} images, elles seront compressées</p>
                       </div>
                       <Input 
                         id="dropzone-file" 
@@ -458,44 +452,40 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                         <Popover open={isMakePopoverOpen} onOpenChange={setIsMakePopoverOpen}>
                           <PopoverTrigger asChild>
                             <FormControl>
-                               <div className="relative">
-                                <Input
-                                    placeholder={isLoadingMakes ? "Chargement..." : "Rechercher ou taper la marque"}
-                                    className="w-full"
-                                    {...field}
-                                    onChange={(e) => {
-                                        field.onChange(e);
-                                        form.setValue("model", ''); // Reset model when make changes
-                                        if(!isMakePopoverOpen) setIsMakePopoverOpen(true);
-                                    }}
-                                    disabled={isLoadingMakes}
-                                />
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 absolute right-3 top-1/2 -translate-y-1/2" />
-                               </div>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                                disabled={isLoadingMakes}
+                              >
+                                {isLoadingMakes ? "Chargement..." : field.value || "Sélectionner une marque"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                             <Command>
                               <CommandInput placeholder="Rechercher une marque..." />
                               <CommandList>
-                                <CommandEmpty>Aucune marque trouvée. Vous pouvez l'entrer manuellement.</CommandEmpty>
+                                <CommandEmpty>Aucune marque trouvée.</CommandEmpty>
                                 <CommandGroup>
                                   {makes.map((make) => (
                                     <CommandItem
                                       value={make.name}
                                       key={make.id}
-                                      onSelect={(currentValue) => {
-                                        form.setValue("make", currentValue === field.value ? "" : currentValue)
-                                        form.setValue("model", '')
-                                        setIsMakePopoverOpen(false)
+                                      onSelect={() => {
+                                        form.setValue("make", make.name);
+                                        form.setValue("model", ""); // Reset model on make change
+                                        setIsMakePopoverOpen(false);
                                       }}
                                     >
                                       <Check
                                         className={cn(
                                           "mr-2 h-4 w-4",
-                                          make.name.toLowerCase() === field.value?.toLowerCase()
-                                            ? "opacity-100"
-                                            : "opacity-0"
+                                          make.name === field.value ? "opacity-100" : "opacity-0"
                                         )}
                                       />
                                       {make.name}
@@ -525,22 +515,17 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                             <FormControl>
                                <div className="relative">
                                 <Input
-                                    placeholder={isLoadingModels ? "Chargement..." : "Rechercher ou taper le modèle"}
+                                    placeholder={isLoadingModels ? "Chargement..." : "Taper le modèle"}
                                     className="w-full"
                                     {...field}
-                                    onChange={(e) => {
-                                        field.onChange(e);
-                                        if(!isModelPopoverOpen) setIsModelPopoverOpen(true);
-                                    }}
                                     disabled={!selectedMakeName || isLoadingModels}
                                 />
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 absolute right-3 top-1/2 -translate-y-1/2" />
                                </div>
                             </FormControl>
                           </PopoverTrigger>
-                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                             <Command>
-                              <CommandInput placeholder="Rechercher un modèle..." />
+                              <CommandInput placeholder="Rechercher un modèle..."/>
                               <CommandList>
                                 <CommandEmpty>Aucun modèle trouvé. Vous pouvez l'entrer manuellement.</CommandEmpty>
                                 <CommandGroup>
@@ -548,15 +533,15 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                                     <CommandItem
                                       value={model.name}
                                       key={model.id}
-                                      onSelect={(currentValue) => {
-                                        form.setValue("model", currentValue === field.value ? "" : currentValue)
-                                        setIsModelPopoverOpen(false)
+                                      onSelect={() => {
+                                        form.setValue("model", model.name);
+                                        setIsModelPopoverOpen(false);
                                       }}
                                     >
                                       <Check
                                         className={cn(
                                           "mr-2 h-4 w-4",
-                                          model.name.toLowerCase() === field.value?.toLowerCase()
+                                          model.name === field.value
                                             ? "opacity-100"
                                             : "opacity-0"
                                         )}
