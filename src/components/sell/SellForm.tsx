@@ -369,6 +369,8 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
       });
     }
   }
+
+  console.log('NB MARQUES DANS LE COMPOSANT:', makes.length)
   
   return (
     <Card>
@@ -476,36 +478,36 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
-                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <div className="max-h-[300px] overflow-y-auto">
-                               {console.log('Rendu de la liste avec', makes.length, 'marques')}
-                               {isLoadingMakes ? (
-                                    <div className="py-6 text-center text-sm">Chargement des marques...</div>
-                               ) : makes.length === 0 ? (
-                                    <div className="py-6 text-center text-sm">Aucune marque trouvée.</div>
-                               ) : (
-                                 makes.map((make) => (
-                                    <div
-                                      key={make.id}
-                                      className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent"
-                                      onClick={() => {
-                                        form.setValue("make", make.name);
-                                        form.setValue("model", "");
-                                        setIsMakePopoverOpen(false);
-                                      }}
-                                    >
-                                      {make.name}
-                                       <Check
-                                        className={cn(
-                                          "ml-auto h-4 w-4",
-                                          make.name === field.value ? "opacity-100" : "opacity-0"
-                                        )}
-                                      />
-                                    </div>
-                                ))
-                               )}
-                            </div>
-                          </PopoverContent>
+                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <div className="max-h-[300px] overflow-y-auto p-2 flex flex-col gap-1">
+                                    {isLoadingMakes ? (
+                                        <div className="py-6 text-center text-sm">Chargement des marques...</div>
+                                    ) : makes.length === 0 ? (
+                                        <div className="py-6 text-center text-sm text-red-600">Aucune marque chargée</div>
+                                    ) : (
+                                        makes.map((make) => (
+                                            <Button
+                                                key={make.id}
+                                                variant="ghost"
+                                                className="justify-start"
+                                                onClick={() => {
+                                                    form.setValue("make", make.name);
+                                                    form.setValue("model", "");
+                                                    setIsMakePopoverOpen(false);
+                                                }}
+                                            >
+                                                {make.name}
+                                                 <Check
+                                                    className={cn(
+                                                    "ml-auto h-4 w-4",
+                                                    make.name === field.value ? "opacity-100" : "opacity-0"
+                                                    )}
+                                                />
+                                            </Button>
+                                        ))
+                                    )}
+                                </div>
+                            </PopoverContent>
                         </Popover>
                          <FormDescription>
                           Si votre marque n'est pas dans la liste, tapez-la simplement.
