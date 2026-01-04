@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,54 +60,60 @@ export default function VehicleCard({ vehicle, showControls = false, onDeletionS
   return (
     <Card className="group h-full flex flex-col overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300 border-none rounded-lg">
        <div className="relative">
-         {!showControls && ( // Show favorite on public pages only
+        <div className="absolute top-3 left-3 z-10">
+          {showControls ? (
+            <StatusBadge status={vehicle.status} published={vehicle.published} />
+          ) : (
+            <Badge className="bg-blue-50 text-blue-700 text-sm font-bold py-1 px-3 shadow-md border border-blue-200/50">
+              {formatCurrency(vehicle.price)}
+            </Badge>
+          )}
+        </div>
+        {!showControls && (
           <div className="absolute top-3 right-3 z-10">
             <FavoriteButton vehicleId={vehicle.id} />
           </div>
-        )}
-        {showControls && (
-             <div className="absolute top-3 left-3 z-10">
-                <StatusBadge status={vehicle.status} published={vehicle.published} />
-             </div>
         )}
         <Link href={`/vehicles/${vehicle.id}`} className="block">
             <CardHeader className="p-0 relative">
               <div className="aspect-[4/3] relative w-full overflow-hidden bg-muted rounded-t-lg">
                 {imageUrl ? (
-                  <Image
-                    src={imageUrl}
-                    alt={`${vehicle.make} ${vehicle.model}`}
-                    fill
-                    className={cn("object-cover transition-transform duration-300 group-hover:scale-105", !vehicle.published && "grayscale opacity-75")}
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    data-ai-hint="car exterior"
-                  />
+                  <>
+                    <Image
+                      src={imageUrl}
+                      alt={`${vehicle.make} ${vehicle.model}`}
+                      fill
+                      className={cn("object-cover transition-transform duration-300 group-hover:scale-105", !vehicle.published && "grayscale opacity-75")}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      data-ai-hint="car exterior"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+                  </>
                 ) : (
                   <div className="flex items-center justify-center h-full">
                     <ImageIcon className="w-16 h-16 text-muted-foreground" />
                   </div>
                 )}
                  <div className="absolute bottom-3 left-3 z-10">
-                    <Badge className="border-white/20 bg-black/20 text-white backdrop-blur-sm">{vehicle.canton}</Badge>
+                    <Badge className="border-white/20 bg-black/30 text-white backdrop-blur-sm shadow-md">{vehicle.canton}</Badge>
                  </div>
               </div>
             </CardHeader>
             <CardContent className="flex-grow p-4 space-y-2">
-              <p className="text-xl font-semibold text-primary">{formatCurrency(vehicle.price)}</p>
               <CardTitle className="text-lg font-bold leading-tight truncate">
                 {vehicle.make} {vehicle.model} {vehicle.trim}
               </CardTitle>
               <div className="flex items-center gap-4 text-sm text-muted-foreground pt-2">
                 <div className="flex items-center gap-1.5">
-                  <Calendar size={14} />
+                  <Calendar size={12} />
                   <span>{vehicle.year}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Gauge size={14} />
+                  <Gauge size={12} />
                   <span>{vehicle.mileage.toLocaleString('fr-CH')} km</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Cog size={14} />
+                  <Cog size={12} />
                   <span>{vehicle.gearbox}</span>
                 </div>
               </div>
@@ -116,13 +123,16 @@ export default function VehicleCard({ vehicle, showControls = false, onDeletionS
 
        {showControls && (
           <CardFooter className="p-4 pt-2 mt-auto border-t flex items-center justify-between bg-muted/30">
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/edit-listing/${vehicle.id}`}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Modifier
-                </Link>
-              </Button>
-              <DeleteListingButton vehicleId={vehicle.id} onDeletionSuccess={onDeletionSuccess} />
+            <div className="font-bold text-primary">{formatCurrency(vehicle.price)}</div>
+            <div className="flex items-center gap-2">
+                <Button asChild variant="outline" size="sm">
+                    <Link href={`/edit-listing/${vehicle.id}`}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Modifier
+                    </Link>
+                </Button>
+                <DeleteListingButton vehicleId={vehicle.id} onDeletionSuccess={onDeletionSuccess} />
+            </div>
           </CardFooter>
       )}
 
