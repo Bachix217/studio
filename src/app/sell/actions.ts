@@ -30,12 +30,13 @@ async function getCarApiToken(): Promise<string> {
     return jwtToken;
   }
 
+  console.log('Requesting new CarAPI token...');
   try {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        'Accept': 'text/plain', // Important, l'API renvoie du texte brut
       },
       body: JSON.stringify({
         api_token: process.env.CARAPI_TOKEN,
@@ -49,11 +50,26 @@ async function getCarApiToken(): Promise<string> {
         throw new Error(`CarAPI Authentication failed: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    jwtToken = data.token;
-    // Le jeton expire en 24h (86400 secondes), on le stocke en millisecondes
-    tokenExpiry = now + (24 * 60 * 60 * 1000); 
-
+    // L'API renvoie le token en texte brut, pas en JSON.
+    const token = await response.text();
+    jwtToken = token;
+    
+    // Décode le payload pour obtenir la date d'expiration
+    try {
+        const payloadBase64 = token.split('.')[1];
+        const decodedPayload = Buffer.from(payloadBase64, 'base64').toString('utf-8');
+        const payload = JSON.parse(decodedPayload);
+        // exp est en secondes, on le convertit en millisecondes
+        if (payload.exp) {
+          tokenExpiry = payload.exp * 1000;
+          console.log(`New token expires at: ${new Date(tokenExpiry).toLocaleString()}`);
+        }
+    } catch(e) {
+        console.error('Failed to decode JWT payload:', e);
+        // On met une expiration par défaut (ex: 24h) si le décodage échoue
+        tokenExpiry = now + (24 * 60 * 60 * 1000);
+    }
+    
     if (!jwtToken) {
         throw new Error("No token received from CarAPI");
     }
