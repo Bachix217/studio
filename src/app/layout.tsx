@@ -25,9 +25,6 @@ export default function RootLayout({
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚗</text></svg>" />
       </head>
       <body className={cn("font-body antialiased min-h-screen flex flex-col", "bg-background")}>
-        <Script src="https://www.carqueryapi.com/js/jquery.min.js" strategy="beforeInteractive" />
-        <Script src="https://www.carqueryapi.com/js/carquery.0.3.4.js" strategy="beforeInteractive" />
-
         <FirebaseProvider>
           <div className="flex-grow pb-16 md:pb-0">{children}</div>
           <BottomNavBar />

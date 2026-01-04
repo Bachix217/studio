@@ -32,7 +32,7 @@ import { useUser } from '@/firebase/auth/use-user';
 import { addDoc, collection, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
-import { useState, ChangeEvent, useEffect } from 'react';
+import { useState, ChangeEvent, useEffect, useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
 import Image from 'next/image';
 import { Label } from '@/components/ui/label';
@@ -132,6 +132,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
         const makesData = await getMakes();
         setMakes(makesData);
       } catch (error) {
+        console.error("Error loading makes in component:", error);
         toast({ variant: "destructive", title: "Erreur de chargement", description: "Impossible de charger la liste des marques." });
       } finally {
         setIsLoadingMakes(false);
@@ -150,7 +151,8 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
         getModels(selectedMakeData.id).then(modelsData => {
             setModels(modelsData);
             setIsLoadingModels(false);
-        }).catch(() => {
+        }).catch((error) => {
+            console.error("Error loading models in component:", error);
             toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger les modèles." });
             setIsLoadingModels(false);
         });
@@ -165,7 +167,8 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
         getTrims(selectedMakeData.id, selectedModel).then(trimsData => {
             setTrims(trimsData);
             setIsLoadingTrims(false);
-        }).catch(() => {
+        }).catch((error) => {
+            console.error("Error loading trims in component:", error);
             toast({ variant: "destructive", title: "Erreur", description: "Impossible de charger les finitions." });
             setIsLoadingTrims(false);
         });
@@ -433,56 +436,68 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                   <Controller name="make" control={form.control} render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Marque</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                    <SelectTrigger disabled={isLoadingMakes}>
-                                        <SelectValue placeholder={isLoadingMakes ? "Chargement..." : "Sélectionner une marque"} />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {makes.map(make => <SelectItem key={make.id} value={make.name}>{make.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )} />
+                   <FormField
+                    control={form.control}
+                    name="make"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Marque</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger disabled={isLoadingMakes}>
+                              <SelectValue placeholder={isLoadingMakes ? "Chargement..." : "Sélectionner une marque"} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {makes.map(make => <SelectItem key={make.id} value={make.name}>{make.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    <Controller name="model" control={form.control} render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Modèle</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingModels || !selectedMake}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder={isLoadingModels ? "Chargement..." : "Sélectionner un modèle"} />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {models.map(model => <SelectItem key={model.name} value={model.name}>{model.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )} />
+                  <FormField
+                    control={form.control}
+                    name="model"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Modèle</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingModels || !selectedMake || models.length === 0}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={isLoadingModels ? "Chargement..." : "Sélectionner un modèle"} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {models.map(model => <SelectItem key={model.name} value={model.name}>{model.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                     <Controller name="trim" control={form.control} render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Finition</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingTrims || !selectedModel}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder={isLoadingTrims ? "Chargement..." : "Sélectionner une finition"} />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {trims.map(trim => <SelectItem key={trim.id} value={trim.name}>{trim.name}</SelectItem>)}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                    )} />
+                  <FormField
+                    control={form.control}
+                    name="trim"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Finition</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingTrims || !selectedModel || trims.length === 0}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={isLoadingTrims ? "Chargement..." : "Sélectionner une finition"} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {trims.map(trim => <SelectItem key={trim.id} value={trim.name}>{trim.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -865,4 +880,3 @@ function FeaturesCombobox({ selectedFeatures, onFeaturesChange }: FeaturesCombob
       </Popover>
     );
 }
-
