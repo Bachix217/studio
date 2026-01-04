@@ -108,7 +108,6 @@ async function fetchCarApi(endpoint: string, options: RequestInit = {}, forceRet
  * Récupère la liste de toutes les marques de véhicules depuis CarAPI.
  */
 export async function getMakes(): Promise<Make[]> {
-  try {
     const data = await fetchCarApi('makes?sort=name');
     
     if (!data.data || !Array.isArray(data.data)) {
@@ -116,19 +115,12 @@ export async function getMakes(): Promise<Make[]> {
         throw new Error("Format de réponse inattendu de CarAPI pour les marques.");
     }
     
-    // Transformation des données pour correspondre à notre type `Make`
     const makes = data.data.map((make: { id: number; name: string }) => ({
       id: String(make.id),
       name: make.name,
     }));
     
-    // L'API trie déjà, mais on peut s'en assurer
     return makes;
-
-  } catch (error) {
-    console.error('Error fetching makes from CarAPI:', error);
-    return [];
-  }
 }
 
 /**

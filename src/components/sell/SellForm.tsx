@@ -370,6 +370,8 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
       });
     }
   }
+  
+  console.log('NB MARQUES DANS LE COMPOSANT:', makes.length);
 
   return (
     <Card>
@@ -477,36 +479,35 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                               </Button>
                             </FormControl>
                           </PopoverTrigger>
-                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput placeholder="Rechercher une marque..." />
-                                    <CommandList>
-                                        {isLoadingMakes && <div className="py-6 text-center text-sm">Chargement des marques...</div>}
-                                        {!isLoadingMakes && makes.length === 0 && <CommandEmpty>Aucune marque chargée.</CommandEmpty>}
-                                        <CommandGroup>
-                                            {makes.map((make) => (
-                                                <CommandItem
-                                                    value={make.name}
-                                                    key={make.id}
-                                                    onSelect={() => {
-                                                        form.setValue("make", make.name);
-                                                        form.setValue("model", "");
-                                                        setIsMakePopoverOpen(false);
-                                                    }}
-                                                >
-                                                    <Check
-                                                        className={cn(
-                                                            "mr-2 h-4 w-4",
-                                                            field.value === make.name ? "opacity-100" : "opacity-0"
-                                                        )}
-                                                    />
-                                                    {make.name}
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Rechercher une marque..." />
+                                <CommandList>
+                                    <CommandEmpty>Aucune marque trouvée.</CommandEmpty>
+                                    <CommandGroup>
+                                        {makes.map((make) => (
+                                            <CommandItem
+                                                value={make.name}
+                                                key={make.id}
+                                                onSelect={() => {
+                                                    form.setValue("make", make.name);
+                                                    form.setValue("model", "");
+                                                    setIsMakePopoverOpen(false);
+                                                }}
+                                            >
+                                                <Check
+                                                    className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        field.value === make.name ? "opacity-100" : "opacity-0"
+                                                    )}
+                                                />
+                                                {make.name}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                          </PopoverContent>
                         </Popover>
                         <FormMessage />
                       </FormItem>
