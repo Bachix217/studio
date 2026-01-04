@@ -138,11 +138,8 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
         setIsLoadingMakes(false);
       }
     }
-    // Load makes when the form for step 2 is ready, or if it's edit mode
-    if (step === 2 || isEditMode) {
-      loadMakes();
-    }
-  }, [step, isEditMode, toast]);
+    loadMakes();
+  }, [toast]);
   
   useEffect(() => {
     async function loadModels() {
@@ -373,7 +370,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
     }
   }
   
-  console.log('Marques reçues:', makes);
+  console.log('Liste des marques à rendre:', makes);
 
   return (
     <Card>
@@ -482,7 +479,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command>
+                            <Command shouldFilter={false}>
                               <CommandInput placeholder="Rechercher une marque..." />
                               <CommandList>
                                 {isLoadingMakes ? (
@@ -493,7 +490,6 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                                 <CommandGroup>
                                   {makes.map((make) => (
                                     <CommandItem
-                                      value={make.name}
                                       key={make.id}
                                       onSelect={() => {
                                         form.setValue("make", make.name);
