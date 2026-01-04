@@ -11,7 +11,6 @@ export type Make = {
 export type Model = {
   id: string;
   name: string;
-  make: string; // Ajout de la marque pour le filtrage côté client
 };
 
 
@@ -120,82 +119,48 @@ async function fetchCarApi(endpoint: string, options: RequestInit = {}, forceRet
  */
 export async function getMakes(): Promise<Make[]> {
     console.log("Début de getMakes");
-    try {
-        const data = await fetchCarApi('makes?sort=name');
-        
-        if (!data.data || !Array.isArray(data.data)) {
-            console.error("Format de réponse inattendu de CarAPI pour les marques:", data);
-            throw new Error("Format de réponse inattendu de CarAPI pour les marques.");
-        }
-        
-        const makes = data.data.map((make: { id: number; name: string }) => ({
-          id: String(make.id),
-          name: make.name,
-        }));
-        console.log(`Marques chargées avec succès : ${makes.length} reçues.`);
-        return makes;
-    } catch(error) {
-        console.error("Erreur dans getMakes:", error);
-        throw error;
+    const data = await fetchCarApi('makes?sort=name');
+    
+    if (!data.data || !Array.isArray(data.data)) {
+        console.error("Format de réponse inattendu de CarAPI pour les marques:", data);
+        throw new Error("Format de réponse inattendu de CarAPI pour les marques.");
     }
+    
+    const makes = data.data.map((make: { id: number; name: string }) => ({
+      id: String(make.id),
+      name: make.name,
+    }));
+    console.log(`Marques chargées avec succès : ${makes.length} reçues.`);
+    return makes;
 }
 
 
 /**
- * Récupère TOUS les modèles de véhicules depuis CarAPI.
+ * Récupère les modèles pour une marque spécifique depuis CarAPI.
  */
-export async function getAllModels(): Promise<Model[]> {
-   console.log(`[Debug Modèles] Début de getAllModels pour récupérer tous les modèles.`);
-   try {
-     // Nous allons chercher tous les modèles. L'API pagine les résultats,
-     // mais pour une liste de modèles, la première page (jusqu'à 1000) est souvent suffisante.
-     const data = await fetchCarApi(`models?sort=name&limit=1000`);
-     
-     if (!data.data || !Array.isArray(data.data)) {
-        console.error(`Format de réponse inattendu pour getAllModels:`, data);
-        return [];
-     }
-     
-     const models = data.data.map((model: { id: number; name: string; make: { name: string } }) => ({
-        id: String(model.id),
-        name: model.name,
-        make: model.make.name, // On stocke le nom de la marque parente
-     }));
-
-     console.log(`[Debug Modèles] ${models.length} modèles totaux récupérés.`);
-     return models;
-
-   } catch(error) {
-      console.error(`[Debug Modèles] Erreur lors du chargement de tous les modèles:`, error);
-      throw error;
-   }
-}
-
-// Cette fonction est conservée au cas où, mais n'est plus utilisée par le formulaire principal.
-export async function getModels(makeName: string): Promise<Model[]> {
-   console.log(`[Debug Modèles] Début de getModels avec makeName: ${makeName}`);
-   if (!makeName) return [];
+export async function getModels(makeId: string): Promise<Model[]> {
+   console.log(`[Debug Modèles] Début de getModels avec makeId: ${makeId}`);
+   if (!makeId) return [];
 
    try {
-     const filter = JSON.stringify([{ "field": "make", "op": "=", "val": makeName }]);
+     const filter = JSON.stringify([{ "field": "make_id", "op": "=", "val": makeId }]);
      const data = await fetchCarApi(`models?sort=name&json=${encodeURIComponent(filter)}`);
-     console.log(`[Debug Modèles] Réponse brute de l'API pour makeName ${makeName}:`, data);
+     console.log(`[Debug Modèles] Réponse brute de l'API pour makeId ${makeId}:`, data);
 
      if (!data.data || !Array.isArray(data.data)) {
-        console.error(`Format de réponse inattendu pour les modèles de la marque ${makeName}:`, data);
+        console.error(`Format de réponse inattendu pour les modèles de la marque ${makeId}:`, data);
         return [];
      }
      
      const models = data.data.map((model: { id: number; name: string }) => ({
         id: String(model.id),
         name: model.name,
-        make: makeName,
      }));
 
      return models;
 
    } catch(error) {
-      console.error(`Error fetching models for make name ${makeName}:`, error);
+      console.error(`[Debug Modèles] Erreur lors du chargement des modèles:`, error);
       throw error;
    }
 }

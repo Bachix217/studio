@@ -40,7 +40,7 @@ import imageCompression from 'browser-image-compression';
 import { Switch } from '../ui/switch';
 import { Separator } from '../ui/separator';
 import type { Vehicle } from '@/lib/types';
-import { getMakes, getAllModels, type Make, type Model } from '@/app/sell/actions';
+import { getMakes, getModels, type Make, type Model } from '@/app/sell/actions';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
@@ -85,10 +85,9 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   const isEditMode = !!vehicleToEdit;
   
   const [makes, setMakes] = useState<Make[]>([]);
-  const [allModels, setAllModels] = useState<Model[]>([]);
-  const [filteredModels, setFilteredModels] = useState<Model[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
   const [isLoadingMakes, setIsLoadingMakes] = useState(true);
-  const [isLoadingModels, setIsLoadingModels] = useState(true);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
 
   const [step, setStep] = useState(1);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
@@ -99,7 +98,6 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
   const [isCompressing, setIsCompressing] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [isMakePopoverOpen, setIsMakePopoverOpen] = useState(false);
-  const [isModelPopoverOpen, setIsModelPopoverOpen] = useState(false);
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -119,55 +117,48 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
       features: [],
     },
   });
-  
-  const selectedMakeName = form.watch('make');
 
   useEffect(() => {
-    async function loadInitialData() {
+    async function loadMakes() {
       setIsLoadingMakes(true);
-      setIsLoadingModels(true);
       try {
-        const [makesData, modelsData] = await Promise.all([
-          getMakes(),
-          getAllModels(),
-        ]);
+        const makesData = await getMakes();
         setMakes(makesData);
-        setAllModels(modelsData);
-        console.log(`[Debug] Données initiales chargées: ${makesData.length} marques, ${modelsData.length} modèles.`);
       } catch (error) {
-        console.error("Error loading initial data in component:", error);
+        console.error("Error loading makes in component:", error);
         toast({
           variant: "destructive",
           title: "Erreur de chargement",
-          description: "Impossible de charger les données des véhicules depuis CarAPI.",
+          description: "Impossible de charger la liste des marques.",
         });
       } finally {
         setIsLoadingMakes(false);
-        setIsLoadingModels(false);
       }
     }
-    loadInitialData();
+    loadMakes();
   }, [toast]);
   
-  useEffect(() => {
-    if (!selectedMakeName) {
-        setFilteredModels([]);
-        form.setValue("model", "");
-        return;
+  const handleMakeSelect = async (make: Make) => {
+    form.setValue('make', make.name);
+    form.setValue('model', '');
+    setIsMakePopoverOpen(false);
+    setIsLoadingModels(true);
+    try {
+        const modelsData = await getModels(make.id);
+        console.log(`[Debug Modèles] ${modelsData.length} modèles reçus pour la marque ${make.name}`);
+        setModels(modelsData);
+    } catch(error) {
+        console.error("Error loading models in component:", error);
+        toast({
+            variant: "destructive",
+            title: "Erreur de chargement",
+            description: "Impossible de charger les modèles pour cette marque."
+        });
+        setModels([]);
+    } finally {
+        setIsLoadingModels(false);
     }
-    
-    console.log(`[Debug Modèles] Filtrage des modèles pour la marque: ${selectedMakeName}`);
-    const modelsForMake = allModels.filter(model => model.make === selectedMakeName);
-    setFilteredModels(modelsForMake);
-    console.log(`[Debug Modèles] ${modelsForMake.length} modèles trouvés pour ${selectedMakeName}.`);
-    
-    // Réinitialiser le modèle si la marque change et que le modèle actuel n'est plus valide
-    const currentModel = form.getValues('model');
-    if(currentModel && !modelsForMake.some(m => m.name === currentModel)) {
-        form.setValue('model', '');
-    }
-
-  }, [selectedMakeName, allModels, form]);
+  };
 
 
   useEffect(() => {
@@ -364,6 +355,8 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
     }
   }
   
+  console.log('NB MARQUES DANS LE COMPOSANT:', makes.length);
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -471,33 +464,24 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                             <Command>
-                                <CommandInput placeholder="Rechercher une marque..." />
-                                <CommandList>
-                                    <CommandEmpty>{isLoadingMakes ? "Chargement des marques..." : "Aucune marque trouvée."}</CommandEmpty>
-                                    <CommandGroup>
-                                        {makes.map((make) => (
-                                            <CommandItem
-                                                value={make.name}
-                                                key={make.id}
-                                                onSelect={() => {
-                                                    form.setValue("make", make.name);
-                                                    form.setValue("model", "");
-                                                    setIsMakePopoverOpen(false);
-                                                }}
-                                            >
-                                                <Check
-                                                    className={cn(
-                                                        "mr-2 h-4 w-4",
-                                                        field.value === make.name ? "opacity-100" : "opacity-0"
-                                                    )}
-                                                />
-                                                {make.name}
-                                            </CommandItem>
-                                        ))}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
+                             <div className="max-h-[300px] overflow-y-auto p-2 flex flex-col gap-1">
+                                {isLoadingMakes ? (
+                                    <p className="text-sm text-center text-muted-foreground py-2">Chargement des marques...</p>
+                                ) : makes.length > 0 ? (
+                                    makes.map((make) => (
+                                        <Button
+                                            key={make.id}
+                                            variant="ghost"
+                                            className="justify-start"
+                                            onClick={() => handleMakeSelect(make)}
+                                        >
+                                            {make.name}
+                                        </Button>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-center text-red-500 py-2">Aucune marque chargée.</p>
+                                )}
+                            </div>
                           </PopoverContent>
                         </Popover>
                         <FormMessage />
@@ -509,58 +493,9 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                     control={form.control}
                     name="model"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col">
+                      <FormItem>
                         <FormLabel>Modèle</FormLabel>
-                        <Popover open={isModelPopoverOpen} onOpenChange={setIsModelPopoverOpen}>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    className={cn(
-                                    "w-full justify-between",
-                                    !field.value && "text-muted-foreground"
-                                    )}
-                                    disabled={!selectedMakeName || isLoadingModels}
-                                >
-                                    {isLoadingModels ? "Chargement..." : field.value || "Sélectionner un modèle"}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command>
-                              <CommandInput placeholder="Rechercher un modèle..."/>
-                              <CommandList>
-                                <CommandEmpty>
-                                    {isLoadingModels ? "Chargement des modèles..." : (filteredModels.length === 0 && selectedMakeName ? "Aucun modèle trouvé." : "Sélectionnez d'abord une marque.")}
-                                </CommandEmpty>
-                                <CommandGroup>
-                                  {filteredModels.map((model) => (
-                                    <CommandItem
-                                      value={model.name}
-                                      key={model.id}
-                                      onSelect={() => {
-                                        form.setValue("model", model.name);
-                                        setIsModelPopoverOpen(false);
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          model.name === field.value
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        )}
-                                      />
-                                      {model.name}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                        <FormControl><Input placeholder="ex: Golf" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -947,4 +882,5 @@ function FeaturesCombobox({ selectedFeatures, onFeaturesChange }: FeaturesCombob
       </Popover>
     );
 }
+
 
