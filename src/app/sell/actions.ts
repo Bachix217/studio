@@ -143,11 +143,13 @@ export async function getMakes(): Promise<Make[]> {
  * Récupère les modèles pour un ID de marque donné.
  */
 export async function getModels(makeId: string): Promise<Model[]> {
+   console.log(`[Debug Modèles] Début de getModels avec makeId: ${makeId}`);
    if (!makeId) return [];
 
    try {
      const filter = JSON.stringify([{ "field": "make_id", "op": "=", "val": makeId }]);
      const data = await fetchCarApi(`models?sort=name&json=${encodeURIComponent(filter)}`);
+     console.log(`[Debug Modèles] Réponse brute de l'API pour makeId ${makeId}:`, data);
 
      if (!data.data || !Array.isArray(data.data)) {
         console.error(`Format de réponse inattendu pour les modèles de la marque ID ${makeId}:`, data);
@@ -167,3 +169,5 @@ export async function getModels(makeId: string): Promise<Model[]> {
       throw error; // Propage l'erreur
    }
 }
+
+    

@@ -156,12 +156,15 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             setModels([]);
             return;
         }
-
+        
+        console.log(`[Debug Modèles] Appel de getModels pour la marque ID: ${selectedMake.id}`);
         setIsLoadingModels(true);
         try {
             const modelsData = await getModels(selectedMake.id);
             setModels(modelsData);
+            console.log(`[Debug Modèles] ${modelsData.length} modèles reçus pour ${selectedMakeName}.`);
         } catch (error) {
+             console.error(`[Debug Modèles] Erreur lors du chargement des modèles:`, error);
              toast({
                 variant: "destructive",
                 title: "Erreur de chargement",
@@ -961,3 +964,6 @@ function FeaturesCombobox({ selectedFeatures, onFeaturesChange }: FeaturesCombob
     
 
 
+
+
+    
