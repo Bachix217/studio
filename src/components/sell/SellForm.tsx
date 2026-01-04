@@ -150,7 +150,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
             return;
         }
         
-        const selectedMake = makes.find(m => m.name.toLowerCase() === selectedMakeName.toLowerCase());
+        const selectedMake = makes.find(m => m.name.toLowerCase() === selectedMakeName?.toLowerCase());
 
         if (!selectedMake) {
             setModels([]);
@@ -480,7 +480,7 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                             </FormControl>
                           </PopoverTrigger>
                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command>
+                             <Command>
                                 <CommandInput placeholder="Rechercher une marque..." />
                                 <CommandList>
                                     <CommandEmpty>Aucune marque trouvée.</CommandEmpty>
@@ -522,14 +522,16 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                         <FormLabel>Modèle</FormLabel>
                         <Popover open={isModelPopoverOpen} onOpenChange={setIsModelPopoverOpen}>
                           <PopoverTrigger asChild>
-                            <FormControl>
-                               <div className="relative">
-                                <Input
-                                    placeholder={isLoadingModels ? "Chargement..." : "Taper le modèle"}
-                                    className="w-full"
-                                    {...field}
-                                    disabled={!selectedMakeName || isLoadingModels}
-                                />
+                             <FormControl>
+                                <div className="relative">
+                                     <Input
+                                        placeholder={isLoadingModels ? "Chargement..." : "Sélectionner ou taper le modèle"}
+                                        className="w-full"
+                                        {...field}
+                                        disabled={!selectedMakeName || isLoadingModels}
+                                        onClick={() => setIsModelPopoverOpen(true)}
+                                    />
+                                    <ChevronsUpDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 shrink-0 opacity-50" />
                                </div>
                             </FormControl>
                           </PopoverTrigger>
@@ -537,7 +539,10 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                             <Command>
                               <CommandInput placeholder="Rechercher un modèle..."/>
                               <CommandList>
-                                <CommandEmpty>Aucun modèle trouvé. Vous pouvez l'entrer manuellement.</CommandEmpty>
+                                {models.length === 0 && !isLoadingModels && selectedMakeName && (
+                                     <CommandEmpty>Aucun modèle trouvé pour cette marque. Vous pouvez l'entrer manuellement.</CommandEmpty>
+                                )}
+                                {isLoadingModels && <CommandEmpty>Chargement des modèles...</CommandEmpty>}
                                 <CommandGroup>
                                   {models.map((model) => (
                                     <CommandItem
@@ -953,3 +958,4 @@ function FeaturesCombobox({ selectedFeatures, onFeaturesChange }: FeaturesCombob
 
 
     
+
