@@ -440,18 +440,59 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                     control={form.control}
                     name="make"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel>Marque</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger disabled={isLoadingMakes}>
-                              <SelectValue placeholder={isLoadingMakes ? "Chargement..." : "Sélectionner une marque"} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {makes.map(make => <SelectItem key={make.id} value={make.name}>{make.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                                disabled={isLoadingMakes}
+                              >
+                                {field.value
+                                  ? makes.find(
+                                      (make) => make.name === field.value
+                                    )?.name
+                                  : (isLoadingMakes ? "Chargement..." : "Sélectionner une marque")}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                              <CommandInput placeholder="Rechercher une marque..." />
+                              <CommandList>
+                                <CommandEmpty>Aucune marque trouvée.</CommandEmpty>
+                                <CommandGroup>
+                                  {makes.map((make) => (
+                                    <CommandItem
+                                      value={make.name}
+                                      key={make.id}
+                                      onSelect={() => {
+                                        form.setValue("make", make.name)
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          make.name === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                      />
+                                      {make.name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -461,18 +502,55 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                     control={form.control}
                     name="model"
                     render={({ field }) => (
-                      <FormItem>
+                       <FormItem className="flex flex-col">
                         <FormLabel>Modèle</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingModels || !selectedMake || models.length === 0}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={isLoadingModels ? "Chargement..." : "Sélectionner un modèle"} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {models.map(model => <SelectItem key={model.name} value={model.name}>{model.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                                disabled={isLoadingModels || !selectedMake || models.length === 0}
+                              >
+                                {field.value || (isLoadingModels ? "Chargement..." : "Sélectionner un modèle")}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                              <CommandInput placeholder="Rechercher un modèle..." />
+                              <CommandList>
+                                <CommandEmpty>Aucun modèle trouvé.</CommandEmpty>
+                                <CommandGroup>
+                                  {models.map((model) => (
+                                    <CommandItem
+                                      value={model.name}
+                                      key={model.name}
+                                      onSelect={() => {
+                                        form.setValue("model", model.name)
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          model.name === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                      />
+                                      {model.name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -482,18 +560,56 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                     control={form.control}
                     name="trim"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="flex flex-col">
                         <FormLabel>Finition</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingTrims || !selectedModel || trims.length === 0}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder={isLoadingTrims ? "Chargement..." : "Sélectionner une finition"} />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {trims.map(trim => <SelectItem key={trim.id} value={trim.name}>{trim.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                         <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn(
+                                  "w-full justify-between",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                                disabled={isLoadingTrims || !selectedModel || trims.length === 0}
+                              >
+                                {field.value || (isLoadingTrims ? "Chargement..." : "Sélectionner une finition")}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                              <CommandInput placeholder="Rechercher une finition..." />
+                              <CommandList>
+                                <CommandEmpty>Aucune finition trouvée.</CommandEmpty>
+                                <CommandGroup>
+                                  {trims.map((trim) => (
+                                    <CommandItem
+                                      value={trim.name}
+                                      key={trim.id}
+                                      onSelect={() => {
+                                        form.setValue("trim", trim.name)
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          "mr-2 h-4 w-4",
+                                          trim.name === field.value
+                                            ? "opacity-100"
+                                            : "opacity-0"
+                                        )}
+                                      />
+                                      {trim.name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        <FormDescription>Optionnel</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -880,3 +996,5 @@ function FeaturesCombobox({ selectedFeatures, onFeaturesChange }: FeaturesCombob
       </Popover>
     );
 }
+
+    
