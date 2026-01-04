@@ -51,7 +51,7 @@ import { Badge } from '../ui/badge';
 const MAX_IMAGES = 10;
 
 const formSchema = z.object({
-  make: z.string().min(2, "La marque est requise."),
+  make: z.string().min(1, "La marque est requise."),
   model: z.string().min(1, "Le modèle est requis."),
   year: z.coerce.number().min(1900, "Année invalide.").max(new Date().getFullYear() + 1, "Année invalide."),
   price: z.coerce.number().min(1, "Le prix doit être positif."),
@@ -371,8 +371,6 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
     }
   }
   
-  console.log('NB MARQUES DANS LE COMPOSANT:', makes.length);
-
   return (
     <Card>
       <CardContent className="p-6">
@@ -483,7 +481,8 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                              <Command>
                                 <CommandInput placeholder="Rechercher une marque..." />
                                 <CommandList>
-                                    <CommandEmpty>Aucune marque trouvée.</CommandEmpty>
+                                    {isLoadingMakes && <CommandEmpty>Chargement des marques...</CommandEmpty>}
+                                    {!isLoadingMakes && makes.length === 0 && <CommandEmpty>Aucune marque trouvée.</CommandEmpty>}
                                     <CommandGroup>
                                         {makes.map((make) => (
                                             <CommandItem
@@ -522,27 +521,29 @@ export default function SellForm({ vehicleToEdit }: SellFormProps) {
                         <FormLabel>Modèle</FormLabel>
                         <Popover open={isModelPopoverOpen} onOpenChange={setIsModelPopoverOpen}>
                           <PopoverTrigger asChild>
-                             <FormControl>
-                                <div className="relative">
-                                     <Input
-                                        placeholder={isLoadingModels ? "Chargement..." : "Sélectionner ou taper le modèle"}
-                                        className="w-full"
-                                        {...field}
-                                        disabled={!selectedMakeName || isLoadingModels}
-                                        onClick={() => setIsModelPopoverOpen(true)}
-                                    />
-                                    <ChevronsUpDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 shrink-0 opacity-50" />
-                               </div>
+                            <FormControl>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                    )}
+                                    disabled={!selectedMakeName || isLoadingModels}
+                                >
+                                    {isLoadingModels ? "Chargement..." : field.value || "Sélectionner un modèle"}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
                             </FormControl>
                           </PopoverTrigger>
-                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                             <Command>
                               <CommandInput placeholder="Rechercher un modèle..."/>
                               <CommandList>
-                                {models.length === 0 && !isLoadingModels && selectedMakeName && (
-                                     <CommandEmpty>Aucun modèle trouvé pour cette marque. Vous pouvez l'entrer manuellement.</CommandEmpty>
-                                )}
                                 {isLoadingModels && <CommandEmpty>Chargement des modèles...</CommandEmpty>}
+                                {!isLoadingModels && models.length === 0 && selectedMakeName && (
+                                     <CommandEmpty>Aucun modèle trouvé pour cette marque.</CommandEmpty>
+                                )}
                                 <CommandGroup>
                                   {models.map((model) => (
                                     <CommandItem
@@ -958,4 +959,5 @@ function FeaturesCombobox({ selectedFeatures, onFeaturesChange }: FeaturesCombob
 
 
     
+
 

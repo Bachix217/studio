@@ -151,7 +151,7 @@ export async function getModels(makeId: string): Promise<Model[]> {
 
      if (!data.data || !Array.isArray(data.data)) {
         console.error(`Format de réponse inattendu pour les modèles de la marque ID ${makeId}:`, data);
-        throw new Error("Format de réponse inattendu de CarAPI pour les modèles.");
+        return [];
      }
      
      // Transformation des données
@@ -164,6 +164,6 @@ export async function getModels(makeId: string): Promise<Model[]> {
 
    } catch(error) {
       console.error(`Error fetching models for make ID ${makeId}:`, error);
-      return [];
+      throw error; // Propage l'erreur
    }
 }
